@@ -1,0 +1,384 @@
+node n1 {
+    type router
+    model aircraft
+    network-config {
+	hostname AL3456
+	!
+	interface eth0
+	 ip address 10.0.0.1/24
+	!
+    }
+    canvas c1
+    iconcoords {137.0 422.0}
+    labelcoords {137.0 454.0}
+    interface-peer {eth0 n6}
+    custom-config {
+	custom-config-id service:TrackS
+	custom-command TrackS
+	config {
+	files=('tracks.cfg', 'CINE0001.exe.xml', 'CINE0001.trf.xml', 'tabTrj.xml', 'tracks.sh', )
+	}
+    }
+    custom-config {
+	custom-config-id service:TrackS:tabTrj.xml
+	custom-command tabTrj.xml
+	config {
+	<?xml version='1.0' encoding='UTF-8'?>
+	<!DOCTYPE trajetorias>
+	<trajetorias VERSION="0001" CODE="1961" FORMAT="NEWTON">
+	
+	    <trajetoria nTrj="1">
+	        <descricao>001 - LUZ / ALINA</descricao>
+	
+	        <breakpoint nBrk="1">
+	            <coord>
+	                <tipo>L</tipo>
+	                <campoA>-22.903908</campoA>
+	                <campoB>-46.469731</campoB>
+	            </coord>
+	            <altitude>10000</altitude>
+	            <velocidade>210</velocidade>
+	        </breakpoint>
+	
+	        <breakpoint nBrk="2">
+	            <coord>
+	                <tipo>L</tipo>
+	                <campoA>-23.463958</campoA>
+	                <campoB>-45.658363</campoB>
+	            </coord>
+	            <altitude>10000</altitude>
+	            <velocidade>210</velocidade>
+	        </breakpoint>
+	
+	        <breakpoint nBrk="3">
+	            <coord>
+	                <tipo>L</tipo>
+	                <campoA>-22.998721</campoA>
+	                <campoB>-45.669746</campoB>
+	            </coord>
+	            <altitude>10000</altitude>
+	            <velocidade>210</velocidade>
+	        </breakpoint>
+	
+	    </trajetoria>
+	
+	</trajetorias>
+	
+	}
+    }
+    custom-config {
+	custom-config-id service:TrackS:CINE0001.trf.xml
+	custom-command CINE0001.trf.xml
+	config {
+	<?xml version='1.0' encoding='UTF-8'?>
+	<!DOCTYPE trafegos>
+	<trafegos VERSION="0001" CODE="1961" FORMAT="NEWTON">
+	
+	    <trafego nTrf="1">
+	        <designador>B737</designador>
+	        <ssr>7003</ssr>
+	        <indicativo>TAM5555</indicativo>
+	        <origem>SBBR</origem>
+	        <destino>SBRJ</destino>
+	        <procedimento>TRJ001</procedimento>
+	        <temptrafego>0</temptrafego>
+	        <coord>
+	            <tipo>L</tipo>
+	            <campoA>-22.907486</campoA>
+		    <campoB>-45.670273</campoB>
+	        </coord>
+	        <velocidade>350</velocidade>
+	        <altitude>3000</altitude>
+	        <proa>46</proa>
+	    </trafego>
+	
+	</trafegos>
+	
+	}
+    }
+    services {zebra OSPFv3MDR vtysh IPForward DefaultMulticastRoute GPSd AdsbOut}
+}
+
+node n4 {
+    type router
+    model ground-station
+    network-config {
+	hostname n4
+	!
+	interface eth1
+	 ip address 10.0.1.1/24
+	!
+	interface eth0
+	 ip address 10.0.0.3/24
+	!
+    }
+    canvas c1
+    iconcoords {509.0 496.0}
+    labelcoords {509.0 528.0}
+    interface-peer {eth0 n6}
+    interface-peer {eth1 n5}
+    services {zebra OSPFv3MDR vtysh IPForward GPSd Dump1090 AdsbIn}
+    custom-config {
+	custom-config-id service:AdsbIn
+	custom-command AdsbIn
+	config {
+	files=('adsbin.cfg', 'adsbin.sh', )
+	}
+    }
+    custom-config {
+	custom-config-id service:AdsbIn:adsbin.cfg
+	custom-command adsbin.cfg
+	config {
+	[General]
+	id = n4
+	destinations = dst01 dst02
+	
+	[dst01]
+	type = dump1090
+	server = 10.0.2.10
+	port = 30001
+	
+	[dst02]
+	type = dump1090
+	server = localhost
+	port = 30001
+	
+	[dst03]
+	type = asterix
+	server = 10.0.1.2
+	port = 40005
+	
+	
+	}
+    }
+}
+
+node n5 {
+    type router
+    model mdr
+    network-config {
+	hostname n5
+	!
+	interface eth1
+	 ip address 10.0.2.1/24
+	 ipv6 address 2001:2::1/64
+	!
+	interface eth0
+	 ip address 10.0.1.2/24
+	 ipv6 address 2001:1::2/64
+	!
+    }
+    canvas c1
+    iconcoords {508.0 345.0}
+    labelcoords {508.0 377.0}
+    interface-peer {eth0 n4}
+    interface-peer {eth1 n7}
+    services {zebra OSPFv3MDR vtysh IPForward AsterixServer}
+    custom-config {
+	custom-config-id service:AsterixServer
+	custom-command AsterixServer
+	config {
+	files=('asterixserver.cfg', 'asterixserver.sh', )
+	}
+    }
+    custom-config {
+	custom-config-id service:AsterixServer:asterixserver.cfg
+	custom-command asterixserver.cfg
+	config {
+	[General]
+	sic = 5
+	port = 40005
+	txport = 50005
+	net = 172.16.0.215
+	
+	}
+    }
+}
+
+node n6 {
+    type wlan
+    network-config {
+	hostname 1090MHz
+	!
+	interface wireless
+	 ipv6 address 2001:0::0/128
+	 ip address 10.0.0.0/24
+	!
+	mobmodel
+	coreapi
+	emane_rfpipe
+	!
+    }
+    custom-config {
+	custom-config-id emane_rfpipe
+	custom-command {11 3 11 2 10 9 9 11 9 9 4 4 4 2 9 9 9 11 10 4 10}
+	config {
+	enablepromiscuousmode=0
+	datarate=1M
+	flowcontrolenable=0
+	flowcontroltokens=10
+	pcrcurveuri=/usr/share/emane/xml/models/mac/rfpipe/rfpipepcr.xml
+	jitter=0.0
+	delay=0.0
+	radiometricenable=0
+	radiometricreportinterval=1.0
+	neighbormetricdeletetime=60.0
+	bandwidth=1M
+	frequency=1.090G
+	frequencyofinterest=1.090G
+	subid=1
+	systemnoisefigure=4.0
+	txpower=100.0
+	fixedantennagain=100.0
+	fixedantennagainenable=1
+	noisemode=none
+	noisebinsize=20
+	propagationmodel=freespace
+	}
+    }
+    custom-config {
+	custom-config-id basic_range
+	custom-command {3 3 9 9 9}
+	config {
+	range=275
+	bandwidth=54000000
+	jitter=0
+	delay=20000
+	error=0
+	}
+    }
+    canvas c1
+    iconcoords {853.0 47.0}
+    labelcoords {853.0 79.0}
+    interface-peer {e0 n1}
+    interface-peer {e3 n4}
+    interface-peer {e1 n2}
+    interface-peer {e4 n8}
+}
+
+node n7 {
+    type router
+    model host
+    network-config {
+	hostname n7
+	!
+	interface eth0
+	 ip address 10.0.2.10/24
+	 ipv6 address 2001:2::10/64
+	!
+    }
+    canvas c1
+    iconcoords {802.0 346.0}
+    labelcoords {802.0 378.0}
+    interface-peer {eth0 n5}
+    services {DefaultRoute SSH Dump1090}
+}
+
+node n2 {
+    type router
+    model aircraft
+    network-config {
+	hostname TAM6543
+	!
+	interface eth0
+	 ip address 10.0.0.2/24
+	!
+    }
+    canvas c1
+    iconcoords {45.0 47.0}
+    labelcoords {45.0 79.0}
+    interface-peer {eth0 n6}
+    services {zebra OSPFv3MDR vtysh IPForward DefaultMulticastRoute GPSd AdsbOut}
+}
+
+node n8 {
+    type router
+    model host
+    network-config {
+	hostname trackserver
+	!
+	interface eth0
+	 ip address 10.0.0.10/24
+	!
+    }
+    canvas c1
+    iconcoords {950.0 45.0}
+    labelcoords {950.0 77.0}
+    services {DefaultRoute SSH TrackServer}
+    interface-peer {eth0 n6}
+    custom-config {
+	custom-config-id service:TrackServer
+	custom-command TrackServer
+	config {
+	files=('track_server.cfg', )
+	}
+    }
+    custom-config {
+	custom-config-id service:TrackServer:track_server.cfg
+	custom-command track_server.cfg
+	config {
+	[Database]
+	; db_host = 172.17.255.254
+	; db_name = atn_sim
+	; db_user = atn_sim
+	; db_pass = atn_sim
+	
+	[Tracks]
+	server = 172.17.255.254
+	port = 5006
+	exercise = SBBR002
+	; n1 = 1
+	
+	}
+    }
+}
+
+link l1 {
+    nodes {n6 n1}
+}
+
+link l4 {
+    nodes {n6 n4}
+}
+
+link l5 {
+    nodes {n4 n5}
+    bandwidth 0
+}
+
+link l6 {
+    nodes {n5 n7}
+    bandwidth 0
+}
+
+link l2 {
+    nodes {n6 n2}
+}
+
+link l7 {
+    nodes {n6 n8}
+}
+
+canvas c1 {
+    name {Canvas1}
+    refpt {0 0 -15.485570 -48.337519 2.0}
+    scale 100000.0
+    size {1000 750}
+}
+
+option global {
+    interface_names no
+    ip_addresses no
+    ipv6_addresses no
+    node_labels yes
+    link_labels yes
+    show_api no
+    background_images no
+    annotations yes
+    grid yes
+    traffic_start 0
+}
+
+option session {
+}
+

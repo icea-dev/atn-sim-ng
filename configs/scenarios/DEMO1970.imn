@@ -1,0 +1,516 @@
+node n1 {
+    type router
+    model aircraft
+    network-config {
+	hostname n1
+	!
+	interface eth0
+	 ipv6 address 2001:0::1/128
+	 ip address 10.0.0.1/24
+	!
+    }
+    canvas c1
+    iconcoords {239.0 717.0}
+    labelcoords {239.0 749.0}
+    interface-peer {eth0 n18}
+    services {zebra OSPFv3MDR vtysh IPForward DefaultMulticastRoute GPSd AdsbOut}
+}
+
+node n2 {
+    type router
+    model aircraft
+    network-config {
+	hostname n2
+	!
+	interface eth0
+	 ipv6 address 2001:0::2/128
+	 ip address 10.0.0.2/24
+	!
+    }
+    canvas c1
+    iconcoords {287.0 717.0}
+    labelcoords {287.0 749.0}
+    interface-peer {eth0 n18}
+    services {zebra OSPFv3MDR vtysh IPForward DefaultMulticastRoute GPSd AdsbOut}
+}
+
+node n3 {
+    type router
+    model aircraft
+    network-config {
+	hostname n3
+	!
+	interface eth0
+	 ipv6 address 2001:0::3/128
+	 ip address 10.0.0.3/24
+	!
+    }
+    canvas c1
+    iconcoords {336.0 716.0}
+    labelcoords {336.0 748.0}
+    interface-peer {eth0 n18}
+    services {zebra OSPFv3MDR vtysh IPForward DefaultMulticastRoute GPSd AdsbOut}
+}
+
+node n4 {
+    type router
+    model aircraft
+    network-config {
+	hostname n4
+	!
+	interface eth0
+	 ipv6 address 2001:0::4/128
+	 ip address 10.0.0.4/24
+	!
+    }
+    canvas c1
+    iconcoords {386.0 718.0}
+    labelcoords {386.0 750.0}
+    interface-peer {eth0 n18}
+    services {zebra OSPFv3MDR vtysh IPForward DefaultMulticastRoute GPSd AdsbOut}
+}
+
+node n5 {
+    type router
+    model aircraft
+    network-config {
+	hostname n5
+	!
+	interface eth0
+	 ipv6 address 2001:0::5/128
+	 ip address 10.0.0.5/24
+	!
+    }
+    canvas c1
+    iconcoords {435.0 718.0}
+    labelcoords {435.0 750.0}
+    interface-peer {eth0 n18}
+    services {zebra OSPFv3MDR vtysh IPForward DefaultMulticastRoute GPSd AdsbOut}
+}
+
+node n6 {
+    type router
+    model aircraft
+    network-config {
+	hostname n6
+	!
+	interface eth0
+	 ipv6 address 2001:0::6/128
+	 ip address 10.0.0.6/24
+	!
+    }
+    canvas c1
+    iconcoords {483.0 717.0}
+    labelcoords {483.0 749.0}
+    interface-peer {eth0 n18}
+    services {zebra OSPFv3MDR vtysh IPForward DefaultMulticastRoute GPSd AdsbOut}
+}
+
+node n7 {
+    type router
+    model aircraft
+    network-config {
+	hostname n7
+	!
+	interface eth0
+	 ipv6 address 2001:0::7/128
+	 ip address 10.0.0.7/24
+	!
+    }
+    canvas c1
+    iconcoords {534.0 717.0}
+    labelcoords {534.0 749.0}
+    interface-peer {eth0 n18}
+    services {zebra OSPFv3MDR vtysh IPForward DefaultMulticastRoute GPSd AdsbOut}
+}
+
+node n8 {
+    type router
+    model aircraft
+    network-config {
+	hostname n8
+	!
+	interface eth0
+	 ipv6 address 2001:0::8/128
+	 ip address 10.0.0.8/24
+	!
+    }
+    canvas c1
+    iconcoords {586.0 716.0}
+    labelcoords {586.0 748.0}
+    interface-peer {eth0 n18}
+    services {zebra OSPFv3MDR vtysh IPForward DefaultMulticastRoute GPSd AdsbOut}
+}
+
+node n9 {
+    type router
+    model aircraft
+    network-config {
+	hostname n9
+	!
+	interface eth0
+	 ipv6 address 2001:0::9/128
+	 ip address 10.0.0.9/24
+	!
+    }
+    canvas c1
+    iconcoords {636.0 716.0}
+    labelcoords {636.0 748.0}
+    interface-peer {eth0 n18}
+    services {zebra OSPFv3MDR vtysh IPForward DefaultMulticastRoute GPSd AdsbOut}
+}
+
+node n10 {
+    type router
+    model aircraft
+    network-config {
+	hostname n10
+	!
+	interface eth0
+	 ipv6 address 2001:0::10/128
+	 ip address 10.0.0.10/24
+	!
+    }
+    canvas c1
+    iconcoords {688.0 716.0}
+    labelcoords {688.0 748.0}
+    interface-peer {eth0 n18}
+    services {zebra OSPFv3MDR vtysh IPForward DefaultMulticastRoute GPSd AdsbOut}
+}
+
+node n11 {
+    type router
+    model aircraft
+    network-config {
+	hostname n11
+	!
+	interface eth0
+	 ipv6 address 2001:0::11/128
+	 ip address 10.0.0.11/24
+	!
+    }
+    canvas c1
+    iconcoords {739.0 718.0}
+    labelcoords {739.0 750.0}
+    interface-peer {eth0 n18}
+    services {zebra OSPFv3MDR vtysh IPForward DefaultMulticastRoute GPSd AdsbOut}
+}
+
+node n12 {
+    type router
+    model aircraft
+    network-config {
+	hostname n12
+	!
+	interface eth0
+	 ipv6 address 2001:0::12/128
+	 ip address 10.0.0.12/24
+	!
+    }
+    canvas c1
+    iconcoords {786.0 717.0}
+    labelcoords {786.0 749.0}
+    interface-peer {eth0 n18}
+    services {zebra OSPFv3MDR vtysh IPForward DefaultMulticastRoute GPSd AdsbOut}
+}
+
+node n13 {
+    type router
+    model aircraft
+    network-config {
+	hostname n13
+	!
+	interface eth0
+	 ipv6 address 2001:0::13/128
+	 ip address 10.0.0.13/24
+	!
+    }
+    canvas c1
+    iconcoords {835.0 717.0}
+    labelcoords {835.0 749.0}
+    interface-peer {eth0 n18}
+    services {zebra OSPFv3MDR vtysh IPForward DefaultMulticastRoute GPSd AdsbOut}
+}
+
+node n14 {
+    type router
+    model aircraft
+    network-config {
+	hostname n14
+	!
+	interface eth0
+	 ipv6 address 2001:0::14/128
+	 ip address 10.0.0.14/24
+	!
+    }
+    canvas c1
+    iconcoords {882.0 717.0}
+    labelcoords {882.0 749.0}
+    interface-peer {eth0 n18}
+    services {zebra OSPFv3MDR vtysh IPForward DefaultMulticastRoute GPSd AdsbOut}
+}
+
+node n15 {
+    type router
+    model aircraft
+    network-config {
+	hostname n15
+	!
+	interface eth0
+	 ipv6 address 2001:0::15/128
+	 ip address 10.0.0.15/24
+	!
+    }
+    canvas c1
+    iconcoords {929.0 717.0}
+    labelcoords {929.0 749.0}
+    interface-peer {eth0 n18}
+    services {zebra OSPFv3MDR vtysh IPForward DefaultMulticastRoute GPSd AdsbOut}
+}
+
+node n16 {
+    type router
+    model aircraft
+    network-config {
+	hostname n16
+	!
+	interface eth0
+	 ipv6 address 2001:0::16/128
+	 ip address 10.0.0.16/24
+	!
+    }
+    canvas c1
+    iconcoords {977.0 716.0}
+    labelcoords {977.0 748.0}
+    interface-peer {eth0 n18}
+    services {zebra OSPFv3MDR vtysh IPForward DefaultMulticastRoute GPSd AdsbOut}
+}
+
+node n17 {
+    type router
+    model ground-station
+    network-config {
+	hostname n17
+	!
+	interface eth0
+	 ip address 10.0.0.17/24
+	!
+    }
+    canvas c1
+    iconcoords {501.0 359.0}
+    labelcoords {501.0 391.0}
+    interface-peer {eth0 n18}
+    services {zebra OSPFv3MDR vtysh IPForward GPSd Dump1090 AdsbIn}
+}
+
+node n18 {
+    type wlan
+    network-config {
+	hostname 1090MHz
+	!
+	interface wireless
+	 ipv6 address 2001:0::0/128
+	 ip address 10.0.0.0/24
+	!
+	mobmodel
+	coreapi
+	emane_rfpipe
+	!
+    }
+    custom-config {
+	custom-config-id emane_rfpipe
+	custom-command {11 3 11 2 10 9 9 11 9 9 4 4 4 2 9 9 9 11 10 4 10}
+	config {
+	enablepromiscuousmode=0
+	datarate=1M
+	flowcontrolenable=0
+	flowcontroltokens=10
+	pcrcurveuri=/usr/share/emane/xml/models/mac/rfpipe/rfpipepcr.xml
+	jitter=0.0
+	delay=0.0
+	radiometricenable=0
+	radiometricreportinterval=1.0
+	neighbormetricdeletetime=60.0
+	bandwidth=1M
+	frequency=1.090G
+	frequencyofinterest=1.090G
+	subid=1
+	systemnoisefigure=4.0
+	txpower=50.0
+	fixedantennagain=5.5
+	fixedantennagainenable=1
+	noisemode=none
+	noisebinsize=20
+	propagationmodel=freespace
+	}
+    }
+    custom-config {
+	custom-config-id basic_range
+	custom-command {3 3 9 9 9}
+	config {
+	range=275
+	bandwidth=54000000
+	jitter=0
+	delay=20000
+	error=0
+	}
+    }
+    canvas c1
+    iconcoords {856.0 45.0}
+    labelcoords {856.0 77.0}
+    interface-peer {e0 n1}
+    interface-peer {e1 n2}
+    interface-peer {e2 n3}
+    interface-peer {e3 n4}
+    interface-peer {e4 n5}
+    interface-peer {e5 n6}
+    interface-peer {e6 n7}
+    interface-peer {e7 n8}
+    interface-peer {e8 n9}
+    interface-peer {e9 n10}
+    interface-peer {e10 n11}
+    interface-peer {e11 n12}
+    interface-peer {e12 n13}
+    interface-peer {e13 n14}
+    interface-peer {e14 n15}
+    interface-peer {e15 n16}
+    interface-peer {e16 n17}
+    interface-peer {e17 n19}
+}
+
+node n19 {
+    type router
+    model host
+    network-config {
+	hostname trackserver
+	!
+	interface eth0
+	 ip address 10.0.0.18/24
+	!
+    }
+    canvas c1
+    iconcoords {949.0 42.0}
+    labelcoords {949.0 74.0}
+    interface-peer {eth0 n18}
+    custom-config {
+	custom-config-id service:TrackServer
+	custom-command TrackServer
+	config {
+	files=('track_server.cfg', )
+	}
+    }
+    custom-config {
+	custom-config-id service:TrackServer:track_server.cfg
+	custom-command track_server.cfg
+	config {
+	[Database]
+	; db_host = 172.17.255.254
+	; db_name = atn_sim
+	; db_user = atn_sim
+	; db_pass = atn_sim
+	
+	[Tracks]
+	exercise = DEMO1970
+	
+	
+	}
+    }
+    services {DefaultRoute SSH TrackServer}
+    hidden 1
+}
+
+link l1 {
+    nodes {n18 n1}
+}
+
+link l2 {
+    nodes {n18 n2}
+}
+
+link l3 {
+    nodes {n18 n3}
+}
+
+link l4 {
+    nodes {n18 n4}
+}
+
+link l5 {
+    nodes {n18 n5}
+}
+
+link l6 {
+    nodes {n18 n6}
+}
+
+link l7 {
+    nodes {n18 n7}
+}
+
+link l8 {
+    nodes {n18 n8}
+}
+
+link l9 {
+    nodes {n18 n9}
+}
+
+link l10 {
+    nodes {n18 n10}
+}
+
+link l11 {
+    nodes {n18 n11}
+}
+
+link l12 {
+    nodes {n18 n12}
+}
+
+link l13 {
+    nodes {n18 n13}
+}
+
+link l14 {
+    nodes {n18 n14}
+}
+
+link l15 {
+    nodes {n18 n15}
+}
+
+link l16 {
+    nodes {n18 n16}
+}
+
+link l17 {
+    nodes {n18 n17}
+}
+
+link l18 {
+    nodes {n18 n19}
+}
+
+canvas c1 {
+    name {Canvas1}
+    refpt {0 0 -20.816800 -49.378582 2.0}
+    scale {100000.0}
+    size {1000 750}
+}
+
+option global {
+    interface_names no
+    ip_addresses no
+    ipv6_addresses no
+    node_labels yes
+    link_labels yes
+    show_api no
+    background_images no
+    annotations yes
+    grid yes
+    traffic_start 0
+}
+
+option session {
+}
+

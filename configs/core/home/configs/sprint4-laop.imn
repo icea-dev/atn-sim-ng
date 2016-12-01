@@ -1,0 +1,559 @@
+node n1 {
+    type router
+    model aircraft
+    network-config {
+	hostname n1
+	!
+	interface eth0
+	 ip address 10.0.0.1/24
+	!
+    }
+    canvas c1
+    iconcoords {926.0 31.0}
+    labelcoords {926.0 63.0}
+    interface-peer {eth0 n6}
+    custom-config {
+	custom-config-id service:IRCbot
+	custom-command IRCbot
+	config {
+	files=('ircbot.cfg', 'ircbot.sh', )
+	}
+    }
+    custom-config {
+	custom-config-id service:IRCbot:ircbot.sh
+	custom-command ircbot.sh
+	config {
+	#!/bin/sh
+	sleep 30
+	python -m adsb.ircbot
+	
+	}
+    }
+    custom-config {
+	custom-config-id service:IRCbot:ircbot.cfg
+	custom-command ircbot.cfg
+	config {
+	[IRC]
+	server = 10.0.2.10
+	channel = #atc
+	nick = n1
+	
+	}
+    }
+    custom-config {
+	custom-config-id service:TrackS
+	custom-command TrackS
+	config {
+	files=('tracks.cfg', 'CINE0001.exe.xml', 'CINE0001.trf.xml', 'tabTrj.xml', 'tracks.sh', )
+	}
+    }
+    custom-config {
+	custom-config-id service:TrackS:tabTrj.xml
+	custom-command tabTrj.xml
+	config {
+	<?xml version='1.0' encoding='UTF-8'?>
+	<!DOCTYPE trajetorias>
+	<trajetorias VERSION="0001" CODE="1961" FORMAT="NEWTON">
+	
+	    <trajetoria nTrj="1">
+	        <descricao>001 - LUZ / ALINA</descricao>
+	
+	        <breakpoint nBrk="1">
+	            <coord>
+	                <tipo>L</tipo>
+	                <campoA>-22.903908</campoA>
+	                <campoB>-46.469731</campoB>
+	            </coord>
+	            <altitude>10000</altitude>
+	            <velocidade>210</velocidade>
+	        </breakpoint>
+	
+	        <breakpoint nBrk="2">
+	            <coord>
+	                <tipo>L</tipo>
+	                <campoA>-23.463958</campoA>
+	                <campoB>-45.658363</campoB>
+	            </coord>
+	            <altitude>10000</altitude>
+	            <velocidade>210</velocidade>
+	        </breakpoint>
+	
+	        <breakpoint nBrk="3">
+	            <coord>
+	                <tipo>L</tipo>
+	                <campoA>-22.998721</campoA>
+	                <campoB>-45.669746</campoB>
+	            </coord>
+	            <altitude>10000</altitude>
+	            <velocidade>210</velocidade>
+	        </breakpoint>
+	
+	    </trajetoria>
+	
+	</trajetorias>
+	
+	}
+    }
+    custom-config {
+	custom-config-id service:TrackS:CINE0001.trf.xml
+	custom-command CINE0001.trf.xml
+	config {
+	<?xml version='1.0' encoding='UTF-8'?>
+	<!DOCTYPE trafegos>
+	<trafegos VERSION="0001" CODE="1961" FORMAT="NEWTON">
+	
+	    <trafego nTrf="1">
+	        <designador>B737</designador>
+	        <ssr>7003</ssr>
+	        <indicativo>TAM5555</indicativo>
+	        <origem>SBBR</origem>
+	        <destino>SBRJ</destino>
+	        <procedimento>TRJ001</procedimento>
+	        <temptrafego>0</temptrafego>
+	        <coord>
+	            <tipo>L</tipo>
+	            <campoA>-22.907486</campoA>
+		    <campoB>-45.670273</campoB>
+	        </coord>
+	        <velocidade>350</velocidade>
+	        <altitude>3000</altitude>
+	        <proa>46</proa>
+	    </trafego>
+	
+	</trafegos>
+	
+	}
+    }
+    services {zebra OSPFv3MDR vtysh IPForward DefaultMulticastRoute GPSd AdsbOut IRCbot Pilot}
+}
+
+node n3 {
+    type router
+    model PC
+    network-config {
+	hostname n3
+	!
+	interface eth0
+	 ipv6 address 2001:0::20/128
+	 ip address 10.0.0.20/24
+	!
+    }
+    canvas c1
+    iconcoords {230.0 162.0}
+    labelcoords {230.0 194.0}
+    interface-peer {eth0 n6}
+    services {DefaultRoute}
+}
+
+node n4 {
+    type router
+    model ground-station
+    network-config {
+	hostname n4
+	!
+	interface eth1
+	 ip address 10.0.1.1/24
+	!
+	interface eth0
+	 ip address 10.0.0.3/24
+	!
+    }
+    canvas c1
+    iconcoords {556.0 196.0}
+    labelcoords {556.0 228.0}
+    interface-peer {eth0 n6}
+    interface-peer {eth1 n5}
+    services {zebra OSPFv3MDR vtysh IPForward GPSd AdsbIn}
+    custom-config {
+	custom-config-id service:AdsbIn
+	custom-command AdsbIn
+	config {
+	files=('adsbin.cfg', 'adsbin.sh', )
+	starttime=5
+	}
+    }
+    custom-config {
+	custom-config-id service:AdsbIn:adsbin.cfg
+	custom-command adsbin.cfg
+	config {
+	[General]
+	id = n4
+	destinations = Dump1090
+	
+	[Dump1090]
+	type = dump1090
+	server = 10.0.2.10
+	port = 30001
+	
+	}
+    }
+}
+
+node n5 {
+    type router
+    model mdr
+    network-config {
+	hostname n5
+	!
+	interface eth3
+	 ip address 172.16.0.177/24
+	!
+	interface eth2
+	 ip address 10.0.3.2/24
+	!
+	interface eth1
+	 ip address 10.0.2.1/24
+	!
+	interface eth0
+	 ip address 10.0.1.2/24
+	!
+    }
+    canvas c1
+    iconcoords {558.0 393.0}
+    labelcoords {558.0 425.0}
+    interface-peer {eth0 n4}
+    interface-peer {eth1 n7}
+    interface-peer {eth2 n8}
+    interface-peer {eth3 n9}
+}
+
+node n6 {
+    type wlan
+    network-config {
+	hostname 1090MHz
+	!
+	interface wireless
+	 ipv6 address 2001:0::0/128
+	 ip address 10.0.0.0/24
+	!
+	mobmodel
+	coreapi
+	emane_rfpipe
+	!
+    }
+    custom-config {
+	custom-config-id emane_rfpipe
+	custom-command {11 3 11 2 10 9 9 11 9 9 4 4 4 2 9 9 9 11 10 4 10}
+	config {
+	enablepromiscuousmode=0
+	datarate=1M
+	flowcontrolenable=0
+	flowcontroltokens=10
+	pcrcurveuri=/usr/share/emane/xml/models/mac/rfpipe/rfpipepcr.xml
+	jitter=0.0
+	delay=0.0
+	radiometricenable=0
+	radiometricreportinterval=1.0
+	neighbormetricdeletetime=60.0
+	bandwidth=1M
+	frequency=1.090G
+	frequencyofinterest=1.090G
+	subid=1
+	systemnoisefigure=4.0
+	txpower=100.0
+	fixedantennagain=100.0
+	fixedantennagainenable=1
+	noisemode=none
+	noisebinsize=20
+	propagationmodel=freespace
+	}
+    }
+    custom-config {
+	custom-config-id basic_range
+	custom-command {3 3 9 9 9}
+	config {
+	range=275
+	bandwidth=54000000
+	jitter=0
+	delay=20000
+	error=0
+	}
+    }
+    canvas c1
+    iconcoords {246.0 114.0}
+    labelcoords {246.0 146.0}
+    interface-peer {e0 n1}
+    interface-peer {e2 n3}
+    interface-peer {e3 n4}
+    interface-peer {e1 n2}
+    interface-peer {e4 n8}
+}
+
+node n7 {
+    type router
+    model host
+    network-config {
+	hostname n7
+	!
+	interface eth0
+	 ip address 10.0.2.10/24
+	!
+    }
+    canvas c1
+    iconcoords {774.0 394.0}
+    labelcoords {774.0 426.0}
+    interface-peer {eth0 n5}
+    services {DefaultRoute SSH IRC Dump1090}
+}
+
+node n2 {
+    type router
+    model aircraft
+    network-config {
+	hostname n2
+	!
+	interface eth0
+	 ip address 10.0.0.2/24
+	!
+    }
+    canvas c1
+    iconcoords {433.0 454.0}
+    labelcoords {433.0 486.0}
+    interface-peer {eth0 n6}
+    services {zebra OSPFv3MDR vtysh IPForward DefaultMulticastRoute GPSd AdsbOut IRCbot Pilot}
+    custom-config {
+	custom-config-id service:IRCbot
+	custom-command IRCbot
+	config {
+	files=('ircbot.cfg', 'ircbot.sh', )
+	}
+    }
+    custom-config {
+	custom-config-id service:IRCbot:ircbot.sh
+	custom-command ircbot.sh
+	config {
+	#!/bin/sh
+	sleep 30
+	python -m adsb.ircbot
+	
+	}
+    }
+    custom-config {
+	custom-config-id service:IRCbot:ircbot.cfg
+	custom-command ircbot.cfg
+	config {
+	[IRC]
+	server = 10.0.2.10
+	channel = #atc
+	nick = n2
+	
+	}
+    }
+}
+
+node n8 {
+    type router
+    model radar
+    network-config {
+	hostname n8
+	!
+	interface eth0
+	 ip address 10.0.3.1/24
+	!
+	interface eth1
+	 ip address 10.0.0.4/24
+	!
+    }
+    canvas c1
+    iconcoords {307.0 391.0}
+    labelcoords {307.0 423.0}
+    custom-config {
+	custom-config-id service:CommServer
+	custom-command CommServer
+	config {
+	files=('srbc.ini', 'CommServerRede', )
+	}
+    }
+    custom-config {
+	custom-config-id service:CommServer:CommServerRede
+	custom-command CommServerRede
+	config {
+	2 20001 2 B
+	
+	}
+    }
+    custom-config {
+	custom-config-id service:CommServer:srbc.ini
+	custom-command srbc.ini
+	config {
+	[readUDP]
+	host=10.0.3.255
+	msq.out=0x120
+	porta=65000
+	saida=queue
+	
+	[unpackSRBC]
+	console=01
+	entrada=queue
+	msq.in=0x120
+	msq.out=0x230
+	protocolo=ICEA
+	saida=queue
+	radar.0=0x230,01,1
+	
+	[Icea2Tvt2]
+	entrada=queue
+	msq.in=0x230
+	msq.out=0x210
+	msq.irouter=localhost
+	msq.orouter=localhost
+	saida=queue
+	radar=2230
+	bypass=true
+	
+	[writeUDP]
+	destino=172.16.0.215
+	entrada=queue
+	msq.in=0x210
+	broadcast=off
+	#mutlicast=off
+	
+	[RADAR]
+	monograma=G
+	sinal=simulado
+	
+	}
+    }
+    custom-config {
+	custom-config-id service:Radar
+	custom-command Radar
+	config {
+	files=('radar.cfg', 'radar.sh', )
+	}
+    }
+    custom-config {
+	custom-config-id service:Radar:radar.sh
+	custom-command radar.sh
+	config {
+	#!/bin/sh
+	# auto-generated by Radar (radar.py)
+	python -m adsb.radar.radar
+	
+	}
+    }
+    custom-config {
+	custom-config-id service:Radar:radar.cfg
+	custom-command radar.cfg
+	config {
+	[Location]
+	; Latitude of radar (in decimal degrees)
+	latitude = -22.225907
+	
+	; Longitude of radar (in decimal degrees)
+	longitude = -45.861531
+	
+	; Altitude of radar (in meters)
+	altitude = 2.0
+	
+	[PSR]
+	
+	; The maximum horizontal distance of a detectable object (in NM)
+	horizontal_coverage = 80
+	
+	; The maximum altitude of a detectable object (in FT)
+	vertical_coverage = 60000
+	
+	; Minimum elevation angle of detectable objects (in degrees)
+	min_angle = 0
+	
+	; Maximum elevation angle of detectable objects (in degrees)
+	max_angle = 85
+	
+	; The time it takes to sweep the entire 360 degrees horizon (in seconds)
+	sweep_time = 4.0
+	
+	[Network]
+	
+	; IP address of the receiver of radar plots (e.g. ATC system)
+	destination = 10.0.3.255
+	
+	; Transport layer port of the destination
+	port = 65000
+	
+	; Mode of transmission: unicast or broadcast
+	mode = broadcast
+	
+	; Radar protocol to be used
+	protocol = ICEA
+	
+	}
+    }
+    services {zebra OSPFv3MDR vtysh IPForward GPSd Radar CommServer}
+    interface-peer {eth1 n6}
+    interface-peer {eth0 n5}
+}
+
+node n9 {
+    type rj45
+    network-config {
+	hostname eth2.10
+	!
+    }
+    canvas c1
+    iconcoords {558.0 577.0}
+    labelcoords {558.0 609.0}
+    interface-peer {0 n5}
+}
+
+link l1 {
+    nodes {n6 n1}
+}
+
+link l3 {
+    nodes {n6 n3}
+}
+
+link l4 {
+    nodes {n6 n4}
+}
+
+link l5 {
+    nodes {n4 n5}
+    bandwidth 0
+}
+
+link l6 {
+    nodes {n5 n7}
+    bandwidth 0
+}
+
+link l2 {
+    nodes {n6 n2}
+}
+
+link l8 {
+    nodes {n6 n8}
+}
+
+link l7 {
+    nodes {n8 n5}
+    bandwidth 0
+}
+
+link l9 {
+    nodes {n9 n5}
+}
+
+canvas c1 {
+    name {Canvas1}
+    refpt {0 0 -22.83712447 -46.58106755 2.0}
+    scale 10000.0
+    size {1000 750}
+}
+
+option global {
+    interface_names no
+    ip_addresses yes
+    ipv6_addresses no
+    node_labels yes
+    link_labels yes
+    show_api no
+    background_images no
+    annotations yes
+    grid yes
+    traffic_start 0
+}
+
+option session {
+}
+

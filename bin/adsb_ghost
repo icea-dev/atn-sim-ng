@@ -1,0 +1,2 @@
+#!/bin/sh
+python -m atn.surveillance.adsb.security.adsb_ghost $@

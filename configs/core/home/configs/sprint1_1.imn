@@ -1,0 +1,384 @@
+node n1 {
+    type router
+    model aircraft
+    network-config {
+	hostname n1
+	!
+	interface eth0
+	 ipv6 address 2001:0::1/128
+	 ip address 10.0.0.1/24
+	!
+    }
+    canvas c1
+    iconcoords {937.0 67.0}
+    labelcoords {937.0 99.0}
+    interface-peer {eth0 n6}
+    custom-config {
+	custom-config-id service:TrackS
+	custom-command TrackS
+	config {
+	files=('tracks.cfg', 'CINE0001.exe.xml', 'CINE0001.trf.xml', 'tabTrj.xml', 'tracks.sh', )
+	}
+    }
+    custom-config {
+	custom-config-id service:TrackS:tabTrj.xml
+	custom-command tabTrj.xml
+	config {
+	<?xml version='1.0' encoding='UTF-8'?>
+	<!DOCTYPE trajetorias>
+	<trajetorias VERSION="0001" CODE="1961" FORMAT="NEWTON">
+	
+	    <trajetoria nTrj="1">
+	        <descricao>001 - LUZ / ALINA</descricao>
+	
+	        <breakpoint nBrk="1">
+	            <coord>
+	                <tipo>L</tipo>
+	                <campoA>-22.903908</campoA>
+	                <campoB>-46.469731</campoB>
+	            </coord>
+	            <altitude>10000</altitude>
+	            <velocidade>210</velocidade>
+	        </breakpoint>
+	
+	        <breakpoint nBrk="2">
+	            <coord>
+	                <tipo>L</tipo>
+	                <campoA>-23.463958</campoA>
+	                <campoB>-45.658363</campoB>
+	            </coord>
+	            <altitude>10000</altitude>
+	            <velocidade>210</velocidade>
+	        </breakpoint>
+	
+	        <breakpoint nBrk="3">
+	            <coord>
+	                <tipo>L</tipo>
+	                <campoA>-22.998721</campoA>
+	                <campoB>-45.669746</campoB>
+	            </coord>
+	            <altitude>10000</altitude>
+	            <velocidade>210</velocidade>
+	        </breakpoint>
+	
+	    </trajetoria>
+	
+	</trajetorias>
+	
+	}
+    }
+    custom-config {
+	custom-config-id service:TrackS:CINE0001.trf.xml
+	custom-command CINE0001.trf.xml
+	config {
+	<?xml version='1.0' encoding='UTF-8'?>
+	<!DOCTYPE trafegos>
+	<trafegos VERSION="0001" CODE="1961" FORMAT="NEWTON">
+	
+	    <trafego nTrf="1">
+	        <designador>B737</designador>
+	        <ssr>7003</ssr>
+	        <indicativo>TAM5555</indicativo>
+	        <origem>SBBR</origem>
+	        <destino>SBRJ</destino>
+	        <procedimento>TRJ001</procedimento>
+	        <temptrafego>0</temptrafego>
+	        <coord>
+	            <tipo>L</tipo>
+	            <campoA>-22.907486</campoA>
+		    <campoB>-45.670273</campoB>
+	        </coord>
+	        <velocidade>350</velocidade>
+	        <altitude>3000</altitude>
+	        <proa>46</proa>
+	    </trafego>
+	
+	</trafegos>
+	
+	}
+    }
+    services {zebra OSPFv3MDR vtysh IPForward DefaultMulticastRoute GPSd AdsbOut TrackS}
+}
+
+node n2 {
+    type router
+    model aircraft
+    network-config {
+	hostname n2
+	!
+	interface eth0
+	 ipv6 address 2001:0::2/128
+	 ip address 10.0.0.2/24
+	!
+    }
+    canvas c1
+    iconcoords {423.0 524.0}
+    labelcoords {423.0 556.0}
+    interface-peer {eth0 n6}
+    custom-config {
+	custom-config-id service:TrackS
+	custom-command TrackS
+	config {
+	files=('tracks.cfg', 'CINE0001.exe.xml', 'CINE0001.trf.xml', 'tabTrj.xml', 'tracks.sh', )
+	}
+    }
+    custom-config {
+	custom-config-id service:TrackS:tabTrj.xml
+	custom-command tabTrj.xml
+	config {
+	<?xml version='1.0' encoding='UTF-8'?>
+	<!DOCTYPE trajetorias>
+	<trajetorias VERSION="0001" CODE="1961" FORMAT="NEWTON">
+	
+	    <trajetoria nTrj="2">
+	        <descricao>001 - LUZ / ALINA</descricao>
+	
+	        <breakpoint nBrk="1">
+	            <coord>
+	                <tipo>L</tipo>
+	                <campoA>-23.014665</campoA>
+			<campoB>-46.186023</campoB>
+	            </coord>
+	            <altitude>10000</altitude>
+	            <velocidade>210</velocidade>
+	        </breakpoint>
+	
+	        <breakpoint nBrk="2">
+	            <coord>
+	                <tipo>L</tipo>
+	                <campoA>-23.294799</campoA>
+	                <campoB>-45.715223</campoB>
+	            </coord>
+	            <altitude>8000</altitude>
+	            <velocidade>300</velocidade>
+	        </breakpoint>
+	    </trajetoria>
+	
+	</trajetorias>
+	
+	}
+    }
+    custom-config {
+	custom-config-id service:TrackS:CINE0001.trf.xml
+	custom-command CINE0001.trf.xml
+	config {
+	<?xml version='1.0' encoding='UTF-8'?>
+	<!DOCTYPE trafegos>
+	<trafegos VERSION="0001" CODE="1961" FORMAT="NEWTON">
+	
+	    <trafego nTrf="2">
+	        <designador>B737</designador>
+	        <ssr>7003</ssr>
+	        <indicativo>TAM6543</indicativo>
+	        <origem>SBBR</origem>
+	        <destino>SBRJ</destino>
+	        <procedimento>TRJ002</procedimento>
+	        <temptrafego>0</temptrafego>
+	        <coord>
+	            <tipo>L</tipo>
+	            <campoA>-23.315526</campoA>
+	            <campoB>-46.173029</campoB>
+	        </coord>
+	        <velocidade>250</velocidade>
+	        <altitude>5000</altitude>
+	        <proa>46</proa>
+	    </trafego>
+	
+	</trafegos>
+	
+	}
+    }
+    services {zebra OSPFv3MDR vtysh IPForward DefaultMulticastRoute GPSd AdsbOut TrackS}
+}
+
+node n3 {
+    type router
+    model PC
+    network-config {
+	hostname n3
+	!
+	interface eth0
+	 ipv6 address 2001:0::20/128
+	 ip address 10.0.0.20/24
+	!
+    }
+    canvas c1
+    iconcoords {474.0 317.0}
+    labelcoords {474.0 349.0}
+    interface-peer {eth0 n6}
+    services {DefaultRoute}
+}
+
+node n4 {
+    type router
+    model ground-station
+    network-config {
+	hostname n4
+	!
+	interface eth0
+	 ipv6 address 2001:0::3/128
+	 ip address 10.0.0.3/24
+	!
+	interface eth1
+	 ip address 10.0.1.1/24
+	 ipv6 address 2001:1::1/64
+	!
+    }
+    canvas c1
+    iconcoords {557.0 258.0}
+    labelcoords {557.0 290.0}
+    interface-peer {eth0 n6}
+    interface-peer {eth1 n5}
+    services {zebra OSPFv3MDR vtysh IPForward GPSd AdsbIn}
+}
+
+node n5 {
+    type router
+    model mdr
+    network-config {
+	hostname n5
+	!
+	interface eth1
+	 ip address 10.0.2.1/24
+	 ipv6 address 2001:2::1/64
+	!
+	interface eth0
+	 ip address 10.0.1.2/24
+	 ipv6 address 2001:1::2/64
+	!
+    }
+    canvas c1
+    iconcoords {558.0 393.0}
+    labelcoords {558.0 425.0}
+    interface-peer {eth0 n4}
+    interface-peer {eth1 n7}
+}
+
+node n6 {
+    type wlan
+    network-config {
+	hostname wlan6
+	!
+	interface wireless
+	 ipv6 address 2001:0::0/128
+	 ip address 10.0.0.0/24
+	!
+	mobmodel
+	coreapi
+	emane_rfpipe
+	!
+    }
+    custom-config {
+	custom-config-id emane_rfpipe
+	custom-command {11 3 11 2 10 9 9 11 9 9 4 4 4 2 9 9 9 11 10 4 10}
+	config {
+	enablepromiscuousmode=0
+	datarate=1M
+	flowcontrolenable=0
+	flowcontroltokens=10
+	pcrcurveuri=/usr/share/emane/xml/models/mac/rfpipe/rfpipepcr.xml
+	jitter=0.0
+	delay=0.0
+	radiometricenable=0
+	radiometricreportinterval=1.0
+	neighbormetricdeletetime=60.0
+	bandwidth=1M
+	frequency=1.090G
+	frequencyofinterest=1.090G
+	subid=1
+	systemnoisefigure=4.0
+	txpower=100.0
+	fixedantennagain=100.0
+	fixedantennagainenable=1
+	noisemode=none
+	noisebinsize=20
+	propagationmodel=freespace
+	}
+    }
+    custom-config {
+	custom-config-id basic_range
+	custom-command {3 3 9 9 9}
+	config {
+	range=275
+	bandwidth=54000000
+	jitter=0
+	delay=20000
+	error=0
+	}
+    }
+    canvas c1
+    iconcoords {246.0 114.0}
+    labelcoords {246.0 146.0}
+    interface-peer {e0 n1}
+    interface-peer {e1 n2}
+    interface-peer {e2 n3}
+    interface-peer {e3 n4}
+}
+
+node n7 {
+    type router
+    model host
+    network-config {
+	hostname n7
+	!
+	interface eth0
+	 ip address 10.0.2.10/24
+	 ipv6 address 2001:2::10/64
+	!
+    }
+    canvas c1
+    iconcoords {774.0 394.0}
+    labelcoords {774.0 426.0}
+    interface-peer {eth0 n5}
+    services {DefaultRoute SSH Dump1090}
+}
+
+link l1 {
+    nodes {n6 n1}
+}
+
+link l2 {
+    nodes {n6 n2}
+}
+
+link l3 {
+    nodes {n6 n3}
+}
+
+link l4 {
+    nodes {n6 n4}
+}
+
+link l5 {
+    nodes {n4 n5}
+    bandwidth 0
+}
+
+link l6 {
+    nodes {n5 n7}
+    bandwidth 0
+}
+
+canvas c1 {
+    name {Canvas1}
+    refpt {0 0 -22.83712447 -46.58106755 2.0}
+    scale {10000.0}
+    size {1000 750}
+}
+
+option global {
+    interface_names no
+    ip_addresses yes
+    ipv6_addresses no
+    node_labels yes
+    link_labels yes
+    show_api no
+    background_images no
+    annotations yes
+    grid yes
+    traffic_start 0
+}
+
+option session {
+}
+
