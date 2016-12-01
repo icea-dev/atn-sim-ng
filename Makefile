@@ -25,7 +25,7 @@ emane:
 	make deb
 
 ptracks:
-	git clone https://github.com/contemmcm/ptracks.git
+	git clone https://github.com/icea-dev/ptracks.git
 
 all: dump1090 core emane ptracks
 
