@@ -49,8 +49,8 @@ class Radar:
     db_pass = 'atn_sim'
     db_host = '172.17.255.254'
 
-    net = "172.16.0.255"
-    port = 20004
+    # net = "172.16.0.255"
+    # port = 20004
 
     sac = 232
     sic = None

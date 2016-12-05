@@ -9,8 +9,8 @@ node n1 {
 	!
     }
     canvas c1
-    iconcoords {212.0 608.0}
-    labelcoords {212.0 640.0}
+    iconcoords {211.0 613.0}
+    labelcoords {211.0 645.0}
     interface-peer {eth0 n5}
     services {zebra OSPFv3MDR vtysh IPForward DefaultMulticastRoute GPSd AdsbOut}
 }
@@ -26,8 +26,8 @@ node n2 {
 	!
     }
     canvas c1
-    iconcoords {118.0 50.0}
-    labelcoords {118.0 82.0}
+    iconcoords {116.0 50.0}
+    labelcoords {116.0 82.0}
     interface-peer {eth0 n5}
     services {zebra OSPFv3MDR vtysh IPForward DefaultMulticastRoute GPSd AdsbOut}
 }
@@ -43,8 +43,8 @@ node n3 {
 	!
     }
     canvas c1
-    iconcoords {226.0 609.0}
-    labelcoords {226.0 641.0}
+    iconcoords {224.0 610.0}
+    labelcoords {224.0 642.0}
     interface-peer {eth0 n5}
     services {zebra OSPFv3MDR vtysh IPForward DefaultMulticastRoute GPSd AdsbOut}
 }
@@ -55,16 +55,21 @@ node n4 {
     network-config {
 	hostname n4
 	!
+	interface eth1
+	 ipv6 address 2001:1::1/64
+	 ip address 172.16.0.240/24
+	!
 	interface eth0
 	 ipv6 address 2001:0::4/128
 	 ip address 10.0.0.4/24
 	!
     }
     canvas c1
-    iconcoords {503.0 364.0}
-    labelcoords {503.0 396.0}
+    iconcoords {509.0 384.0}
+    labelcoords {509.0 416.0}
     interface-peer {eth0 n5}
     services {zebra OSPFv3MDR vtysh IPForward GPSd Dump1090 AdsbIn}
+    interface-peer {eth1 n7}
 }
 
 node n5 {
@@ -127,6 +132,7 @@ node n5 {
     interface-peer {e2 n3}
     interface-peer {e3 n4}
     interface-peer {e4 n6}
+    interface-peer {e5 n8}
 }
 
 node n6 {
@@ -140,8 +146,8 @@ node n6 {
 	!
     }
     canvas c1
-    iconcoords {951.0 44.0}
-    labelcoords {951.0 76.0}
+    iconcoords {948.0 36.0}
+    labelcoords {948.0 68.0}
     interface-peer {eth0 n5}
     custom-config {
 	custom-config-id service:TrackServer
@@ -172,6 +178,89 @@ node n6 {
     hidden 1
 }
 
+node n7 {
+    type lanswitch
+    network-config {
+	hostname n7
+	!
+    }
+    canvas c1
+    iconcoords {508.0 478.0}
+    labelcoords {508.0 502.0}
+    interface-peer {e0 n4}
+    interface-peer {e1 n8}
+    interface-peer {e2 n9}
+}
+
+node n8 {
+    type router
+    model radar
+    network-config {
+	hostname n8
+	!
+	interface eth1
+	 ip address 172.16.0.243/24
+	!
+	interface eth0
+	 ip address 10.0.0.5/24
+	!
+    }
+    canvas c1
+    iconcoords {205.0 216.0}
+    labelcoords {205.0 248.0}
+    interface-peer {eth0 n5}
+    interface-peer {eth1 n7}
+    custom-config {
+	custom-config-id service:Radar
+	custom-command Radar
+	config {
+	files=('radar.cfg', 'radar.sh', )
+	}
+    }
+    custom-config {
+	custom-config-id service:Radar:radar.cfg
+	custom-command radar.cfg
+	config {
+	[Location]
+	latitude = -14.4230556
+	longitude = -47.3336111
+	altitude = 10.0
+	
+	[PSR]
+	
+	psr_horizontal_coverage = 80
+	vertical_coverage = 60000
+	min_angle = 0
+	max_angle = 85
+	ssr_horizontal_coverage = 200
+	sweep_time = 4.0
+	
+	[Network]
+	
+	destination = 172.16.0.255
+	port = 20002
+	mode = broadcast
+	protocol = ASTERIX
+	SAC = 232
+	SIC = 51
+	
+	}
+    }
+    services {zebra OSPFv3MDR vtysh IPForward GPSd Radar}
+}
+
+node n9 {
+    type rj45
+    network-config {
+	hostname eth0
+	!
+    }
+    canvas c1
+    iconcoords {518.0 587.0}
+    labelcoords {518.0 619.0}
+    interface-peer {0 n7}
+}
+
 link l1 {
     nodes {n5 n1}
 }
@@ -192,6 +281,24 @@ link l5 {
     nodes {n5 n6}
 }
 
+link l6 {
+    nodes {n5 n8}
+}
+
+link l7 {
+    nodes {n4 n7}
+    bandwidth 0
+}
+
+link l8 {
+    nodes {n8 n7}
+    bandwidth 0
+}
+
+link l9 {
+    nodes {n7 n9}
+}
+
 canvas c1 {
     name {Canvas1}
     refpt {0 0 -15.197385 -49.548118 2.0}
@@ -201,7 +308,7 @@ canvas c1 {
 
 option global {
     interface_names no
-    ip_addresses no
+    ip_addresses yes
     ipv6_addresses no
     node_labels yes
     link_labels yes
