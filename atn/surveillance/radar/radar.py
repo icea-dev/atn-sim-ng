@@ -1,3 +1,22 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+#
+# Copyright 2016, ICEA
+#
+# This file is part of atn-sim
+#
+# atn-sim is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# atn-sim is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import binascii
 import ConfigParser
@@ -37,20 +56,16 @@ class Radar:
     psr_horizontal_coverage = 80 * NM_TO_M
     ssr_horizontal_coverage = 200 * NM_TO_M
 
-
     # Default values
-    net_ip = "172.18.104.255"
-    net_port = 65000
+    net_ip = "172.16.0.255"
+    net_port = 20000
     net_mode = "broadcast"
-    net_proto = "ICEA"
+    net_proto = "ASTERIX"
 
     db_name = 'atn_sim'
     db_user = 'atn_sim'
     db_pass = 'atn_sim'
     db_host = '172.17.255.254'
-
-    # net = "172.16.0.255"
-    # port = 20004
 
     sac = 232
     sic = None
