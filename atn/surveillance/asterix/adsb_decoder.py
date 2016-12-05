@@ -173,7 +173,7 @@ class AdsBDecoder(object):
             aircraft_icao24_keys = self.aircraft_table.keys()
 
             for icao24 in aircraft_icao24_keys:
-                if self.aircraft_table[icao24].was_updated() is False:
+                if self.aircraft_table[icao24].was_update() is False:
                     del self.aircraft_table[icao24]
 
             time.sleep(self.delete_time)

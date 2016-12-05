@@ -1,6 +1,7 @@
 import ConfigParser
 import logging
 import os
+import Queue
 import socket
 import threading
 import time
@@ -8,6 +9,9 @@ import time
 from .forwarders.dump1090_fwrd import Dump1090Forwarder
 from .forwarders.database_fwrd import DatabseForwarder
 from .forwarders.asterix_fwrd import AsterixForwarder
+from ..asterix.adsb_decoder import AdsBDecoder
+from ..asterix.asterix_encoder import AdsBAsterixEncode
+
 
 class AdsbIn:
 
@@ -18,6 +22,14 @@ class AdsbIn:
 
     rec_msgs = []
     max_rec_msgs = 5000
+
+    # Asterix
+    QUEUE_SIZE = 10
+    asterix_server = False
+    asterix_sic = None
+    asterix_rx_port = None
+    asterix_tx_port = None
+    asterix_dst = None
 
     def __init__(self, config="adsbin.cfg", store_msgs=False):
         # Logging
@@ -54,12 +66,55 @@ class AdsbIn:
                     f = DatabseForwarder(sensor_id=self.id, items=d)
                     self.forwarders.append(f)
                 elif d["type"] == "asterix":
+                    # Enable Asterix Server
+                    self.asterix_server = True
+
+                    # Asterix parameters
+                    self.asterix_sic = int(d["sic"])
+                    self.asterix_rx_port = 15000
+                    self.asterix_tx_port = int(d["port"])
+                    self.asterix_dst = d["server"]
+
+                    # Forwards to local Asterix Server, which is listening on localhost:15000
+                    d["server"] = "127.0.0.1"
+                    d["port"] = self.asterix_rx_port
+
+                    # Create forwarder
                     f = AsterixForwarder(items=d)
                     self.forwarders.append(f)
+
+    def _start_asterix_server(self):
+
+        print "Intializing Asterix Server..."
+
+        sic = self.asterix_sic
+        rx_port = self.asterix_rx_port
+        tx_port = self.asterix_tx_port
+        net = self.asterix_dst
+
+        queue = Queue.Queue(self.QUEUE_SIZE)
+
+        # Create an object to decode ADS-B Message
+        decoder = AdsBDecoder(sic)
+        decoder.create_socket(rx_port)
+        decoder.set_queue(queue)
+        decoder.start_thread()
+
+        # Create an object to encode ASTERIX
+        encoder = AdsBAsterixEncode(sic)
+        encoder.create_socket(tx_port)
+        encoder.set_net(net)
+        encoder.set_queue(queue)
+        encoder.start_thread()
 
     def start(self):
         t1 = threading.Thread(target=self._start, args=())
         t1.start()
+
+        # If receiver contains an Asterix destination ...
+        if self.asterix_server:
+            t2 = threading.Thread(target=self._start_asterix_server, args=())
+            t2.start()
 
     def _start(self):
         print "  ,---.  ,------.   ,---.        ,-----.          ,--.         "

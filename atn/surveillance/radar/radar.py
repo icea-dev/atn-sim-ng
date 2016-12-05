@@ -1,6 +1,7 @@
 
 import binascii
 import ConfigParser
+from geopy.distance import great_circle
 import math
 import MySQLdb
 import os
@@ -26,11 +27,16 @@ class Radar:
 
     M_TO_FT = 3.28084
     M_TO_NM = 0.000539957
+    NM_TO_M = 1852
     MPS_TO_KT = 1.94384
     DEG_SETOR = 11.25
 
     # PSR default values
     sweep_time = 4.0
+    vertical_coverage = 60000
+    psr_horizontal_coverage = 80 * NM_TO_M
+    ssr_horizontal_coverage = 200 * NM_TO_M
+
 
     # Default values
     net_ip = "172.18.104.255"
@@ -45,6 +51,9 @@ class Radar:
 
     net = "172.16.0.255"
     port = 20004
+
+    sac = 232
+    sic = None
 
 
     # -------------------------------------------------------------------------
@@ -82,12 +91,19 @@ class Radar:
 
             # Radar parameters
             self.sweep_time = conf.getfloat("PSR", "sweep_time")
+            self.vertical_coverage = conf.getfloat("PSR", "vertical_coverage")
+            self.psr_horizontal_coverage = conf.getfloat("PSR", "psr_horizontal_coverage") * self.NM_TO_M
+            self.ssr_horizontal_coverage = conf.getfloat("PSR", "ssr_horizontal_coverage") * self.NM_TO_M
 
             # Network parameters
             self.net_ip    = conf.get("Network", "destination")
             self.net_port  = conf.getint("Network", "port")
             self.net_mode  = conf.get("Network", "mode")
             self.net_proto = conf.get("Network", "protocol")
+            self.sac = int(conf.get("Network", "SAC"))
+            self.sic = int(conf.get("Network", "SIC"))
+
+
 
             # Placing radar on the proper location
             # set_location(nemid, lat, lon, alt, heading, speed, climb)
@@ -128,6 +144,8 @@ class Radar:
         print "  Port:         %s" % self.net_port
         print "  Mode:         %s" % self.net_mode
         print "  Radar Proto.: %s" % self.net_proto
+        print "  SAC:          %s" % self.sac
+        print "  SIC:          %s" % self.sic
 
         # sock (socket):  The end point to send ASTERIX CAT 21.
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -238,6 +256,13 @@ class Radar:
 
             sector = int(h_angle / self.DEG_SETOR)
 
+            # Radar distance detection
+            hdist_2d = math.sqrt(x*x + y*y)
+
+            if hdist_2d > self.ssr_horizontal_coverage:
+                # print "Rejecting (%d): %f > %f" % (nodenum, hdist_2d, self.ssr_horizontal_coverage)
+                continue
+
             # ToDo: how to encode primary radar plots?
             if callsign is not None and ssr is not None:
                 detected_tracks.append([nodenum,
@@ -281,20 +306,20 @@ class Radar:
 
     def broadcast_asterix(self, tracks, sector, north_flag=False):
 
-        sac = 232
-        sic = 10
+        # sac = 232
+        # sic = 10
         tod = time.time()
 
         sector_record = {
             444: {'MsgTyp': 2},
-            10: {'SAC': sac, 'SIC': sic},
+            10: {'SAC': self.sac, 'SIC': self.sic},
             20: {'Azi': (sector * 11.25)},
             30: {'ToD': tod}
         }
 
         north_record = {
             444: {'MsgTyp': 2},
-            10: {'SAC': sac, 'SIC': sic},
+            10: {'SAC': self.sac, 'SIC': self.sic},
             30: {'ToD': (tod+0.867)},
             41: {'RotS': 4},
             # 50: {'COM_presence': 1, 'PSR_presence': 1, 'MDS_presence': 1, 'fx': 0,
@@ -330,7 +355,7 @@ class Radar:
             dist2d = math.sqrt(t[1]*t[1] + t[2]*t[2])  # Distance from radar (2D)
 
             track_record = {
-                10: {'SAC': sac, 'SIC': sic},
+                10: {'SAC': self.sac, 'SIC': self.sic},
                 140: {'ToD': tod},
                 20: {'TYP': 3, 'SIM': 0, 'RDP': 0, 'SPI': 0, 'RAB': 0, 'FX': 1, 'TST': 0, 'ME': 0, 'MI': 0, 'FOEFRI': 0, 'FX2': 0},
                 40: {'RHO': dist2d, 'THETA': t[9]},
@@ -371,8 +396,8 @@ class Radar:
         data_bin = asterix_utils.encode(asterix_record)
         # print ("%x" % data_bin)
         msg = hex(data_bin).rstrip("L").lstrip("0x")
-        self.sock.sendto(binascii.unhexlify(msg), (self.net, self.port))
-        print msg
+        self.sock.sendto(binascii.unhexlify(msg), (self.net_ip, self.net_port))
+        # print msg
 
 
     # -------------------------------------------------------------------------
@@ -414,7 +439,6 @@ class Radar:
 
         This method calculates the distance of the aircraft on radar
         """
-
         x, y, z = geo_utils.geog2enu(float(lat), float(lon), float(alt), self.latitude, self.longitude, self.altitude)
 
         return x, y

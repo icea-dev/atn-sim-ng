@@ -9,8 +9,8 @@ node n1 {
 	!
     }
     canvas c1
-    iconcoords {809.0 398.0}
-    labelcoords {809.0 430.0}
+    iconcoords {212.0 608.0}
+    labelcoords {212.0 640.0}
     interface-peer {eth0 n5}
     services {zebra OSPFv3MDR vtysh IPForward DefaultMulticastRoute GPSd AdsbOut}
 }
@@ -26,8 +26,8 @@ node n2 {
 	!
     }
     canvas c1
-    iconcoords {747.0 360.0}
-    labelcoords {747.0 392.0}
+    iconcoords {118.0 50.0}
+    labelcoords {118.0 82.0}
     interface-peer {eth0 n5}
     services {zebra OSPFv3MDR vtysh IPForward DefaultMulticastRoute GPSd AdsbOut}
 }
@@ -43,8 +43,8 @@ node n3 {
 	!
     }
     canvas c1
-    iconcoords {871.0 429.0}
-    labelcoords {871.0 461.0}
+    iconcoords {226.0 609.0}
+    labelcoords {226.0 641.0}
     interface-peer {eth0 n5}
     services {zebra OSPFv3MDR vtysh IPForward DefaultMulticastRoute GPSd AdsbOut}
 }
@@ -61,8 +61,8 @@ node n4 {
 	!
     }
     canvas c1
-    iconcoords {503.0 360.0}
-    labelcoords {503.0 392.0}
+    iconcoords {503.0 364.0}
+    labelcoords {503.0 396.0}
     interface-peer {eth0 n5}
     services {zebra OSPFv3MDR vtysh IPForward GPSd Dump1090 AdsbIn}
 }
@@ -140,8 +140,8 @@ node n6 {
 	!
     }
     canvas c1
-    iconcoords {953.0 46.0}
-    labelcoords {953.0 78.0}
+    iconcoords {951.0 44.0}
+    labelcoords {951.0 76.0}
     interface-peer {eth0 n5}
     custom-config {
 	custom-config-id service:TrackServer
