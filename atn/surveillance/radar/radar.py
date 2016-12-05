@@ -372,13 +372,13 @@ class Radar:
             track_record = {
                 10: {'SAC': self.sac, 'SIC': self.sic},
                 140: {'ToD': tod},
-                20: {'TYP': 3, 'SIM': 0, 'RDP': 0, 'SPI': 0, 'RAB': 0, 'FX': 1, 'TST': 0, 'ME': 0, 'MI': 0, 'FOEFRI': 0, 'FX2': 0},
+                20: {'TYP': 2, 'SIM': 0, 'RDP': 0, 'SPI': 0, 'RAB': 0, 'FX': 1, 'TST': 0, 'ME': 0, 'MI': 0, 'FOEFRI': 0, 'FX2': 0},
                 40: {'RHO': dist2d, 'THETA': t[9]},
                 70: {'V': 0, 'G': 0, 'L': 0, 'Mode3A': int(t[6], 8)},
                 90: {'V': 0, 'G': 0, 'FL': (t[3]/100)},
                 161: {'Tn': t[0]},
                 200: {'CGS': t[5], 'CHdg': t[4]},
-                170: {'CNF': 0, 'RAD': 0, 'DOU': 0, 'MAH': 0, 'CDM': 0, 'FX': 1, 'TRE': 0, 'GHO': 0, 'SUP': 0, 'TCC': 0, 'FX2': 0}
+                170: {'CNF': 0, 'RAD': 2, 'DOU': 0, 'MAH': 0, 'CDM': 0, 'FX': 1, 'TRE': 0, 'GHO': 0, 'SUP': 0, 'TCC': 0, 'FX2': 0}
             }
 
             detected_tracks.append(track_record)
