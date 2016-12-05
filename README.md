@@ -7,9 +7,9 @@ Aeronautical Telecommunications Network (ATN) Simulator
 The following procedures were tested on Ubuntu 12.04 and Ubuntu 14.04. If that is not your case, please refer to the Wiki for more details on the installation process.
 
 ```
-git clone --recursive https://github.com/contemmcm/atn-sim
+git clone --recursive https://github.com/icea-dev/atn-sim
 cd atn-sim
-sudo make deps
+make deps
 make all
 sudo make install
 ```

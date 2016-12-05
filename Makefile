@@ -24,14 +24,12 @@ emane:
 	./configure                                         ;\
 	make deb
 
-ptracks:
-	git clone https://github.com/icea-dev/ptracks.git
+all: dump1090 core emane
 
-all: dump1090 core emane ptracks
-
-install: dump1090 core emane ptracks
+install: dump1090 core emane
 	# CORE
 	cd core ; sudo make install; cd ..
+	sudo update-rc.d core-daemon defaults
 
 	# EMANE
 	cd emane/.debbuild ; sudo dpkg -i *.deb ; cd ../..
@@ -47,11 +45,14 @@ install: dump1090 core emane ptracks
 
 	sudo rm -f /usr/local/lib/python2.7/dist-packages/atn
 	sudo ln -s `pwd`/atn/ /usr/local/lib/python2.7/dist-packages/atn
+
+	sudo rm -rf /opt/atn-sim
 	sudo ln -s `pwd` /opt/atn-sim
 
 	sudo rm -rf /etc/core
-	rm -rf ~/.core
 	sudo ln -s `pwd`/configs/core/etc/ /etc/core
+
+	rm -rf ~/.core
 	ln -s `pwd`/configs/core/home ~/.core
 
 	# Database
