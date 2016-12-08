@@ -32,6 +32,10 @@ import atn.surveillance.adsb.adsb_utils as adsb_utils
 from ..adsb_in import AdsbIn
 from ..adsb_out import AdsbOut
 
+__author__ = "Marcio Monteiro"
+__version__ = "0.1"
+__date__ = "2016-dec-08"
+
 
 class AdsbGhost:
 

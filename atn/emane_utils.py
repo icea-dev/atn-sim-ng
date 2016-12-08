@@ -18,18 +18,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
 import math
 import subprocess
 
-from emanesh.emaneshell import EMANEShell
-
-__author__ = "Márcio Monteiro"
-__email__ = "muriloconte@gmail.com"
-__date__ = "2016/12"
+__author__ = "Marcio Monteiro"
 __version__ = "0.1"
-
-shell = EMANEShell("127.0.0.1", 47000)
+__date__ = "2016-dec-08"
 
 
 def set_location(nemid, lat, lon, alt, heading, speed, climb):

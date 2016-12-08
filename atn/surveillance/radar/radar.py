@@ -20,7 +20,6 @@
 
 import binascii
 import ConfigParser
-from geopy.distance import great_circle
 import math
 import MySQLdb
 import os
@@ -34,6 +33,9 @@ from ... import core_utils
 from ... import emane_utils
 from ... import geo_utils
 
+__author__ = "Marcio Monteiro, Ivan Matias"
+__version__ = "0.1"
+__date__ = "2016-dec-23"
 
 # -----------------------------------------------------------------------------
 # class Radar

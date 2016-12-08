@@ -310,7 +310,9 @@ def cpr_encode(lat, lon, ctype, surface):
 
 
 '''
-ADS-B encoder funciotions
+ADS-B encoder functions
+
+Author: Alexandre Magno
 '''
 
 

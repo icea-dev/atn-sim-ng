@@ -33,6 +33,10 @@ import adsb_utils
 
 from .feeds.coreemu_feed import CoreFeed
 
+__author__ = "Marcio Monteiro, Alexandre Magno"
+__version__ = "0.1"
+__date__ = "2016-dec-08"
+
 
 class AdsbOut:
 

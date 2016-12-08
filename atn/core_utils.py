@@ -21,6 +21,10 @@
 import os
 import subprocess
 
+__author__ = "Marcio Monteiro"
+__version__ = "0.1"
+__date__ = "2016-dec-08"
+
 
 def get_node_name(nem_id=None, session_id=None):
 

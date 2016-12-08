@@ -28,6 +28,11 @@ import os
 
 from  Message import Message
 
+__author__ = "Alexandre Magno"
+__version__ = "0.1"
+__date__ = "2016-dec-08"
+
+
 class Aeronave(object):
 
     def __init__(self):

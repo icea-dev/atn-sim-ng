@@ -18,29 +18,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""--------------------------------------------------------------------------
-Project ADS-B Security
-Copyright (c) 2016, ICEA - Institute of Airspace Control
------------------------------------------------------------------------------
-Package....: radar/icea
-Module.....: tagPR95.py
-Description: This class implements a message of empty sector
------------------------------------------------------------------------------
-Details change
------------------------------------------------------------------------------
-Alexandre MG Silva  2016/06/23
-                    program created
-                    documentation of class in docstrings
---------------------------------------------------------------------------"""
+"""This class implements a message of empty sector.
+"""
 
-import array
-import struct
 import binascii
-import ctypes
-import socket
-import time
 
 from HeaderPR99 import HeaderPR99
+
+__author__ = "Alexandre Magno"
+__version__ = "0.1"
+__date__ = "2016-dec-08"
 
 F_D = 0xFD
 MAX_SETOR = 32

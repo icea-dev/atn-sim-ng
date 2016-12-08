@@ -24,6 +24,10 @@ import socket
 
 from .adsb_fwrd import AdsbForwarder
 
+__author__ = "Marcio Monteiro"
+__version__ = "0.1"
+__date__ = "2016-dec-08"
+
 
 class Dump1090Forwarder(AdsbForwarder):
 

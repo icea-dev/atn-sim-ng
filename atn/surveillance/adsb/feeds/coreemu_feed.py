@@ -34,6 +34,10 @@ from .adsb_feed import AdsbFeed
 from atn import core_utils
 from atn import emane_utils
 
+__author__ = "Marcio Monteiro"
+__version__ = "0.1"
+__date__ = "2016-dec-08"
+
 
 class CoreFeed(AdsbFeed):
 

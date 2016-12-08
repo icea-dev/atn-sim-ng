@@ -18,6 +18,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""
+Track server
+
+This module contains the TrackServer class and a stand-alone run script.
+"""
 
 import ConfigParser
 import logging
@@ -37,8 +42,14 @@ from emanesh.events import LocationEvent
 
 from collections import deque
 
+__author__ = "Marcio Monteiro"
+__version__ = "0.1"
+__date__ = "2016-dec-08"
+
 
 class TrackServer:
+    """Read ptracks data through a multicast address and update the position of aircraft nodes on a MySQL database.
+    """
 
     update_interval = 1.0
 
@@ -228,7 +239,6 @@ class TrackServer:
             result = cursor.fetchone()
 
             if result is None:
-                print "SELECT callsign, performance_type, ssr_squawk FROM transponder WHERE nem_id=%d" % nemid
                 return
 
             db_callsign = result[0]
@@ -245,7 +255,6 @@ class TrackServer:
             cursor.close()
 
         except MySQLdb.Error, e:
-            print "listen(): MySQL Error [%d]: %s" % (e.args[0], e.args[1])
             logging.warn("listen(): MySQL Error [%d]: %s" % (e.args[0], e.args[1]))
 
     def _update_from_emane(self):
@@ -287,7 +296,7 @@ class TrackServer:
 
                     self.logger.error("MySQL Error [%d]: %s" % (e.args[0], e.args[1]))
 
-                    time.sleep(0.5)
+                    time.sleep(self.update_interval)
                     continue
 
             dt = time.time() - t0
@@ -319,7 +328,6 @@ class TrackServer:
                              self.tracks[nem]['azimuth'], self.tracks[nem]['elevation'], self.tracks[nem]['magnitude'],
                              nem)
 
-                    print sql
                     cursor.execute(sql)
 
                     self.db_update.commit()
@@ -336,7 +344,7 @@ class TrackServer:
 
                     self.logger.error("MySQL Error [%d]: %s" % (e.args[0], e.args[1]))
 
-                    time.sleep(0.5)
+                    time.sleep(self.update_interval)
                     continue
 
             dt = time.time() - t0

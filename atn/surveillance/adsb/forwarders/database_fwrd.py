@@ -29,6 +29,10 @@ import atn.geo_utils
 import atn.emane_utils
 import atn.core_utils
 
+__author__ = "Marcio Monteiro"
+__version__ = "0.1"
+__date__ = "2016-dec-08"
+
 
 class DatabseForwarder(AdsbForwarder):
 

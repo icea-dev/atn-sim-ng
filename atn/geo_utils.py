@@ -18,11 +18,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+""" Conversao de coordenadas Geografica para ENU. Parametros do WGS84 - Defense Mapping Agency Technical Report
+"""
+
 
 import math
 
-# Conversao de coordenadas Geografica para ENU
-# Parametros do WGS84 - Defense Mapping Agency Technical Report
+__author__ = "Roberto Xavier"
+__version__ = "0.1"
+__date__ = "2016-dec-08"
+
 
 a = 6378137.0  # semi-eixo maior em metros
 b = 6356752.3142 # semi-eixo menor em metros

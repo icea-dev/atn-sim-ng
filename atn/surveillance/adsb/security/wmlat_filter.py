@@ -34,6 +34,11 @@ import atn.geo_utils as geoutils
 from ..forwarders import dump1090_fwrd
 from ..forwarders import database_fwrd
 
+__author__ = "Marcio Monteiro"
+__version__ = "0.1"
+__date__ = "2016-dec-08"
+
+
 class MlatServer:
 
     EVEN_MSG = 0

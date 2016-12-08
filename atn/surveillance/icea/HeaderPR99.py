@@ -18,26 +18,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""--------------------------------------------------------------------------
-Project ADS-B Security
-Copyright (c) 2016, ICEA - Institute of Airspace Control
------------------------------------------------------------------------------
-Package....: radar/icea
-Module.....: HeaderPR99.py
-Description: This class implements a message header
------------------------------------------------------------------------------
-Details change
------------------------------------------------------------------------------
-Alexandre MG Silva  2016/06/23
-                    program created
-                    documentation of class in docstrings
---------------------------------------------------------------------------"""
+"""This class implements a message header
+"""
 
 import array
 import struct
 import binascii
 import ctypes
 import socket
+
+__author__ = "Alexandre Magno"
+__version__ = "0.1"
+__date__ = "2016-dec-08"
+
 
 class HeaderPR99:
 

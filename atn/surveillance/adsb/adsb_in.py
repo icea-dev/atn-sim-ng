@@ -33,6 +33,10 @@ from .forwarders.asterix_fwrd import AsterixForwarder
 from ..asterix.adsb_decoder import AdsBDecoder
 from ..asterix.asterix_encoder import AdsBAsterixEncode
 
+__author__ = "Ivan Matias"
+__version__ = "0.1"
+__date__ = "2016-dec-08"
+
 
 class AdsbIn:
 

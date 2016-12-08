@@ -25,6 +25,10 @@ import time
 
 from .adsb_fwrd import AdsbForwarder
 
+__author__ = "Ivan Matias"
+__version__ = "0.1"
+__date__ = "2016-dec-08"
+
 
 class AsterixForwarder(AdsbForwarder):
     """This class is responsible for forwarding ADS-B messages to the ASTERIX Server.

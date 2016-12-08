@@ -19,8 +19,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import binascii
-import ctypes
 import os
+
+__author__ = "Alexandre Magno"
+__version__ = "0.1"
+__date__ = "2016-dec-08"
+
 
 class Message(object):
 
