@@ -60,15 +60,15 @@ class Radar:
     net_ip = "172.16.0.255"
     net_port = 20000
     net_mode = "broadcast"
-    net_proto = "ASTERIX"
+    net_proto = "asterix"
 
     db_name = 'atn_sim'
     db_user = 'atn_sim'
     db_pass = 'atn_sim'
     db_host = '172.17.255.254'
 
-    sac = 232
-    sic = None
+    sac = 232  # E8: Brazil
+    sic = 0
 
 
     # -------------------------------------------------------------------------
@@ -111,14 +111,18 @@ class Radar:
             self.ssr_horizontal_coverage = conf.getfloat("PSR", "ssr_horizontal_coverage") * self.NM_TO_M
 
             # Network parameters
-            self.net_ip    = conf.get("Network", "destination")
-            self.net_port  = conf.getint("Network", "port")
-            self.net_mode  = conf.get("Network", "mode")
+            self.net_ip = conf.get("Network", "destination")
+            self.net_port = conf.getint("Network", "port")
+            self.net_mode = conf.get("Network", "mode")
             self.net_proto = conf.get("Network", "protocol")
-            self.sac = int(conf.get("Network", "SAC"))
-            self.sic = int(conf.get("Network", "SIC"))
 
+            # System Area Code (SAC)
+            if conf.has_option("Network", "sac"):
+                self.sac = int(conf.get("Network", "sac"), 16)  # in hex
 
+            # System Identification Code (SIC)
+            if conf.has_option("Network", "sic"):
+                self.sic = int(conf.get("Network", "sic"), 16)  # in hex
 
             # Placing radar on the proper location
             # set_location(nemid, lat, lon, alt, heading, speed, climb)
@@ -131,14 +135,14 @@ class Radar:
             self.longitude = location["longitude"]
             self.altitude = location["altitude"]
 
-        if self.net_proto == "ICEA":
+        if self.net_proto.lower() == "icea":
             self.encoder = Icea()
 
             # Pre-calculating for speed
             self.empty_msg = {}
             for sector in range(0, 32):
                 self.empty_msg[sector] = self.encoder.get_empty_sector_msg(sector)
-        elif self.net_proto == "ASTERIX":
+        elif self.net_proto.lower() == "asterix":
             pass
         else:
             print "Radar protocol %s is not supported." % self.net_proto

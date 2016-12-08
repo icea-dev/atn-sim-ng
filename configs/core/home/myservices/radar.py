@@ -79,7 +79,7 @@ class Radar(CoreService):
             cfg += "[Network]\n"
             cfg += "\n"
             cfg += "; IP address of the receiver of radar plots (e.g. ATC system)\n"
-            cfg += "destination = 172.18.104.255\n"
+            cfg += "destination = 172.16.0.255\n"
             cfg += "\n"
             cfg += "; Transport layer port of the destination\n"
             cfg += "port = 65000\n"
@@ -88,7 +88,7 @@ class Radar(CoreService):
             cfg += "mode = broadcast\n"
             cfg += "\n"
             cfg += "; Radar protocol to be used\n"
-            cfg += "protocol = ICEA\n"
+            cfg += "protocol = icea\n"
 
             return cfg
 
