@@ -34,6 +34,8 @@ class AsterixForwarder(AdsbForwarder):
     """This class is responsible for forwarding ADS-B messages to the ASTERIX Server.
     """
 
+    __TYPE__ = "ASTERIX"
+
     def __init__(self, verbose=False, items=None, server="127.0.0.1", port="60000"):
         """The contructor.
 

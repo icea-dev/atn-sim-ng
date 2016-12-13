@@ -1,0 +1,665 @@
+node n1 {
+    type router
+    model aircraft
+    network-config {
+	hostname TAM9261
+	!
+	interface eth0
+	 ip address 10.0.0.1/24
+	!
+    }
+    canvas c1
+    iconcoords {218.0 608.0}
+    labelcoords {218.0 640.0}
+    interface-peer {eth0 n5}
+    services {zebra OSPFv3MDR vtysh IPForward DefaultMulticastRoute GPSd AdsbOut}
+}
+
+node n2 {
+    type router
+    model aircraft
+    network-config {
+	hostname GOL1234
+	!
+	interface eth0
+	 ip address 10.0.0.2/24
+	!
+    }
+    canvas c1
+    iconcoords {119.0 52.0}
+    labelcoords {119.0 84.0}
+    interface-peer {eth0 n5}
+    services {zebra OSPFv3MDR vtysh IPForward DefaultMulticastRoute GPSd AdsbOut}
+}
+
+node n3 {
+    type router
+    model aircraft
+    network-config {
+	hostname GOL5678
+	!
+	interface eth0
+	 ip address 10.0.0.3/24
+	!
+    }
+    canvas c1
+    iconcoords {229.0 608.0}
+    labelcoords {229.0 640.0}
+    interface-peer {eth0 n5}
+    services {zebra OSPFv3MDR vtysh IPForward DefaultMulticastRoute GPSd AdsbOut}
+}
+
+node n4 {
+    type router
+    model ground-station
+    network-config {
+	hostname n4
+	!
+	interface eth1
+	 ip address 10.0.1.2/24
+	!
+	interface eth0
+	 ip address 10.0.0.4/24
+	!
+    }
+    canvas c1
+    iconcoords {346.0 756.0}
+    labelcoords {346.0 788.0}
+    interface-peer {eth0 n5}
+    services {zebra OSPFv3MDR vtysh IPForward GPSd Dump1090 AdsbIn}
+    interface-peer {eth1 n11}
+    custom-config {
+	custom-config-id service:AdsbIn
+	custom-command AdsbIn
+	config {
+	files=('adsbin.cfg', 'adsbin.sh', )
+	}
+    }
+    custom-config {
+	custom-config-id service:AdsbIn:adsbin.cfg
+	custom-command adsbin.cfg
+	config {
+	[General]
+	id = n4
+	destinations = dst01 dst02
+	
+	[dst01]
+	type = dump1090
+	server = localhost
+	port = 30001
+	
+	[dst02]
+	type = database
+	server = 172.17.255.254
+	dbname = atn_sim
+	dbuser = atn_sim
+	dbpass = atn_sim
+	
+	
+	}
+    }
+}
+
+node n5 {
+    type wlan
+    network-config {
+	hostname 1090MHz
+	!
+	interface wireless
+	 ipv6 address 2001:0::0/128
+	 ip address 10.0.0.0/24
+	!
+	mobmodel
+	coreapi
+	emane_rfpipe
+	!
+    }
+    custom-config {
+	custom-config-id emane_rfpipe
+	custom-command {11 3 11 2 10 9 9 11 9 9 4 4 4 2 9 9 9 11 10 4 10}
+	config {
+	enablepromiscuousmode=0
+	datarate=1M
+	flowcontrolenable=0
+	flowcontroltokens=10
+	pcrcurveuri=/usr/share/emane/xml/models/mac/rfpipe/rfpipepcr.xml
+	jitter=0.0
+	delay=0.0
+	radiometricenable=0
+	radiometricreportinterval=1.0
+	neighbormetricdeletetime=60.0
+	bandwidth=1M
+	frequency=1.090G
+	frequencyofinterest=1.090G
+	subid=1
+	systemnoisefigure=4.0
+	txpower=50.0
+	fixedantennagain=5.5
+	fixedantennagainenable=1
+	noisemode=none
+	noisebinsize=20
+	propagationmodel=freespace
+	}
+    }
+    custom-config {
+	custom-config-id basic_range
+	custom-command {3 3 9 9 9}
+	config {
+	range=275
+	bandwidth=54000000
+	jitter=0
+	delay=20000
+	error=0
+	}
+    }
+    canvas c1
+    iconcoords {692.0 67.0}
+    labelcoords {692.0 99.0}
+    interface-peer {e0 n1}
+    interface-peer {e1 n2}
+    interface-peer {e2 n3}
+    interface-peer {e3 n4}
+    interface-peer {e4 n6}
+    interface-peer {e5 n7}
+    interface-peer {e6 n8}
+    interface-peer {e7 n9}
+    interface-peer {e8 n10}
+    interface-peer {e9 n14}
+}
+
+node n6 {
+    type router
+    model host
+    network-config {
+	hostname trackserver
+	!
+	interface eth0
+	 ip address 10.0.0.10/24
+	!
+    }
+    canvas c1
+    iconcoords {948.0 1.0}
+    labelcoords {948.0 33.0}
+    interface-peer {eth0 n5}
+    custom-config {
+	custom-config-id service:TrackServer
+	custom-command TrackServer
+	config {
+	files=('track_server.cfg', )
+	}
+    }
+    custom-config {
+	custom-config-id service:TrackServer:track_server.cfg
+	custom-command track_server.cfg
+	config {
+	[Database]
+	; db_host = 172.17.255.254
+	; db_name = atn_sim
+	; db_user = atn_sim
+	; db_pass = atn_sim
+	
+	[Tracks]
+	; server = 172.17.255.254
+	; port = 5006
+	exercise = SBBR001
+	; n1 = 1
+	
+	}
+    }
+    services {DefaultRoute SSH TrackServer}
+    hidden 1
+}
+
+node n7 {
+    type router
+    model ground-station
+    network-config {
+	hostname n7
+	!
+	interface eth1
+	 ip address 10.0.1.1/24
+	!
+	interface eth0
+	 ip address 10.0.0.5/24
+	!
+    }
+    canvas c1
+    iconcoords {84.0 500.0}
+    labelcoords {84.0 532.0}
+    interface-peer {eth0 n5}
+    interface-peer {eth1 n11}
+    custom-config {
+	custom-config-id service:AdsbIn
+	custom-command AdsbIn
+	config {
+	files=('adsbin.cfg', 'adsbin.sh', )
+	}
+    }
+    custom-config {
+	custom-config-id service:AdsbIn:adsbin.cfg
+	custom-command adsbin.cfg
+	config {
+	[General]
+	id = n7
+	destinations = dst01 dst02
+	
+	[dst01]
+	type = dump1090
+	server = localhost
+	port = 30001
+	
+	[dst02]
+	type = database
+	server = 172.17.255.254
+	dbname = atn_sim
+	dbuser = atn_sim
+	dbpass = atn_sim
+	
+	}
+    }
+    services {zebra OSPFv3MDR vtysh IPForward GPSd AdsbIn}
+}
+
+node n8 {
+    type router
+    model ground-station
+    network-config {
+	hostname n8
+	!
+	interface eth1
+	 ip address 10.0.1.3/24
+	!
+	interface eth0
+	 ip address 10.0.0.6/24
+	!
+    }
+    canvas c1
+    iconcoords {349.0 501.0}
+    labelcoords {349.0 533.0}
+    interface-peer {eth0 n5}
+    interface-peer {eth1 n11}
+    custom-config {
+	custom-config-id service:AdsbIn
+	custom-command AdsbIn
+	config {
+	files=('adsbin.cfg', 'adsbin.sh', )
+	}
+    }
+    custom-config {
+	custom-config-id service:AdsbIn:adsbin.cfg
+	custom-command adsbin.cfg
+	config {
+	[General]
+	id = n8
+	destinations = dst01 dst02
+	
+	[dst01]
+	type = dump1090
+	server = localhost
+	port = 30001
+	
+	[dst02]
+	type = database
+	server = 172.17.255.254
+	dbname = atn_sim
+	dbuser = atn_sim
+	dbpass = atn_sim
+	
+	}
+    }
+    services {zebra OSPFv3MDR vtysh IPForward GPSd Dump1090 AdsbIn}
+}
+
+node n9 {
+    type router
+    model ground-station
+    network-config {
+	hostname n9
+	!
+	interface eth1
+	 ip address 10.0.1.5/24
+	!
+	interface eth0
+	 ip address 10.0.0.7/24
+	!
+    }
+    canvas c1
+    iconcoords {68.0 756.0}
+    labelcoords {68.0 788.0}
+    interface-peer {eth0 n5}
+    interface-peer {eth1 n11}
+    custom-config {
+	custom-config-id service:AdsbIn
+	custom-command AdsbIn
+	config {
+	files=('adsbin.cfg', 'adsbin.sh', )
+	}
+    }
+    custom-config {
+	custom-config-id service:AdsbIn:adsbin.cfg
+	custom-command adsbin.cfg
+	config {
+	[General]
+	id = n9
+	destinations = dst01 dst02
+	
+	[dst01]
+	type = dump1090
+	server = localhost
+	port = 30001
+	
+	[dst02]
+	type = database
+	server = 172.17.255.254
+	dbname = atn_sim
+	dbuser = atn_sim
+	dbpass = atn_sim
+	
+	
+	}
+    }
+    services {zebra OSPFv3MDR vtysh IPForward GPSd AdsbIn}
+}
+
+node n10 {
+    type router
+    model ground-station
+    network-config {
+	hostname n10
+	!
+	interface eth1
+	 ip address 10.0.1.4/24
+	!
+	interface eth0
+	 ip address 10.0.0.8/24
+	!
+    }
+    canvas c1
+    iconcoords {251.0 647.0}
+    labelcoords {251.0 679.0}
+    interface-peer {eth0 n5}
+    interface-peer {eth1 n11}
+    custom-config {
+	custom-config-id service:AdsbIn
+	custom-command AdsbIn
+	config {
+	files=('adsbin.cfg', 'adsbin.sh', )
+	}
+    }
+    custom-config {
+	custom-config-id service:AdsbIn:adsbin.cfg
+	custom-command adsbin.cfg
+	config {
+	[General]
+	id = n10
+	destinations = dst01 dst02
+	
+	[dst01]
+	type = dump1090
+	server = localhost
+	port = 30001
+	
+	[dst02]
+	type = database
+	server = 172.17.255.254
+	dbname = atn_sim
+	dbuser = atn_sim
+	dbpass = atn_sim
+	
+	}
+    }
+    services {zebra OSPFv3MDR vtysh IPForward GPSd AdsbIn}
+}
+
+node n11 {
+    type lanswitch
+    network-config {
+	hostname n11
+	!
+    }
+    canvas c1
+    iconcoords {496.0 501.0}
+    labelcoords {496.0 525.0}
+    interface-peer {e0 n7}
+    interface-peer {e1 n4}
+    interface-peer {e2 n8}
+    interface-peer {e3 n10}
+    interface-peer {e4 n9}
+    interface-peer {e5 n12}
+}
+
+node n12 {
+    type router
+    model host
+    network-config {
+	hostname firewall
+	!
+	interface eth1
+	 ip address 10.0.2.10/24
+	!
+	interface eth0
+	 ip address 10.0.1.10/24
+	!
+    }
+    canvas c1
+    iconcoords {680.0 500.0}
+    labelcoords {680.0 532.0}
+    interface-peer {eth0 n11}
+    interface-peer {eth1 n13}
+    custom-config {
+	custom-config-id service:AdsbFirewall
+	custom-command AdsbFirewall
+	config {
+	files=('aimod.cfg', 'aimod.sh', )
+	}
+    }
+    custom-config {
+	custom-config-id service:AdsbFirewall:aimod.sh
+	custom-command aimod.sh
+	config {
+	#!/bin/sh
+	# auto-generated by AIMod (aimod.py)
+	sleep 30
+	python -m atn.surveillance.adsb.security.wmlat_filter
+	
+	}
+    }
+    custom-config {
+	custom-config-id service:AdsbFirewall:aimod.cfg
+	custom-command aimod.cfg
+	config {
+	[General]
+	id = firewall
+	
+	; DB where unprocessed messsages are stored
+	dbname = atn_sim
+	dbuser = atn_sim
+	dbpass = atn_sim
+	dbhost = 172.17.255.254
+	
+	; Destination(s) of reliable messages
+	destinations = Dump1090
+	
+	[Dump1090]
+	type = dump1090
+	server = 10.0.2.11
+	port = 30001
+	
+	}
+    }
+    custom-config {
+	custom-config-id service:AIMod
+	custom-command AIMod
+	config {
+	files=('aimod.sh', 'aimod.cfg', )
+	}
+    }
+    custom-config {
+	custom-config-id service:AIMod:aimod.cfg
+	custom-command aimod.cfg
+	config {
+	[General]
+	id = n12
+	
+	; DB where unprocessed messsages are stored
+	dbname = atn_sim
+	dbuser = atn_sim
+	dbpass = atn_sim
+	dbhost = 172.17.255.254
+	
+	; Destination(s) of reliable messages
+	destinations = Dump1090
+	
+	[Dump1090]
+	type = dump1090
+	server = 10.0.2.11
+	port = 30001
+	
+	}
+    }
+    custom-config {
+	custom-config-id service:AIMod:aimod.sh
+	custom-command aimod.sh
+	config {
+	#!/bin/sh
+	# auto-generated by AIMod (aimod.py)
+	python -m atn.surveillance.adsb.security.wmlat_filter
+	
+	}
+    }
+    services {DefaultRoute SSH AdsbFirewall}
+}
+
+node n13 {
+    type router
+    model host
+    network-config {
+	hostname n13
+	!
+	interface eth0
+	 ip address 10.0.2.11/24
+	!
+    }
+    canvas c1
+    iconcoords {680.0 692.0}
+    labelcoords {680.0 724.0}
+    interface-peer {eth0 n12}
+    services {DefaultRoute SSH Dump1090}
+}
+
+node n14 {
+    type router
+    model PC
+    network-config {
+	hostname n14
+	!
+	interface eth0
+	 ip address 10.0.0.20/24
+	 ipv6 address 2001:0::20/128
+	!
+    }
+    canvas c1
+    iconcoords {127.0 385.0}
+    labelcoords {127.0 417.0}
+    interface-peer {eth0 n5}
+    services {DefaultRoute AdsbReplay}
+}
+
+link l1 {
+    nodes {n5 n1}
+}
+
+link l2 {
+    nodes {n5 n2}
+}
+
+link l3 {
+    nodes {n5 n3}
+}
+
+link l4 {
+    nodes {n5 n4}
+}
+
+link l5 {
+    nodes {n5 n6}
+}
+
+link l6 {
+    nodes {n5 n7}
+}
+
+link l7 {
+    nodes {n5 n8}
+}
+
+link l8 {
+    nodes {n5 n9}
+}
+
+link l9 {
+    nodes {n5 n10}
+}
+
+link l10 {
+    nodes {n7 n11}
+    bandwidth 0
+}
+
+link l11 {
+    nodes {n4 n11}
+    bandwidth 0
+}
+
+link l12 {
+    nodes {n8 n11}
+    bandwidth 0
+}
+
+link l13 {
+    nodes {n10 n11}
+    bandwidth 0
+}
+
+link l14 {
+    nodes {n9 n11}
+    bandwidth 0
+}
+
+link l15 {
+    nodes {n11 n12}
+    bandwidth 0
+}
+
+link l16 {
+    nodes {n12 n13}
+    bandwidth 0
+}
+
+link l17 {
+    nodes {n5 n14}
+}
+
+canvas c1 {
+    name {Canvas1}
+    refpt {0 0 -15.197385 -49.548118 2.0}
+    scale {150000.0}
+    size {1000 818.0}
+}
+
+option global {
+    interface_names no
+    ip_addresses no
+    ipv6_addresses no
+    node_labels yes
+    link_labels yes
+    show_api no
+    background_images no
+    annotations yes
+    grid yes
+    traffic_start 0
+}
+
+option session {
+}
+

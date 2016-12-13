@@ -21,6 +21,8 @@
 
 import ConfigParser
 import logging
+import math
+import MySQLdb
 import os
 import Queue
 import socket
@@ -32,6 +34,10 @@ from .forwarders.database_fwrd import DatabseForwarder
 from .forwarders.asterix_fwrd import AsterixForwarder
 from ..asterix.adsb_decoder import AdsBDecoder
 from ..asterix.asterix_encoder import AdsBAsterixEncode
+
+import atn.core_utils as core_utils
+import atn.emane_utils as emane_utils
+import atn.geo_utils as geo_utils
 
 __author__ = "Ivan Matias"
 __version__ = "0.1"
@@ -56,6 +62,11 @@ class AdsbIn:
     asterix_tx_port = None
     asterix_dst = None
 
+    db_name = 'atn_sim'
+    db_user = 'atn_sim'
+    db_pass = 'atn_sim'
+    db_host = '172.17.255.254'
+
     def __init__(self, config="adsbin.cfg", store_msgs=False):
         # Logging
         logging.basicConfig(filename=self.log_file, level=self.log_level, filemode='w',
@@ -68,6 +79,9 @@ class AdsbIn:
 
         # Id
         self.id = None
+
+        # DB connection with general purposes
+        self.db = MySQLdb.connect(self.db_host, self.db_user, self.db_pass, self.db_name)
 
         if os.path.exists(config):
             conf = ConfigParser.ConfigParser()
@@ -107,6 +121,22 @@ class AdsbIn:
                     # Create forwarder
                     f = AsterixForwarder(items=d)
                     self.forwarders.append(f)
+        else:
+            self.id = core_utils.get_node_name()
+
+        # Discover self location
+        cursor = self.db.cursor()
+        cursor.execute("SELECT B.id from node A, nem B where A.id=B.node_id and A.name='%s'" % self.id)
+        result = cursor.fetchone()
+
+        if result is not None:
+            self.nemid = int(result[0])
+
+            location = emane_utils.get_nem_location(self.nemid)
+
+            self.latitude = location['latitude']
+            self.longitude = location['longitude']
+            self.altitude = location['altitude']
 
     def _start_asterix_server(self):
 
@@ -168,9 +198,11 @@ class AdsbIn:
             if len(splits) > 1:
                 message = splits[0]
                 tx_node = splits[1]
+                toa_est = self.estimate_toa(tx_node)
             else:
                 message = splits[0]
                 tx_node = None
+                toa_est = None
 
             # Time of arrival
             toa = time.time()
@@ -184,7 +216,8 @@ class AdsbIn:
 
             # Forward received ADS-B message to all configured forwarders
             for f in self.forwarders:
-                f.forward(message, toa, tx_node, self.id)
+                # f.forward(message, toa_est, tx_node, self.id)
+                f.forward(message, toa_est)
 
             # Logging
             t1 = time.time()
@@ -206,6 +239,34 @@ class AdsbIn:
             return self.rec_msgs.pop()
         else:
             return None
+
+    def estimate_toa(self, tx_node):
+        query_tx = "SELECT B.latitude, B.longitude, B.altitude FROM node A, nem B WHERE A.name='%s' and A.id=B.node_id" % tx_node
+        cursor = self.db.cursor()
+
+        cursor.execute(query_tx)
+        result_tx = cursor.fetchone()
+
+        if result_tx is not None:
+            tx_lat = float(result_tx[0])
+            tx_lon = float(result_tx[1])
+            tx_alt = float(result_tx[2])
+
+            cursor.close()
+
+            x, y, z = geo_utils.geog2enu(tx_lat, tx_lon, tx_alt, self.latitude, self.longitude, self.altitude)
+
+            h1 = math.sqrt(x*x + y*y)
+            dt = math.sqrt(h1*h1 + z*z)
+
+            # The speed of light
+            E = 299792458.0
+
+            toa = dt / E
+
+            return toa
+
+        return None
 
 
 if __name__ == '__main__':

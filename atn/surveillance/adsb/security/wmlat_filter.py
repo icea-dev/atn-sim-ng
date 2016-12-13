@@ -20,6 +20,7 @@
 
 
 import ConfigParser
+import logging
 import math
 import MySQLdb
 import numpy
@@ -41,6 +42,9 @@ __date__ = "2016-dec-08"
 
 class MlatServer:
 
+    log_file = "adsb_filter.log"
+    log_level = logging.DEBUG
+
     EVEN_MSG = 0
     ODD_MSG = 1
     FT_TO_M = 0.3048
@@ -48,6 +52,11 @@ class MlatServer:
     FTPM_TO_MPS = 0.00508
 
     def __init__(self, config="aimod.cfg"):
+        # Logging
+        logging.basicConfig(filename=self.log_file, level=self.log_level, filemode='w',
+                            format='%(asctime)s %(levelname)s: %(message)s')
+        self.logger = logging.getLogger(self.log_file)
+
         self.dbname = "atn_sim"
         self.dbpass = "atn_sim"
         self.dbuser = "atn_sim"
@@ -131,6 +140,8 @@ class MlatServer:
             # Add sensor to dictionary
             self.sensors[sensor_id] = sensor
 
+            print sensor
+
         # Remove old messages
         rows = cursor.execute("DELETE FROM adsb_messages WHERE created < now()")
         self.db.commit()
@@ -172,7 +183,6 @@ class MlatServer:
             cursor.close()
 
     def process_msg(self, message, delete=False):
-
         icao24 = decoder.get_icao_addr(message)
 
         cursor = self.db.cursor()
@@ -202,11 +212,6 @@ class MlatServer:
         xpos = [0]*nrows
         ypos = [0]*nrows
         zpos = [0]*nrows
-
-        # Position of object (relative to sensor)
-        # tx_xpos = [0]*nrows
-        # tx_ypos = [0]*nrows
-        # tx_zpos = [0]*nrows
 
         i = 0
         for row in rows:
@@ -238,7 +243,7 @@ class MlatServer:
         # Verifying declared position (in X, Y)
         x, y = self.get_declared_xy(message)
 
-        # Determining source of transmission using mulilateration
+        # Determining source of transmission using multilateration
         _x, _y = self.get_estimated_xy(xpos, ypos, zpos, toa)
 
         # Determining reliability of message
@@ -249,12 +254,14 @@ class MlatServer:
 
             if distance <= 1000:
                 print "'%s'\t%d\t%s[PASS]%s" % (message, distance, bcolors.OKBLUE, bcolors.ENDC)
+                self.logger.info("'%s'\t%d\t%s[PASS]%s" % (message, distance, bcolors.OKBLUE, bcolors.ENDC))
 
                 # Forward received ADS-B message to all configured forwarders
                 for f in self.forwarders:
                     f.forward(message, None)
             else:
                 print "'%s'\t%d\t%s[DROP]%s" % (message, distance, bcolors.FAIL, bcolors.ENDC)
+                self.logger.warn("'%s'\t%d\t%s[DROP]%s" % (message, distance, bcolors.FAIL, bcolors.ENDC))
 
         # Deleting processed messages from database
         for i in msg_id:

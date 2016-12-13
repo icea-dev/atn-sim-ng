@@ -31,6 +31,8 @@ __date__ = "2016-dec-08"
 
 class Dump1090Forwarder(AdsbForwarder):
 
+    __TYPE__ = "DUMP1090"
+
     def __init__(self, verbose=False, items=None, server="localhost", port="30001"):
         self.logger = logging.getLogger('adsb_in_app.Dump1090')
         self.s = None

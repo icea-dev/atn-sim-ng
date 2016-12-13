@@ -36,6 +36,8 @@ __date__ = "2016-dec-08"
 
 class DatabseForwarder(AdsbForwarder):
 
+    __TYPE__ = "DATABASE"
+
     LIGHT_SPEED = 299792458  # meters per second
 
     def __init__(self, sensor_id, verbose=False, items=None):
