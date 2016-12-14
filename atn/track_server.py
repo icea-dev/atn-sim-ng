@@ -361,7 +361,9 @@ class TrackServer:
 
         cursor = self.db.cursor()
 
-        # Clean table
+        # Clean tables
+        cursor.execute("DELETE FROM adsb_sensors")
+        cursor.execute("DELETE FROM adsb_messages")
         cursor.execute("DELETE FROM node")
 
         for n in range(0, len(node_number)):

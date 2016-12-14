@@ -140,10 +140,14 @@ class AdsbOut:
         pass
 
     def broadcast(self, message):
+        if message is None:
+            return False
         if self.nodename is None:
             self.net_sock.sendto(message, (self.net_dest, self.net_port))
+            return True
         else:
             self.net_sock.sendto(message + " " + self.nodename, (self.net_dest, self.net_port))
+            return True
 
     def generate_aircraft_id(self):
 
@@ -152,7 +156,7 @@ class AdsbOut:
         air_type = self.feed.get_type()
         icao24 = self.feed.get_icao24()
 
-        if callsign is None:
+        if not self.feed.is_track_updated():
             return None
 
         # Binary
@@ -164,6 +168,9 @@ class AdsbOut:
         return hex_msg
 
     def generate_airborne_position(self):
+
+        if not self.feed.is_track_updated():
+            return None
 
         # Capabilities
         ca = self.feed.get_capabilities()
@@ -273,6 +280,9 @@ class AdsbOut:
         Returns:
             A string with ADS-B Airbone Velocity Message encodes in hexadecimal.
         """
+
+        if not self.feed.is_track_updated():
+            return None
 
         (heading, vertical_rate, ground_speed) = self.feed.get_velocity()
         (heading_radians, vertical_rate, ground_speed) = adsb_utils.to_unit_adsb(heading, vertical_rate, ground_speed)

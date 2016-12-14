@@ -65,6 +65,7 @@ class CoreFeed(AdsbFeed):
     tracksrv_track = 0
     tracksrv_speed = 0
     tracksrv_climb = 0
+    tracksrv_perftype = None
 
     tracksrv_dbname = "atn_sim"
     tracksrv_dbuser = "atn_sim"
@@ -195,7 +196,7 @@ class CoreFeed(AdsbFeed):
 
             cursor = self.db.cursor()
             query = "SELECT A.latitude, A.longitude, A.altitude, A.azimuth, A.magnitude, A.elevation, B.callsign," \
-                    " B.icao24 FROM nem A, transponder B WHERE A.id=%d and A.id = B.nem_id" % self.nem_id
+                    " B.icao24, B.performance_type FROM nem A, transponder B WHERE A.id=%d and A.id = B.nem_id" % self.nem_id
             try:
                 cursor.execute(query)
 
@@ -209,6 +210,7 @@ class CoreFeed(AdsbFeed):
                 climb = result[5]
                 callsign = result[6]
                 icao24 = result[7]
+                perftype = result[8]
 
                 self.tracksrv_latitude = lat
                 self.tracksrv_longitude = lon
@@ -218,6 +220,7 @@ class CoreFeed(AdsbFeed):
                 self.tracksrv_climb = climb
                 self.callsign = callsign
                 self.icao24 = icao24
+                self.tracksrv_perftype = perftype
 
                 cursor.close()
             except MySQLdb.Error as e:
@@ -226,3 +229,10 @@ class CoreFeed(AdsbFeed):
                 cursor.close()
 
             time.sleep(0.5)
+
+    def is_track_updated(self):
+        if self.tracksrv_perftype is None:
+            return False
+        if self.get_callsign() is None:
+            return False
+        return True
