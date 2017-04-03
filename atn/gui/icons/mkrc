@@ -1,0 +1,4 @@
+###
+#  atn-sim
+#
+pyrcc4 wnd_main_atn_sim.qrc > ../wnd_main_atn_sim_rc.py

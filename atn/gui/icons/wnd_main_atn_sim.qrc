@@ -1,0 +1,17 @@
+<RCC>
+  <qresource prefix="gui">
+    <file>db_edit.png</file>
+    <file>add_aircraft.png</file>
+    <file>applications-office.png</file>
+    <file>dump1090.png</file>
+    <file>edit-mode.png</file>
+    <file>help-about.png</file>
+    <file>preferences-system.png</file>
+    <file>quit.png</file>
+    <file>scenario-to-exe.png</file>
+    <file>scenario-to-xml.png</file>
+    <file>start-session-1.png</file>
+    <file>stop-session.png</file>
+    <file>visil.png</file>
+  </qresource>
+</RCC>

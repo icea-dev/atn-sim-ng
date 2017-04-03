@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>CWndMainATNSim</class>
+ <widget class="QMainWindow" name="CWndMainATNSim">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>439</width>
+    <height>210</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>ATN Simulator</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <widget class="QFrame" name="frm_title">
+      <property name="styleSheet">
+       <string notr="true">background-color: rgb(0, 0, 255);</string>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::StyledPanel</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Raised</enum>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_2">
+       <item>
+        <widget class="QLabel" name="lbl_01">
+         <property name="styleSheet">
+          <string notr="true">background-color: rgb(0, 0, 255);</string>
+         </property>
+         <property name="text">
+          <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Ubuntu'; font-size:11pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Sans'; font-size:16pt; font-weight:600; color:#ffff00;&quot;&gt;ATN SIMULATOR&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="lbl_02">
+         <property name="styleSheet">
+          <string notr="true">background-color: rgb(0, 0, 255);</string>
+         </property>
+         <property name="text">
+          <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Cantarell'; font-size:11pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Sans'; font-size:16pt; font-weight:600; color:#00007f;&quot;&gt;(C) 2017 ICEA &lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>439</width>
+     <height>25</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuSimulation">
+    <property name="title">
+     <string>Simulation</string>
+    </property>
+    <addaction name="act_edit_scenario"/>
+    <addaction name="separator"/>
+    <addaction name="act_start_session"/>
+    <addaction name="act_stop_session"/>
+    <addaction name="separator"/>
+    <addaction name="act_start_dump1090"/>
+    <addaction name="act_start_visil"/>
+    <addaction name="separator"/>
+    <addaction name="act_quit"/>
+   </widget>
+   <widget class="QMenu" name="menuConfiguration">
+    <property name="title">
+     <string>Settings</string>
+    </property>
+    <addaction name="act_db_edit"/>
+    <addaction name="separator"/>
+    <addaction name="act_scenario_to_xml"/>
+    <addaction name="act_scenario_to_exe"/>
+   </widget>
+   <widget class="QMenu" name="menuRuntime">
+    <property name="title">
+     <string>Runtime</string>
+    </property>
+    <addaction name="act_add_aircraft"/>
+   </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+    <addaction name="act_show_manual"/>
+    <addaction name="act_about"/>
+   </widget>
+   <addaction name="menuSimulation"/>
+   <addaction name="menuConfiguration"/>
+   <addaction name="menuRuntime"/>
+   <addaction name="menuHelp"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QToolBar" name="toolBar">
+   <property name="windowTitle">
+    <string>toolBar</string>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="act_edit_scenario"/>
+   <addaction name="separator"/>
+   <addaction name="act_start_session"/>
+   <addaction name="act_stop_session"/>
+   <addaction name="separator"/>
+   <addaction name="act_start_dump1090"/>
+   <addaction name="act_start_visil"/>
+   <addaction name="separator"/>
+   <addaction name="act_db_edit"/>
+   <addaction name="separator"/>
+   <addaction name="act_scenario_to_xml"/>
+   <addaction name="act_scenario_to_exe"/>
+   <addaction name="separator"/>
+   <addaction name="act_add_aircraft"/>
+  </widget>
+  <action name="act_edit_scenario">
+   <property name="icon">
+    <iconset resource="../icons/wnd_main_atn_sim.qrc">
+     <normaloff>:/gui/edit-mode.png</normaloff>:/gui/edit-mode.png</iconset>
+   </property>
+   <property name="text">
+    <string>Create a scenario</string>
+   </property>
+  </action>
+  <action name="act_start_session">
+   <property name="icon">
+    <iconset>
+     <normalon>:/gui/start-session-1.png</normalon>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>Start ATN simulation</string>
+   </property>
+  </action>
+  <action name="act_stop_session">
+   <property name="icon">
+    <iconset>
+     <normalon>:/gui/stop-session.png</normalon>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>Stop ATN Simulation</string>
+   </property>
+  </action>
+  <action name="act_start_dump1090">
+   <property name="icon">
+    <iconset>
+     <normalon>:/gui/dump1090.png</normalon>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>Start ADS-B Viewer</string>
+   </property>
+  </action>
+  <action name="act_start_visil">
+   <property name="icon">
+    <iconset>
+     <normalon>:/gui/visil.png</normalon>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>Start ViSIL</string>
+   </property>
+  </action>
+  <action name="act_quit">
+   <property name="icon">
+    <iconset>
+     <normalon>:/gui/quit.png</normalon>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>Quit</string>
+   </property>
+  </action>
+  <action name="act_db_edit">
+   <property name="icon">
+    <iconset>
+     <normalon>:/gui/db_edit.png</normalon>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>Manage exercises</string>
+   </property>
+  </action>
+  <action name="act_scenario_to_xml">
+   <property name="icon">
+    <iconset>
+     <normalon>:/gui/scenario-to-xml.png</normalon>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>Export scenario to XML</string>
+   </property>
+  </action>
+  <action name="act_scenario_to_exe">
+   <property name="icon">
+    <iconset>
+     <normalon>:/gui/scenario-to-exe.png</normalon>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>Export scenario to exercise</string>
+   </property>
+  </action>
+  <action name="act_add_aircraft">
+   <property name="icon">
+    <iconset>
+     <normalon>:/gui/add_aircraft.png</normalon>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>Add an aircraft ...</string>
+   </property>
+  </action>
+  <action name="act_show_manual">
+   <property name="text">
+    <string>Manual</string>
+   </property>
+  </action>
+  <action name="act_about">
+   <property name="icon">
+    <iconset>
+     <normalon>:/gui/help-about.png</normalon>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>About</string>
+   </property>
+  </action>
+ </widget>
+ <resources>
+  <include location="../icons/wnd_main_atn_sim.qrc"/>
+ </resources>
+ <connections/>
+</ui>
