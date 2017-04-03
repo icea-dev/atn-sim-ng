@@ -2,3 +2,5 @@
 #  atn-sim
 #
 pyuic4 wnd_main_atn_sim.ui > ../wnd_main_atn_sim_ui.py
+pyuic4 wnd_traf.ui > ../wnd_traf_ui.py
+

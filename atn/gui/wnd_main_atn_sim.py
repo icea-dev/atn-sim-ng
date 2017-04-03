@@ -33,13 +33,14 @@ __date__ = "2017/03"
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4 import QtXml
-
+from string import Template
 from core.api import coreapi
 
 import os
 import socket
 import subprocess
 import wnd_main_atn_sim_ui as wmain_ui
+import wnd_trf as wtraf_ui
 
 # < class CWndMainATNSim >-------------------------------------------------------------------------
 
@@ -65,6 +66,7 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
 
         self.act_scenario_to_xml.triggered.connect(self.cbk_scenario_to_xml)
 
+        self.wnd_traf = wtraf_ui.CWndTraf()
 
     # ---------------------------------------------------------------------------------------------
     def check_process(self):
@@ -106,7 +108,9 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
     # ---------------------------------------------------------------------------------------------
     def cbk_start_session(self):
         """
-
+        Inicia a simulação de um determinado cenário de simulação. Verifica se existem os arquivos
+        necessários para execução do ptracks. Caso eles não exsitem é dado a possibilidade de
+        criá-los.
         :return:
         """
         l_scenario_dir = os.path.join(os.environ['HOME'], 'atn-sim/configs/scenarios')
@@ -116,21 +120,44 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         if (not l_file_path):
             return
 
-        # Verificar se já existe um exercicio para o cenário escolhido
-
         self.filename = os.path.splitext(os.path.basename(str(l_file_path)))[0]
         print self.filename
 
-        l_split = l_file_path.split('/')
-        self.session_name = l_split [ len(l_split) - 1 ]
+        l_ptracks_dir = os.path.join(os.environ["HOME"], 'atn-sim/ptracks/data')
+        l_exe_filename = l_ptracks_dir + "/exes/" + self.filename  + ".exe.xml"
 
-        self.p = subprocess.Popen(['core-gui', '--start', l_file_path ],
-                                  stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        # Verifica se já existe um exercicio para o cenário escolhido
+        if not os.path.isfile(l_exe_filename):
+            self.create_ptracks_exe(l_exe_filename)
 
-        l_status_msg = "Running the scenario: " + self.filename
-        self.statusbar.showMessage(l_status_msg)
+        l_traf_filename = l_ptracks_dir + "/traf/" + self.filename + ".trf.xml"
 
-        self.check_process()
+        # Verifica se já existe um arquivo de tráfegos para o cenário escolhido
+        if not os.path.isfile(l_traf_filename):
+            self.wnd_traf.extract_anvs(l_file_path, l_traf_filename)
+            self.wnd_traf.show()
+
+        '''
+            l_msg = QtGui.QMessageBox()
+            l_msg.setIcon(QtGui.QMessageBox.Question)
+            l_msg_text = "File %s does not exist.\n Do you want to create it?" % l_exe_filename
+            l_msg.setText(l_msg_text)
+            l_msg.setWindowTitle("Start Session")
+            l_msg.setStandardButtons(QtGui.QMessageBox.No | QtGui.QMessageBox.Yes)
+            l_ret_val = l_msg.exec_()
+            print "value of pressed message box button: %d" % l_ret_val
+        '''
+
+        #l_split = l_file_path.split('/')
+        #self.session_name = l_split [ len(l_split) - 1 ]
+
+        #self.p = subprocess.Popen(['core-gui', '--start', l_file_path ],
+        #                          stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+        #l_status_msg = "Running the scenario: " + self.filename
+        #self.statusbar.showMessage(l_status_msg)
+
+        #self.check_process()
 
 
     # ---------------------------------------------------------------------------------------------
@@ -181,172 +208,40 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         self.statusbar.clearMessage()
 
     # ---------------------------------------------------------------------------------------------
-    def extract_anvs(self, fname):
-
-        # cria o QFile para o arquivo XML
-        l_data_file = QtCore.QFile(fname)
-        assert l_data_file is not None
-
-        # abre o arquivo XML
-        l_data_file.open(QtCore.QIODevice.ReadOnly)
-
-        # cria o documento XML
-        l_xdoc_aer = QtXml.QDomDocument("scenario")
-        assert l_xdoc_aer is not None
-
-        l_xdoc_aer.setContent(l_data_file)
-
-        # fecha o arquivo
-        l_data_file.close()
-
-        # obtém o elemento raíz do documento
-        l_elem_root = l_xdoc_aer.documentElement()
-        assert l_elem_root is not None
-
-        l_index = 0
-
-        # cria uma lista com os elementos
-        l_node_list = l_elem_root.elementsByTagName("host")
-
-        # para todos os nós na lista...
-        for li_ndx in xrange(l_node_list.length()):
-
-            l_element = l_node_list.at(li_ndx).toElement()
-            assert l_element is not None
-
-            if "host" != l_element.tagName():
-                continue
-
-            # read identification if available
-            if l_element.hasAttribute("id"):
-                ls_host_id = l_element.attribute("id")
-
-            # obtém o primeiro nó da sub-árvore
-            l_node = l_element.firstChild()
-            assert l_node is not None
-
-            lv_host_ok = False
-
-            # percorre a sub-árvore
-            while not l_node.isNull():
-                # tenta converter o nó em um elemento
-                l_element = l_node.toElement()
-                assert l_element is not None
-
-                # o nó é um elemento ?
-                if not l_element.isNull():
-                    if "type" == l_element.tagName():
-                        if "aircraft" == l_element.text():
-                            # faz o parse do elemento
-                            lv_host_ok = True
-
-                        else:
-                            break
-
-                    if "point" == l_element.tagName():
-                        # faz o parse do elemento
-                        lf_host_lat = float(l_element.attribute("lat"))
-                        lf_host_lng = float(l_element.attribute("lon"))
-
-                # próximo nó
-                l_node = l_node.nextSibling()
-                assert l_node is not None
-            '''
-            # achou aircraft ?
-            if lv_host_ok:
-                # cria nova linha na tabela
-                self.qtw_trf.insertRow(l_index)
-
-                # node
-                self.qtw_trf.setItem(l_index, 0, QtGui.QTableWidgetItem(str(ls_host_id)))
-
-                # cria doubleSpinBox para latitude
-                self.lat = QtGui.QDoubleSpinBox()
-                self.lat.setDecimals(4)
-                self.lat.setRange(-90., 90.)
-                self.lat.setValue(lf_host_lat)
-                self.lat.valueChanged.connect(self.valuechange)
-
-                # latitude
-                self.qtw_trf.setCellWidget(l_index, 1, self.lat)
-
-                # cria doubleSpinBox para longitude
-                self.lng = QtGui.QDoubleSpinBox()
-                self.lng.setDecimals(4)
-                self.lng.setRange(-180., 180.)
-                self.lng.setValue(lf_host_lng)
-                self.lng.valueChanged.connect(self.valuechange)
-
-                # longitude
-                self.qtw_trf.setCellWidget(l_index, 2, self.lng)
-
-                # cria combo para designador
-                self.cb = QtGui.QComboBox()
-                self.cb.addItems(["B737", "A380", "AVRO"])
-                self.cb.currentIndexChanged.connect(self.selectionchange)
-
-                # designador
-                self.qtw_trf.setCellWidget(l_index, 3, self.cb)
-
-                # ssr
-                self.qtw_trf.setItem(l_index, 4, QtGui.QTableWidgetItem(str(7001 + l_index)))
-                # indicativo
-                self.qtw_trf.setItem(l_index, 5, QtGui.QTableWidgetItem("{}X{:03d}".format(str(ls_host_id[:3]).upper(), l_index + 1)))
-                # origem
-                self.qtw_trf.setItem(l_index, 6, QtGui.QTableWidgetItem("SBGR"))
-                # destino
-                self.qtw_trf.setItem(l_index, 7, QtGui.QTableWidgetItem("SBBR"))
-
-                # cria spinBox para proa
-                self.proa = QtGui.QSpinBox()
-                self.proa.setRange(0, 360)
-                self.proa.setValue(60)
-                self.proa.valueChanged.connect(self.valuechange)
-
-                # proa
-                self.qtw_trf.setCellWidget(l_index, 8, self.proa)
-
-                # cria spinBox para velocidade
-                self.velocidade = QtGui.QSpinBox()
-                self.velocidade.setRange(0, 600)
-                self.velocidade.setValue(500)
-                self.velocidade.valueChanged.connect(self.valuechange)
-
-                # velocidade
-                self.qtw_trf.setCellWidget(l_index, 9, self.velocidade)
-
-                # cria spinBox para altitude
-                self.altitude = QtGui.QSpinBox()
-                self.altitude.setRange(0, 40000)
-                self.altitude.setValue(2000)
-                self.altitude.valueChanged.connect(self.valuechange)
-
-                # altitude
-                self.qtw_trf.setCellWidget(l_index, 10, self.altitude)
-
-                # cria combo para procedimento
-                self.prc = QtGui.QComboBox()
-                self.prc.addItems([u"trajetória", "espera", "subida"])
-                self.prc.currentIndexChanged.connect(self.selectionchange)
-
-                # procedimento
-                self.qtw_trf.setCellWidget(l_index, 11, self.prc)
-
-                # incrementa contador de linhas
-                l_index += 1
-
-        # habilita botão de gerar tráfegos
-        self.btn_trf.setEnabled(l_index > 0)
-        '''
-
-
-    # ---------------------------------------------------------------------------------------------
     def cbk_scenario_to_xml(self):
         """
 
         :return:
         """
         pass
+
+    # ---------------------------------------------------------------------------------------------
+    def create_ptracks_exe(self, f_scenario_filename):
+        """
+        Cria o arquivo exe do ptracks para o cenário solicitado
+        :param f_scenario_filename: o nome do cenário de simulação
+        :return:
+        """
+        # open template file (exercicio)
+        l_file_in = open("templates/exe.xml.in")
+
+        # read it
+        l_src = Template(l_file_in.read())
+
+        # document data
+        l_title = "ATN Simulator"
+        l_hora = "06:00"
+        l_data = {"title": l_title, "exe": self.filename, "hora": l_hora}
+
+        # do the substitution
+        result = l_src.substitute(l_data)
+
+        l_ptracks_dir = os.path.join(os.environ["HOME"], 'ptracks/data')
+        l_exe_filename = l_ptracks_dir + "/exes/" + self.filename  + ".exe.xml"
+
+        # grava o arquivo de exercícios
+        with open(f_scenario_filename, 'w') as f:
+            f.write(result)
 
 
 # < the end>---------------------------------------------------------------------------------------

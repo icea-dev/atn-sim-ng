@@ -1,0 +1,17 @@
+    <trafego nTrf="$ntrf">
+        <designador>$designador</designador>
+        <ssr>$ssr</ssr>
+        <indicativo>$indicativo</indicativo>
+        <origem>$origem</origem>
+        <destino>$destino</destino>
+        <temptrafego>0</temptrafego>
+        <coord>
+            <tipo>G</tipo>
+            <cpoA>$latitude</cpoA>
+            <cpoB>$longitude</cpoB>
+        </coord>
+        <velocidade>$velocidade</velocidade>
+        <altitude>$altitude</altitude>
+        <proa>$proa</proa>
+        <procedimento>$procedimento</procedimento>
+    </trafego>
