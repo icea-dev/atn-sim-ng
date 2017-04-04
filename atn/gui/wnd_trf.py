@@ -59,6 +59,9 @@ class CWndTraf(QtGui.QWidget, wtrf_ui.Ui_frm_trf):
         self.btn_create.clicked.connect(self.cbk_create_aircrafts)
 
         self.traf_filename = ""
+        self.traf_filename_created = False
+
+        self.setWindowModality ( QtCore.Qt.ApplicationModal )
 
     # ---------------------------------------------------------------------------------------------
     def selectionchange(self,i):
@@ -149,14 +152,23 @@ class CWndTraf(QtGui.QWidget, wtrf_ui.Ui_frm_trf):
         with open(f_traf_filename, 'w') as l_file:
             l_file.write(l_result)
 
+        self.traf_filename_created = True
 
     # ---------------------------------------------------------------------------------------------
     def extract_anvs(self, fname, f_traf_filename):
         """
         Extrai as aeronaves que foram criadas pelo core-gui.
+
         :param fname:
+        :param f_traf_filename:
         :return:
         """
+
+        self.traf_filename_created = False
+
+        # para todas as linhas da tabela...
+        self.qtw_trf.setRowCount(0);
+
         # cria o QFile para o arquivo XML
         l_data_file = QtCore.QFile(fname)
         assert l_data_file is not None
@@ -318,3 +330,7 @@ class CWndTraf(QtGui.QWidget, wtrf_ui.Ui_frm_trf):
         :return:
         """
         self.create_ptracks_traf(self.traf_filename)
+
+    # ---------------------------------------------------------------------------------------------
+    def is_file_trf_created(self):
+        return self.traf_filename_created

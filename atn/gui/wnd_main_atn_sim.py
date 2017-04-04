@@ -40,7 +40,8 @@ import os
 import socket
 import subprocess
 import wnd_main_atn_sim_ui as wmain_ui
-import wnd_trf as wtraf_ui
+import dlg_trf as dtraf_ui
+import dlg_start as dstart_ui
 
 # < class CWndMainATNSim >-------------------------------------------------------------------------
 
@@ -66,7 +67,28 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
 
         self.act_scenario_to_xml.triggered.connect(self.cbk_scenario_to_xml)
 
-        self.wnd_traf = wtraf_ui.CWndTraf()
+        self.dlg_traf = dtraf_ui.CDlgTraf()
+        self.dlg_start = dstart_ui.CDlgStart()
+
+    # ---------------------------------------------------------------------------------------------
+    def diff_files(self, f_file1, f_file2):
+        """
+        Verifica a diferença entre os arquivos f_file1 e f_file2.
+        :param f_file1:
+        :param f_file1:
+        :return: retorna True se os arquivos forem diferentes caso contrário False.
+        """
+        if not os.path.isfile(f_file1) or not os.path.isfile(f_file2):
+            return True
+
+        l_diff_proc = subprocess.Popen(['diff', '-q', f_file1, f_file2],
+                                stdout=subprocess.PIPE)
+        stdout_value = l_diff_proc.communicate()[0]
+
+        if 0 != len(stdout_value):
+            return True
+
+        return False
 
     # ---------------------------------------------------------------------------------------------
     def check_process(self):
@@ -117,12 +139,10 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         l_file_path = QtGui.QFileDialog.getOpenFileName(self, 'Open simulation scenario - XML',
                                                         l_scenario_dir, 'XML files (*.xml)')
 
-        if (not l_file_path):
+        if not l_file_path:
             return
 
         self.filename = os.path.splitext(os.path.basename(str(l_file_path)))[0]
-        print self.filename
-
         l_ptracks_dir = os.path.join(os.environ["HOME"], 'atn-sim/ptracks/data')
         l_exe_filename = l_ptracks_dir + "/exes/" + self.filename  + ".exe.xml"
 
@@ -134,30 +154,67 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
 
         # Verifica se já existe um arquivo de tráfegos para o cenário escolhido
         if not os.path.isfile(l_traf_filename):
-            self.wnd_traf.extract_anvs(l_file_path, l_traf_filename)
-            self.wnd_traf.show()
+            self.dlg_traf.populate_table(self.extract_anvs(l_file_path))
+            self.dlg_traf.set_title(self.filename)
+            l_ret_val = self.dlg_traf.exec_()
 
-        '''
-            l_msg = QtGui.QMessageBox()
-            l_msg.setIcon(QtGui.QMessageBox.Question)
-            l_msg_text = "File %s does not exist.\n Do you want to create it?" % l_exe_filename
-            l_msg.setText(l_msg_text)
-            l_msg.setWindowTitle("Start Session")
-            l_msg.setStandardButtons(QtGui.QMessageBox.No | QtGui.QMessageBox.Yes)
-            l_ret_val = l_msg.exec_()
-            print "value of pressed message box button: %d" % l_ret_val
-        '''
+            if QtGui.QDialog.Rejected == l_ret_val:
+                l_msg = QtGui.QMessageBox()
+                l_msg.setIcon(QtGui.QMessageBox.Critical)
+                l_msg_text = "Error creating file: %s" % l_traf_filename
+                l_msg.setText ( l_msg_text )
+                l_msg.setWindowTitle ( "Start Session" )
+                l_msg.setStandardButtons ( QtGui.QMessageBox.Ok )
+                l_msg.exec_()
 
-        #l_split = l_file_path.split('/')
-        #self.session_name = l_split [ len(l_split) - 1 ]
+                return
+            else:
+                self.create_ptracks_traf(self.dlg_traf.get_data(), l_traf_filename)
+        else:
+            # Arquivo de tráfegos existe, primeiro cria um arquivo de trafego temporário ...
+            self.dlg_traf.populate_table(self.extract_anvs(l_file_path))
+            l_tmp_traf_filename = os.path.join(os.environ['HOME'], 'atn-sim/atn/gui') + "/" \
+                                  + self.filename + ".trf.xml"
+            self.create_ptracks_traf(self.dlg_traf.get_data(), l_tmp_traf_filename)
 
-        #self.p = subprocess.Popen(['core-gui', '--start', l_file_path ],
-        #                          stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            # Compara com o arquivo que já existe para verificar se existe alguma diferença
+            if self.diff_files(l_traf_filename, l_tmp_traf_filename):
+                self.dlg_start.set_title(self.filename)
+                l_ret_val = self.dlg_start.exec_()
 
-        #l_status_msg = "Running the scenario: " + self.filename
-        #self.statusbar.showMessage(l_status_msg)
+                # Cancelamento da execução do cenário de simulação
+                if QtGui.QDialog.Rejected == l_ret_val:
+                    return
 
-        #self.check_process()
+                # Cria um novo arquivo de aeronaves
+                if 1 == l_ret_val:
+                    self.dlg_traf.populate_table(self.extract_anvs(l_file_path))
+                    self.dlg_traf.set_title(self.filename)
+                    l_ret_val = self.dlg_traf.exec_()
+
+                    if QtGui.QDialog.Rejected == l_ret_val:
+                        l_msg = QtGui.QMessageBox()
+                        l_msg.setIcon(QtGui.QMessageBox.Critical)
+                        l_msg_text = "Error creating file: %s" % l_traf_filename
+                        l_msg.setText(l_msg_text)
+                        l_msg.setWindowTitle("Start Session")
+                        l_msg.setStandardButtons(QtGui.QMessageBox.Ok)
+                        l_msg.exec_()
+
+                        return
+                    else:
+                        self.create_ptracks_traf(self.dlg_traf.get_data(), l_traf_filename)
+
+        l_split = l_file_path.split('/')
+        self.session_name = l_split [ len(l_split) - 1 ]
+
+        self.p = subprocess.Popen(['core-gui', '--start', l_file_path ],
+                                  stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+        l_status_msg = "Running the scenario: " + self.filename
+        self.statusbar.showMessage(l_status_msg)
+
+        self.check_process()
 
 
     # ---------------------------------------------------------------------------------------------
@@ -236,12 +293,129 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         # do the substitution
         result = l_src.substitute(l_data)
 
-        l_ptracks_dir = os.path.join(os.environ["HOME"], 'ptracks/data')
-        l_exe_filename = l_ptracks_dir + "/exes/" + self.filename  + ".exe.xml"
-
         # grava o arquivo de exercícios
         with open(f_scenario_filename, 'w') as f:
             f.write(result)
+
+
+    # ---------------------------------------------------------------------------------------------
+    def create_ptracks_traf(self, f_result_set, f_traf_filename):
+        """
+
+        :return:
+        """
+
+        # open template file (trafegos)
+        l_file_in = open("templates/trf.xml.in")
+
+        # read it
+        l_src = Template(l_file_in.read())
+
+        # document data
+        l_data = {"trafegos": '\n'.join(f_result_set)}
+
+        # do the substitution
+        l_result = l_src.substitute(l_data)
+
+        with open(f_traf_filename, 'w') as l_file:
+            l_file.write(l_result)
+
+
+    # ---------------------------------------------------------------------------------------------
+    def extract_anvs(self, f_xml_filename):
+        """
+        Extrai as aeronaves que foram criadas pelo core-gui.
+
+        :param f_xml_filename: nome do arquivo XML.
+        :return:
+        """
+        # cria o QFile para o arquivo XML
+        l_data_file = QtCore.QFile(f_xml_filename)
+        assert l_data_file is not None
+
+        # abre o arquivo XML
+        l_data_file.open(QtCore.QIODevice.ReadOnly)
+
+        # cria o documento XML
+        l_xdoc_aer = QtXml.QDomDocument("scenario")
+        assert l_xdoc_aer is not None
+
+        l_xdoc_aer.setContent(l_data_file)
+
+        # fecha o arquivo
+        l_data_file.close()
+
+        # obtém o elemento raíz do documento
+        l_elem_root = l_xdoc_aer.documentElement()
+        assert l_elem_root is not None
+
+        l_index = 0
+
+        # cria uma lista com os elementos
+        l_node_list = l_elem_root.elementsByTagName("host")
+
+        l_table_list = []
+
+        # para todos os nós na lista...
+        for li_ndx in xrange(l_node_list.length()):
+
+            l_element = l_node_list.at(li_ndx).toElement()
+            assert l_element is not None
+
+            if "host" != l_element.tagName():
+                continue
+
+            # read identification if available
+            if l_element.hasAttribute("id"):
+                ls_host_id = l_element.attribute("id")
+
+            # obtém o primeiro nó da sub-árvore
+            l_node = l_element.firstChild()
+            assert l_node is not None
+
+            lv_host_ok = False
+
+            # percorre a sub-árvore
+            while not l_node.isNull():
+                # tenta converter o nó em um elemento
+                l_element = l_node.toElement()
+                assert l_element is not None
+
+                # o nó é um elemento ?
+                if not l_element.isNull():
+                    if "type" == l_element.tagName():
+                        if "aircraft" == l_element.text():
+                            # faz o parse do elemento
+                            lv_host_ok = True
+
+                        else:
+                            break
+
+                    if "point" == l_element.tagName():
+                        # faz o parse do elemento
+                        lf_host_lat = float(l_element.attribute("lat"))
+                        lf_host_lng = float(l_element.attribute("lon"))
+
+                # próximo nó
+                l_node = l_node.nextSibling()
+                assert l_node is not None
+
+            # achou aircraft ?
+            if lv_host_ok:
+
+                l_table_item = { "node": str(ls_host_id), "latitude": lf_host_lat, "longitude": lf_host_lng,
+                                 "designador": "B737", "ssr": str(7001 + l_index),
+                                 "indicativo": "{}X{:03d}".format(str(ls_host_id[:3]).upper(), l_index + 1),
+                                 "origem": "SBGR", "destino": "SBBR", "proa": 60, "velocidade": 500,
+                                 "altitude": 2000, "procedimento": "trajetória" }
+
+
+                l_table_list.append ( l_table_item )
+
+                # incrementa contador de linhas
+                l_index += 1
+
+        return l_table_list
 
 
 # < the end>---------------------------------------------------------------------------------------
