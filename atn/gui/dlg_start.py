@@ -55,6 +55,7 @@ class CDlgStart(QtGui.QDialog, dstart_ui.Ui_dlg_start):
     def set_title(self, f_title):
         """
         Define o título da janela de diálogo com o nome do cenário de simulação (f_title)
+
         :param f_title: o nome do cenário de simulação.
         :return:
         """

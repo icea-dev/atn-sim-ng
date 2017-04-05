@@ -74,6 +74,7 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
     def diff_files(self, f_file1, f_file2):
         """
         Verifica a diferença entre os arquivos f_file1 e f_file2.
+
         :param f_file1:
         :param f_file1:
         :return: retorna True se os arquivos forem diferentes caso contrário False.
@@ -90,18 +91,22 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
 
         return False
 
+
     # ---------------------------------------------------------------------------------------------
     def check_process(self):
         """
+        Cria um timer de 100ms para verificar se o processo iniciado foi finalizado pela sua GUI.
 
         :return:
         """
         QtCore.QObject.connect(self.timer, QtCore.SIGNAL('timeout()'), self.cbk_check_process)
         self.timer.start(100)
 
+
     # ---------------------------------------------------------------------------------------------
     def cbk_check_process(self):
         """
+        Callback para verificar se a core-gui foi finalizado pela sua GUI.
 
         :return:
         """
@@ -114,16 +119,23 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
     # ---------------------------------------------------------------------------------------------
     def cbk_start_edit_mode(self):
         """
+        Inicia a core-gui no modo de edição.
 
         :return:
         """
+        # Se exitir algum processo iniciado e não finalizado, termina seu processamento.
         if self.p:
-            self.p.terminate()
+            l_ret_code = self.p.poll()
+            if l_ret_code is None:
+                self.p.terminate()
 
+        # Inicia o core-gui no modo de edição
         self.p = subprocess.Popen(['core-gui'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
+        # Apresenta a mensagem na barra de status da GUI
         self.statusbar.showMessage("Starting core-gui in edit mode!")
 
+        # Timer para verificar se o processo foi finalizado pelo core-gui.
         self.check_process()
 
 
@@ -131,47 +143,45 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
     def cbk_start_session(self):
         """
         Inicia a simulação de um determinado cenário de simulação. Verifica se existem os arquivos
-        necessários para execução do ptracks. Caso eles não exsitem é dado a possibilidade de
+        necessários para execução do ptracks. Caso não existam é dado a possibilidade de
         criá-los.
+
         :return:
         """
+
+        # Seleciona o arquivo cenário de simulação em XML
         l_scenario_dir = os.path.join(os.environ['HOME'], 'atn-sim/configs/scenarios')
         l_file_path = QtGui.QFileDialog.getOpenFileName(self, 'Open simulation scenario - XML',
                                                         l_scenario_dir, 'XML files (*.xml)')
 
+        # Nenhum arquivo selecionado, termina o processamento
         if not l_file_path:
             return
 
+        # Obtém o nome do arquivo do cenário de simulação sem a extensão.
         self.filename = os.path.splitext(os.path.basename(str(l_file_path)))[0]
+
+        # Monta o diretório de arquivos do ptracks
         l_ptracks_dir = os.path.join(os.environ["HOME"], 'atn-sim/ptracks/data')
         l_exe_filename = l_ptracks_dir + "/exes/" + self.filename  + ".exe.xml"
 
-        # Verifica se já existe um exercicio para o cenário escolhido
+        # Cria o arquivo de exercicio para o cenário escolhido caso ele não exista.
         if not os.path.isfile(l_exe_filename):
             self.create_ptracks_exe(l_exe_filename)
 
+        # Monta o nome do arquivo de tráfego do ptracks para o cenário de simulação escolhido
         l_traf_filename = l_ptracks_dir + "/traf/" + self.filename + ".trf.xml"
 
-        # Verifica se já existe um arquivo de tráfegos para o cenário escolhido
+        # Não existe um arquivo de tráfego para o cenário de simulação escolhido, cria ...
         if not os.path.isfile(l_traf_filename):
-            self.dlg_traf.populate_table(self.extract_anvs(l_file_path))
-            self.dlg_traf.set_title(self.filename)
-            l_ret_val = self.dlg_traf.exec_()
+            l_ret_val = self.create_new_ptracks_traf( l_file_path, l_traf_filename )
 
-            if QtGui.QDialog.Rejected == l_ret_val:
-                l_msg = QtGui.QMessageBox()
-                l_msg.setIcon(QtGui.QMessageBox.Critical)
-                l_msg_text = "Error creating file: %s" % l_traf_filename
-                l_msg.setText ( l_msg_text )
-                l_msg.setWindowTitle ( "Start Session" )
-                l_msg.setStandardButtons ( QtGui.QMessageBox.Ok )
-                l_msg.exec_()
-
+            # Arquivo de tráfego para o ptracks não foi criado, abandona a execução do
+            # cenário de simulação
+            if not l_ret_val:
                 return
-            else:
-                self.create_ptracks_traf(self.dlg_traf.get_data(), l_traf_filename)
         else:
-            # Arquivo de tráfegos existe, primeiro cria um arquivo de trafego temporário ...
+            # Arquivo dos tráfegos existe, primeiro cria um arquivo de trafego temporário ...
             self.dlg_traf.populate_table(self.extract_anvs(l_file_path))
             l_tmp_traf_filename = os.path.join(os.environ['HOME'], 'atn-sim/atn/gui') + "/" \
                                   + self.filename + ".trf.xml"
@@ -188,69 +198,112 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
 
                 # Cria um novo arquivo de aeronaves
                 if 1 == l_ret_val:
-                    self.dlg_traf.populate_table(self.extract_anvs(l_file_path))
-                    self.dlg_traf.set_title(self.filename)
-                    l_ret_val = self.dlg_traf.exec_()
+                    l_ret_val = self.create_new_ptracks_traf ( l_file_path, l_traf_filename )
 
-                    if QtGui.QDialog.Rejected == l_ret_val:
-                        l_msg = QtGui.QMessageBox()
-                        l_msg.setIcon(QtGui.QMessageBox.Critical)
-                        l_msg_text = "Error creating file: %s" % l_traf_filename
-                        l_msg.setText(l_msg_text)
-                        l_msg.setWindowTitle("Start Session")
-                        l_msg.setStandardButtons(QtGui.QMessageBox.Ok)
-                        l_msg.exec_()
+                    if not l_ret_val:
+                        return ;
 
-                        return
-                    else:
-                        self.create_ptracks_traf(self.dlg_traf.get_data(), l_traf_filename)
-
+        # Monta o nome da sessão que será executada no core-gui
         l_split = l_file_path.split('/')
         self.session_name = l_split [ len(l_split) - 1 ]
 
+        # Executa o core-gui
         self.p = subprocess.Popen(['core-gui', '--start', l_file_path ],
                                   stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
+        # Apresenta as mensagens na barra de status
         l_status_msg = "Running the scenario: " + self.filename
         self.statusbar.showMessage(l_status_msg)
 
+        # Timer para verificar se o processo foi finalizado pelo core-gui.
         self.check_process()
+
+
+    # ---------------------------------------------------------------------------------------------
+    def create_new_ptracks_traf ( self, f_scenario_file, f_traf_filename ):
+        """
+        A partir de um cenário de simulação, criado pelo core-gui pelo modo de edição, cria um
+        arquivo de tráfegos, em XML, para o sistema do ptracks (cinemática das aeronaves da simulação).
+
+        :param f_scenario_file: arquivo do cenário de simulação.
+        :param f_traf_filename: arquivo de tráfegos para o ptracks.
+        :return: True se o arquivo de tráfegos foi criado com sucesso caso contrário False.
+        """
+
+        # Extrai as informações do arquivo do cenário de simulação e popula a tabela da
+        # janela de diálogo de aeronaves
+        self.dlg_traf.populate_table ( self.extract_anvs ( f_scenario_file ) )
+
+        # Coloca o nome do arquivo do cenário de simulação na barra de título da janela de diálogo.
+        self.dlg_traf.set_title(self.filename)
+
+        # Abre a janela de diálogo
+        l_ret_val = self.dlg_traf.exec_()
+
+        # Verifica o código de retorno da janela de diálogo, caso desista da operação
+        # Avisa o usuário do erro de criação do arquivo de tráfegos.
+        if QtGui.QDialog.Rejected == l_ret_val:
+            l_msg = QtGui.QMessageBox()
+            l_msg.setIcon(QtGui.QMessageBox.Critical)
+            l_msg_text = "Error creating file: %s" % f_traf_filename
+            l_msg.setText(l_msg_text)
+            l_msg.setWindowTitle("Start Session")
+            l_msg.setStandardButtons(QtGui.QMessageBox.Ok)
+            l_msg.exec_()
+
+            return False
+        else:
+            # Cria o arquivo de tráfegos para o ptracks.
+            self.create_ptracks_traf(self.dlg_traf.get_data(), f_traf_filename )
+            return True
 
 
     # ---------------------------------------------------------------------------------------------
     def cbk_stop_session(self):
         """
         Stop running session
+
         :return:
         """
+        # Monta a mensagem para solicitar as sessões que estão sendo executadas no CORE
         l_num = '0'
         l_flags = coreapi.CORE_API_STR_FLAG
         l_tlv_data = coreapi.CoreSessionTlv.pack(coreapi.CORE_TLV_SESS_NUMBER, l_num)
         l_msg = coreapi.CoreSessionMessage.pack(l_flags, l_tlv_data)
 
+        # Socket para comunicação com o CORE, conecta-se ao CORE e envia a mensagem
         l_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         l_sock.connect(('localhost', coreapi.CORE_API_PORT))
         l_sock.send(l_msg)
 
+        # Espera a resposta do CORE
         l_hdr = l_sock.recv(coreapi.CoreMessage.hdrsiz)
         l_msg_type, l_msg_flags, l_msg_len = coreapi.CoreMessage.unpackhdr(l_hdr)
         l_data = ""
+
         if l_msg_len:
             l_data = l_sock.recv(l_msg_len)
+
+        # Desempacota a mensagem do CORE
         l_msg = coreapi.CoreMessage(l_msg_flags, l_hdr, l_data)
         l_sessions = l_msg.gettlv(coreapi.CORE_TLV_SESS_NUMBER)
         l_names = l_msg.gettlv(coreapi.CORE_TLV_SESS_NAME)
 
+        # Cria uma lista de strings com os identificadores das sessões que estão sendo executadas.
         l_lst_session = l_sessions.split('|')
 
+        # Existem nomes para as sessões ?
         if l_names != None:
+            # Cria uma lista com os nomes das sessões que estão sendo executadas.
             l_lst_names = l_names.split('|')
             l_index = 0
             while True:
+                # Tenta encontrar o nome da sessão que está sendo executada
                 if l_lst_names [ l_index ] == self.session_name:
                     break
                 l_index += 1
 
+            # Monta a mensagem para finalizar a sessão no CORE
             l_num = l_lst_session [ l_index ]
             l_flags = coreapi.CORE_API_DEL_FLAG
             l_tlv_data = coreapi.CoreSessionTlv.pack(coreapi.CORE_TLV_SESS_NUMBER, l_num)
@@ -259,10 +312,13 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
 
         l_sock.close()
 
+        # Finaliza a core-gui
         if self.p:
             self.p.terminate()
 
+        # Limpa a barra de status da GUI
         self.statusbar.clearMessage()
+
 
     # ---------------------------------------------------------------------------------------------
     def cbk_scenario_to_xml(self):
@@ -272,10 +328,12 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         """
         pass
 
+
     # ---------------------------------------------------------------------------------------------
     def create_ptracks_exe(self, f_scenario_filename):
         """
         Cria o arquivo exe do ptracks para o cenário solicitado
+
         :param f_scenario_filename: o nome do cenário de simulação
         :return:
         """
@@ -301,7 +359,10 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
     # ---------------------------------------------------------------------------------------------
     def create_ptracks_traf(self, f_result_set, f_traf_filename):
         """
+        Cria um arquivo de tráfegos para po ptracks
 
+        :param f_result_set: lista de dicionários com as informações necessárias para criar o tráfego.
+        :param f_traf_filename: o nome do aquivo de tráfegos para o ptracks.
         :return:
         """
 
@@ -407,7 +468,7 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
                                  "designador": "B737", "ssr": str(7001 + l_index),
                                  "indicativo": "{}X{:03d}".format(str(ls_host_id[:3]).upper(), l_index + 1),
                                  "origem": "SBGR", "destino": "SBBR", "proa": 60, "velocidade": 500,
-                                 "altitude": 2000, "procedimento": "trajetória" }
+                                 "altitude": 2000, "procedimento": u"trajetória" }
 
 
                 l_table_list.append ( l_table_item )

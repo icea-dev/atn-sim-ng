@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'dlg_start.ui'
 #
-# Created: Tue Apr  4 16:23:04 2017
+# Created: Wed Apr  5 10:53:28 2017
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -52,6 +52,6 @@ class Ui_dlg_start(object):
         dlg_start.setWindowTitle(_translate("dlg_start", "Start Simulation", None))
         self.lbl_text.setText(_translate("dlg_start", "<html><head/><body><p align=\"center\"><span style=\" font-size:16pt; color:#ff0000;\">The aircraft in the simulation scenario may have changed.</span></p><p align=\"center\"><span style=\" font-size:16pt; color:#ff0000;\">What do you want to do ?</span></p></body></html>", None))
         self.btn_upgrade.setText(_translate("dlg_start", "Upgrade the aircraft of the scenario", None))
-        self.btn_run.setText(_translate("dlg_start", "Run the simulation without changing the aicraft", None))
+        self.btn_run.setText(_translate("dlg_start", "Run the simulation without changing the aircraft", None))
         self.btn_cancel.setText(_translate("dlg_start", "Cancel the ATN simulation", None))
 
