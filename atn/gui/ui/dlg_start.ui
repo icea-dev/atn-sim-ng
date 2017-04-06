@@ -33,7 +33,7 @@
      <item>
       <widget class="QPushButton" name="btn_run">
        <property name="text">
-        <string>Run the simulation without changing the aicraft</string>
+        <string>Run the simulation without changing the aircraft</string>
        </property>
       </widget>
      </item>

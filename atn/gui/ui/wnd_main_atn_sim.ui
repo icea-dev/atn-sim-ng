@@ -83,6 +83,7 @@ p, li { white-space: pre-wrap; }
     <addaction name="separator"/>
     <addaction name="act_start_dump1090"/>
     <addaction name="act_start_visil"/>
+    <addaction name="act_start_pilot"/>
     <addaction name="separator"/>
     <addaction name="act_quit"/>
    </widget>
@@ -131,6 +132,7 @@ p, li { white-space: pre-wrap; }
    <addaction name="separator"/>
    <addaction name="act_start_dump1090"/>
    <addaction name="act_start_visil"/>
+   <addaction name="act_start_pilot"/>
    <addaction name="separator"/>
    <addaction name="act_db_edit"/>
    <addaction name="separator"/>
@@ -251,6 +253,16 @@ p, li { white-space: pre-wrap; }
    </property>
    <property name="text">
     <string>About</string>
+   </property>
+  </action>
+  <action name="act_start_pilot">
+   <property name="icon">
+    <iconset resource="../icons/wnd_main_atn_sim.qrc">
+     <normaloff>:/gui/pilot.png</normaloff>
+     <normalon>:/gui/pilot-military.png</normalon>:/gui/pilot.png</iconset>
+   </property>
+   <property name="text">
+    <string>Start Pilot</string>
    </property>
   </action>
  </widget>
