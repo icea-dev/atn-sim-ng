@@ -1,5 +1,8 @@
 <RCC>
   <qresource prefix="gui">
+    <file>pilot-military-48.png</file>
+    <file>pilot-military.png</file>
+    <file>pilot.png</file>
     <file>db_edit.png</file>
     <file>add_aircraft.png</file>
     <file>applications-office.png</file>
