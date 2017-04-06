@@ -52,8 +52,10 @@ class CDlgTraf(QtGui.QDialog, dtrf_ui.Ui_dlg_trf):
 
         self.qtw_trf.setColumnCount(12)
         self.qtw_trf.setHorizontalHeaderLabels(
-            ["Node", "Latitude", "Longitude", "Designador", "SSR", "Indicativo", "Origem", "Destino", "Proa", "Velocidade",
-             "Altitude", "Procedimento"])
+            ["Node", "Latitude", "Longitude", "Type of Acft", "SSR", "Callsign", "Departure", "Arrival", "Heading", "Speed",
+             "Altitude", "Procedure"])
+
+        self.qtw_trf.horizontalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
 
         # do signal/slot connections
         self.btn_cancel.clicked.connect(self.on_cancel)
@@ -63,6 +65,7 @@ class CDlgTraf(QtGui.QDialog, dtrf_ui.Ui_dlg_trf):
 
         self.designador_list = self.load_performance()
         self.proc_list = self.load_tables()
+
 
     # ---------------------------------------------------------------------------------------------
     def load_xml_file(self, f_xml_filename, f_element, f_attribute):
@@ -175,8 +178,6 @@ class CDlgTraf(QtGui.QDialog, dtrf_ui.Ui_dlg_trf):
         # List all the files and folders in the current directory
         l_dir = os.path.join(os.environ["HOME"], 'atn-sim/ptracks/data/proc/')
         l_xml_files = self.filter_XML_files(os.listdir(l_dir))
-
-        print l_xml_files
 
         l_result = []
 
@@ -326,6 +327,14 @@ class CDlgTraf(QtGui.QDialog, dtrf_ui.Ui_dlg_trf):
             # procedimento
             self.qtw_trf.setCellWidget(l_row, 11, self.prc)
 
+        # redefine o tamanho da QTableWidget
+        self.qtw_trf.resizeRowsToContents()
+        self.qtw_trf.resizeColumnsToContents()
+
+        # Define o novo tamanho da janela de diálogo de tráfegos
+        width = self.qtw_trf.horizontalHeader().length() + \
+                ( self.qtw_trf.horizontalHeader().sizeHint().width() *  3 / 4 )
+        self.setFixedWidth ( width + 10 )
 
     # ---------------------------------------------------------------------------------------------
     def selectionchange(self,i):
@@ -403,7 +412,6 @@ class CDlgTraf(QtGui.QDialog, dtrf_ui.Ui_dlg_trf):
             l_altitude = self.qtw_trf.cellWidget(l_row, 10).value()
             # procedimento
             l_procedimento = self.qtw_trf.cellWidget(l_row, 11).currentText().toUtf8()
-            l_procedimento = "TRJ200"
 
             l_data = {"ntrf": l_row + 1, "latitude": l_latitude, "longitude": l_longitude,
                     "designador": l_designador, "ssr": l_ssr, "indicativo": l_indicativo,
@@ -415,9 +423,6 @@ class CDlgTraf(QtGui.QDialog, dtrf_ui.Ui_dlg_trf):
             l_result.append(l_src.substitute(l_data))
 
         return l_result
-
-
-# < the end>---------------------------------------------------------------------------------------
 
 
 # < the end>---------------------------------------------------------------------------------------

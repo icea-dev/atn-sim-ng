@@ -468,7 +468,7 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
                                  "designador": "B737", "ssr": str(7001 + l_index),
                                  "indicativo": "{}X{:03d}".format(str(ls_host_id[:3]).upper(), l_index + 1),
                                  "origem": "SBGR", "destino": "SBBR", "proa": 60, "velocidade": 500,
-                                 "altitude": 2000, "procedimento": u"trajetória" }
+                                 "altitude": 2000, "procedimento": "TRJ200" }
 
 
                 l_table_list.append ( l_table_item )

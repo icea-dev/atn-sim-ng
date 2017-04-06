@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'wnd_main_atn_sim.ui'
 #
-# Created: Wed Apr  5 10:53:28 2017
+# Created: Thu Apr  6 11:31:12 2017
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -124,6 +124,12 @@ class Ui_CWndMainATNSim(object):
         icon10.addPixmap(QtGui.QPixmap(_fromUtf8(":/gui/help-about.png")), QtGui.QIcon.Normal, QtGui.QIcon.On)
         self.act_about.setIcon(icon10)
         self.act_about.setObjectName(_fromUtf8("act_about"))
+        self.act_start_pilot = QtGui.QAction(CWndMainATNSim)
+        icon11 = QtGui.QIcon()
+        icon11.addPixmap(QtGui.QPixmap(_fromUtf8(":/gui/pilot.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon11.addPixmap(QtGui.QPixmap(_fromUtf8(":/gui/pilot-military.png")), QtGui.QIcon.Normal, QtGui.QIcon.On)
+        self.act_start_pilot.setIcon(icon11)
+        self.act_start_pilot.setObjectName(_fromUtf8("act_start_pilot"))
         self.menuSimulation.addAction(self.act_edit_scenario)
         self.menuSimulation.addSeparator()
         self.menuSimulation.addAction(self.act_start_session)
@@ -131,6 +137,7 @@ class Ui_CWndMainATNSim(object):
         self.menuSimulation.addSeparator()
         self.menuSimulation.addAction(self.act_start_dump1090)
         self.menuSimulation.addAction(self.act_start_visil)
+        self.menuSimulation.addAction(self.act_start_pilot)
         self.menuSimulation.addSeparator()
         self.menuSimulation.addAction(self.act_quit)
         self.menuConfiguration.addAction(self.act_db_edit)
@@ -151,6 +158,7 @@ class Ui_CWndMainATNSim(object):
         self.toolBar.addSeparator()
         self.toolBar.addAction(self.act_start_dump1090)
         self.toolBar.addAction(self.act_start_visil)
+        self.toolBar.addAction(self.act_start_pilot)
         self.toolBar.addSeparator()
         self.toolBar.addAction(self.act_db_edit)
         self.toolBar.addSeparator()
@@ -191,5 +199,6 @@ class Ui_CWndMainATNSim(object):
         self.act_add_aircraft.setText(_translate("CWndMainATNSim", "Add an aircraft ...", None))
         self.act_show_manual.setText(_translate("CWndMainATNSim", "Manual", None))
         self.act_about.setText(_translate("CWndMainATNSim", "About", None))
+        self.act_start_pilot.setText(_translate("CWndMainATNSim", "Start Pilot", None))
 
 import wnd_main_atn_sim_rc

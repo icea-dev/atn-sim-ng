@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'dlg_traf.ui'
 #
-# Created: Wed Apr  5 10:53:28 2017
+# Created: Thu Apr  6 11:31:12 2017
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -27,6 +27,11 @@ class Ui_dlg_trf(object):
     def setupUi(self, dlg_trf):
         dlg_trf.setObjectName(_fromUtf8("dlg_trf"))
         dlg_trf.resize(578, 300)
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(dlg_trf.sizePolicy().hasHeightForWidth())
+        dlg_trf.setSizePolicy(sizePolicy)
         self.verticalLayout = QtGui.QVBoxLayout(dlg_trf)
         self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
         self.gbx_tbl = QtGui.QGroupBox(dlg_trf)
