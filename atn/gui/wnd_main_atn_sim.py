@@ -70,6 +70,7 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         self.dlg_traf = dtraf_ui.CDlgTraf()
         self.dlg_start = dstart_ui.CDlgStart()
 
+
     # ---------------------------------------------------------------------------------------------
     def diff_files(self, f_file1, f_file2):
         """
@@ -210,6 +211,8 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         # Executa o core-gui
         self.p = subprocess.Popen(['core-gui', '--start', l_file_path ],
                                   stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+        # Executar o ptracks .....
 
         # Apresenta as mensagens na barra de status
         l_status_msg = "Running the scenario: " + self.filename
@@ -457,6 +460,11 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
                         lf_host_lat = float(l_element.attribute("lat"))
                         lf_host_lng = float(l_element.attribute("lon"))
 
+                    if "alias" == l_element.tagName():
+                        if l_element.hasAttribute("domain"):
+                            if "COREID" == l_element.attribute("domain"):
+                                li_ntrf = int(l_element.text())
+
                 # próximo nó
                 l_node = l_node.nextSibling()
                 assert l_node is not None
@@ -468,7 +476,7 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
                                  "designador": "B737", "ssr": str(7001 + l_index),
                                  "indicativo": "{}X{:03d}".format(str(ls_host_id[:3]).upper(), l_index + 1),
                                  "origem": "SBGR", "destino": "SBBR", "proa": 60, "velocidade": 500,
-                                 "altitude": 2000, "procedimento": "TRJ200" }
+                                 "altitude": 2000, "procedimento": "TRJ200", "id": str(li_ntrf) }
 
 
                 l_table_list.append ( l_table_item )

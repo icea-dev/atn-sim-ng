@@ -50,10 +50,11 @@ class CDlgTraf(QtGui.QDialog, dtrf_ui.Ui_dlg_trf):
         # create window
         self.setupUi(self)
 
-        self.qtw_trf.setColumnCount(12)
+        self.qtw_trf.setColumnCount(13)
         self.qtw_trf.setHorizontalHeaderLabels(
             ["Node", "Latitude", "Longitude", "Type of Acft", "SSR", "Callsign", "Departure", "Arrival", "Heading", "Speed",
-             "Altitude", "Procedure"])
+             "Altitude", "Procedure", "ID"])
+        self.qtw_trf.setColumnHidden(12, True)
 
         self.qtw_trf.horizontalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
 
@@ -248,7 +249,7 @@ class CDlgTraf(QtGui.QDialog, dtrf_ui.Ui_dlg_trf):
             # cria nova linha na tabela
             self.qtw_trf.insertRow(l_row)
 
-            # node
+            # node name
             self.qtw_trf.setItem(l_row, 0, QtGui.QTableWidgetItem( f_table[l_row]['node'] ))
 
             # cria doubleSpinBox para latitude
@@ -319,13 +320,15 @@ class CDlgTraf(QtGui.QDialog, dtrf_ui.Ui_dlg_trf):
 
             # cria combo para procedimento
             self.prc = QtGui.QComboBox()
-            #self.prc.addItems([u"trajetória", "espera", "subida"])
             self.prc.addItems(self.proc_list)
             self.prc.setCurrentIndex(self.prc.findText(f_table[l_row]['procedimento']))
             self.prc.currentIndexChanged.connect(self.selectionchange)
 
             # procedimento
             self.qtw_trf.setCellWidget(l_row, 11, self.prc)
+
+            # traffic number
+            self.qtw_trf.setItem(l_row, 12, QtGui.QTableWidgetItem(f_table[l_row]['id']))
 
         # redefine o tamanho da QTableWidget
         self.qtw_trf.resizeRowsToContents()
@@ -389,7 +392,8 @@ class CDlgTraf(QtGui.QDialog, dtrf_ui.Ui_dlg_trf):
         # para todas as linhas da tabela...
         for l_row in xrange(0, self.qtw_trf.rowCount()):
             # node
-            l_node = self.qtw_trf.item(l_row, 0).text().toUtf8()
+            l_node = self.qtw_trf.item(l_row, 12).text().toUtf8()
+
             # latitude
             l_latitude = self.qtw_trf.cellWidget(l_row, 1).value()
             # longitude
@@ -413,7 +417,7 @@ class CDlgTraf(QtGui.QDialog, dtrf_ui.Ui_dlg_trf):
             # procedimento
             l_procedimento = self.qtw_trf.cellWidget(l_row, 11).currentText().toUtf8()
 
-            l_data = {"ntrf": l_row + 1, "latitude": l_latitude, "longitude": l_longitude,
+            l_data = {"ntrf": l_node, "latitude": l_latitude, "longitude": l_longitude,
                     "designador": l_designador, "ssr": l_ssr, "indicativo": l_indicativo,
                     "origem": l_origem, "destino": l_destino, "proa": l_proa,
                     "velocidade": l_velocidade, "altitude": l_altitude,
