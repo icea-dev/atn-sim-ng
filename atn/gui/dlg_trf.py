@@ -43,7 +43,7 @@ import dlg_traf_ui as dtrf_ui
 class CDlgTraf(QtGui.QDialog, dtrf_ui.Ui_dlg_trf):
 
     # ---------------------------------------------------------------------------------------------
-    def __init__(self, f_parent=None):
+    def __init__(self, f_parent=None, f_ptracks_dir=os.path.join(os.environ["HOME"], 'ptracks')):
         # init super class
         QtGui.QDialog.__init__(self, f_parent)
 
@@ -61,6 +61,7 @@ class CDlgTraf(QtGui.QDialog, dtrf_ui.Ui_dlg_trf):
         # do signal/slot connections
         self.btn_cancel.clicked.connect(self.on_cancel)
         self.btn_create.clicked.connect(self.on_create)
+        self.ptracks_dir = f_ptracks_dir
 
         self.scenario_filename = ""
 
@@ -130,7 +131,7 @@ class CDlgTraf(QtGui.QDialog, dtrf_ui.Ui_dlg_trf):
         """
 
         # Monta o nome do arquivo de performance de aeronaves do ptracks
-        l_xml_filename = os.path.join(os.environ["HOME"], 'atn-sim/ptracks/data/tabs') + "/tabPrf.xml"
+        l_xml_filename = os.path.join(self.ptracks_dir, 'data/tabs/tabPrf.xml')
 
         return self.load_xml_file(l_xml_filename, 'performance', 'nPrf')
 
@@ -148,7 +149,7 @@ class CDlgTraf(QtGui.QDialog, dtrf_ui.Ui_dlg_trf):
         l_file_extensions = ['XML']
         l_result = []
 
-        l_dir = os.path.join(os.environ["HOME"], 'atn-sim/ptracks/data/proc/')
+        l_dir = os.path.join(self.ptracks_dir, 'data/proc/')
 
         # loop through all the file and folders
         for l_filename in f_filenames:
@@ -177,7 +178,7 @@ class CDlgTraf(QtGui.QDialog, dtrf_ui.Ui_dlg_trf):
                          'Trj': 'trajetoria'}
 
         # List all the files and folders in the current directory
-        l_dir = os.path.join(os.environ["HOME"], 'atn-sim/ptracks/data/proc/')
+        l_dir = os.path.join(self.ptracks_dir, 'data/proc/')
         l_xml_files = self.filter_XML_files(os.listdir(l_dir))
 
         l_result = []
@@ -338,6 +339,7 @@ class CDlgTraf(QtGui.QDialog, dtrf_ui.Ui_dlg_trf):
         width = self.qtw_trf.horizontalHeader().length() + \
                 ( self.qtw_trf.horizontalHeader().sizeHint().width() *  3 / 4 )
         self.setFixedWidth ( width + 10 )
+
 
     # ---------------------------------------------------------------------------------------------
     def selectionchange(self,i):

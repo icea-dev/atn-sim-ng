@@ -39,6 +39,7 @@ from core.api import coreapi
 import os
 import socket
 import subprocess
+import ConfigParser
 import wnd_main_atn_sim_ui as wmain_ui
 import dlg_trf as dtraf_ui
 import dlg_start as dstart_ui
@@ -57,6 +58,8 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
 
         self.p = None
 
+        self.loadConfigFile()
+
         self.timer = QtCore.QTimer()
 
         # create signal and slots connections
@@ -67,8 +70,32 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
 
         self.act_scenario_to_xml.triggered.connect(self.cbk_scenario_to_xml)
 
-        self.dlg_traf = dtraf_ui.CDlgTraf()
+        self.dlg_traf = dtraf_ui.CDlgTraf(f_ptracks_dir=self.ptracks_dir)
+
         self.dlg_start = dstart_ui.CDlgStart()
+
+
+    # ---------------------------------------------------------------------------------------------
+    def loadConfigFile(self, config="atn-sim-gui.cfg"):
+        """
+        Faz a leitura de um arquivo de configuração para carregar o diretório do arquivo do cenário
+        da simulação criado pelo CORE e do diretório do gerador de informações de alvos ptracks.
+
+        :param config: nome do arquivo de configuração.
+        :return:
+        """
+
+        if os.path.exists(config):
+            conf = ConfigParser.ConfigParser()
+            conf.read(config)
+
+            self.scenario_dir = conf.get("Dir", "scenario")
+            self.ptracks_dir = conf.get("Dir", "ptracks")
+        else:
+            self.scenario_dir = os.path.join(os.environ['HOME'], 'atn-sim/configs/scenarios')
+            self.ptracks_dir = os.path.join(os.environ['HOME'], 'ptracks')
+
+        self.ptracks_data_dir = os.path.join(self.ptracks_dir, 'data')
 
 
     # ---------------------------------------------------------------------------------------------
@@ -151,9 +178,8 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         """
 
         # Seleciona o arquivo cenário de simulação em XML
-        l_scenario_dir = os.path.join(os.environ['HOME'], 'atn-sim/configs/scenarios')
         l_file_path = QtGui.QFileDialog.getOpenFileName(self, 'Open simulation scenario - XML',
-                                                        l_scenario_dir, 'XML files (*.xml)')
+                                                        self.scenario_dir, 'XML files (*.xml)')
 
         # Nenhum arquivo selecionado, termina o processamento
         if not l_file_path:
@@ -163,15 +189,14 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         self.filename = os.path.splitext(os.path.basename(str(l_file_path)))[0]
 
         # Monta o diretório de arquivos do ptracks
-        l_ptracks_dir = os.path.join(os.environ["HOME"], 'atn-sim/ptracks/data')
-        l_exe_filename = l_ptracks_dir + "/exes/" + self.filename  + ".exe.xml"
+        l_exe_filename = self.ptracks_data_dir + "/exes/" + self.filename  + ".exe.xml"
 
         # Cria o arquivo de exercicio para o cenário escolhido caso ele não exista.
         if not os.path.isfile(l_exe_filename):
             self.create_ptracks_exe(l_exe_filename)
 
         # Monta o nome do arquivo de tráfego do ptracks para o cenário de simulação escolhido
-        l_traf_filename = l_ptracks_dir + "/traf/" + self.filename + ".trf.xml"
+        l_traf_filename = self.ptracks_data_dir + "/traf/" + self.filename + ".trf.xml"
 
         # Não existe um arquivo de tráfego para o cenário de simulação escolhido, cria ...
         if not os.path.isfile(l_traf_filename):
