@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 ---------------------------------------------------------------------------------------------------
-wnd_main_atnsim
+wnd_main_atn_sim
 
 janela principal do simulador
 
@@ -56,19 +56,40 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         # create main menu ui
         self.setupUi(self)
 
+        # core-gui process
         self.p = None
+
+        # ptracks simulator processes
+        self.ptracks = None
+        self.adapter = None
+        self.visil = None
+        self.pilot = None
 
         self.loadConfigFile()
 
         self.timer = QtCore.QTimer()
 
+        self.act_stop_session.setEnabled(False)
+        self.act_start_dump1090.setEnabled(False)
+        self.act_start_visil.setEnabled(False)
+        self.act_start_pilot.setEnabled(False)
+        self.act_add_aircraft.setEnabled(False)
+
+        self.act_db_edit.setEnabled(False)
+        self.act_scenario_to_xml.setEnabled(False)
+        self.act_scenario_to_exe.setEnabled(False)
+
+
         # create signal and slots connections
         self.act_edit_scenario.triggered.connect(self.cbk_start_edit_mode)
         self.act_start_session.triggered.connect(self.cbk_start_session)
         self.act_stop_session.triggered.connect(self.cbk_stop_session)
+        self.act_start_pilot.triggered.connect(self.cbk_start_pilot)
+        self.act_start_visil.triggered.connect(self.cbk_start_visil)
+
         self.act_quit.triggered.connect(QtGui.QApplication.quit)
 
-        self.act_scenario_to_xml.triggered.connect(self.cbk_scenario_to_xml)
+        #self.act_scenario_to_xml.triggered.connect(self.cbk_scenario_to_xml)
 
         self.dlg_traf = dtraf_ui.CDlgTraf(f_ptracks_dir=self.ptracks_dir)
 
@@ -143,6 +164,43 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
             self.statusbar.clearMessage()
             self.timer.stop()
 
+            if self.act_start_session.isEnabled() is False:
+                self.act_start_session.setEnabled(True)
+
+            if self.act_edit_scenario.isEnabled() is False:
+                self.act_edit_scenario.setEnabled(True)
+
+            # Desabilita as ações para uma simulação ATN ativa
+            self.act_stop_session.setEnabled(False)
+            self.act_start_dump1090.setEnabled(False)
+            self.act_start_visil.setEnabled(False)
+            self.act_start_pilot.setEnabled(False)
+            self.act_add_aircraft.setEnabled(False)
+
+            # Finaliza o adapter do ptracks para o core-gui
+            if self.adapter:
+                kill = "kill -9 $(pgrep -P " + str(self.adapter.pid) + ")"
+                os.system(kill)
+                self.adapter.terminate()
+
+            # Finaliza o ptracks
+            if self.ptracks:
+                kill = "kill -9 $(pgrep -P " + str(self.ptracks.pid) + ")"
+                os.system(kill)
+                self.ptracks.terminate()
+
+            # Finaliza a visualização do ptracks
+            if self.visil:
+                kill = "kill -9 $(pgrep -P " + str(self.visil.pid) + ")"
+                os.system(kill)
+                self.visil.terminate()
+
+            # Finaliza o piloto do ptracks
+            if self.pilot:
+                kill = "kill -9 $(pgrep -P " + str(self.pilot.pid) + ")"
+                os.system(kill)
+                self.pilot.terminate()
+
 
     # ---------------------------------------------------------------------------------------------
     def cbk_start_edit_mode(self):
@@ -165,6 +223,10 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
 
         # Timer para verificar se o processo foi finalizado pelo core-gui.
         self.check_process()
+
+        # Desabilitar a ação de iniciar a simulação
+        self.act_start_session.setEnabled(False)
+        self.act_edit_scenario.setEnabled(False)
 
 
     # ---------------------------------------------------------------------------------------------
@@ -238,6 +300,18 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
                                   stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
         # Executar o ptracks .....
+        l_cur_dir = os.getcwd()
+        os.chdir(self.ptracks_dir)
+
+        self.adapter = subprocess.Popen(['python', 'adapter.py'], stdout=subprocess.PIPE,
+                                        stderr=subprocess.STDOUT)
+        print "Adapter PID :", self.adapter.pid
+
+        self.ptracks = subprocess.Popen(['python', 'newton.py', '-e', self.filename],
+                                        stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        print "PTRACKS PID :", self.ptracks.pid
+
+        os.chdir(l_cur_dir)
 
         # Apresenta as mensagens na barra de status
         l_status_msg = "Running the scenario: " + self.filename
@@ -245,6 +319,17 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
 
         # Timer para verificar se o processo foi finalizado pelo core-gui.
         self.check_process()
+
+        # Desabilita as ações de criar cenario e iniciar a simulação ATN
+        self.act_edit_scenario.setEnabled(False)
+        self.act_start_session.setEnabled(False)
+
+        # Habilita as ações para uma simulação ATN ativa
+        self.act_stop_session.setEnabled(True)
+        self.act_start_dump1090.setEnabled(True)
+        self.act_start_visil.setEnabled(True)
+        self.act_start_pilot.setEnabled(True)
+        self.act_add_aircraft.setEnabled(True)
 
 
     # ---------------------------------------------------------------------------------------------
@@ -340,12 +425,91 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
 
         l_sock.close()
 
+        # Finaliza a visualização do ptracks
+        if self.visil:
+            kill = "kill -9 $(pgrep -P " + str(self.visil.pid) + ")"
+            print "Finalizando o visil [%s]" % kill
+            os.system(kill)
+            self.visil.terminate()
+
+        # Finaliza o piloto do ptracks
+        if self.pilot:
+            kill = "kill -9 $(pgrep -P " + str(self.pilot.pid) + ")"
+            print "Finalizando o piloto [%s]" % kill
+            os.system(kill)
+            self.pilot.terminate()
+
         # Finaliza a core-gui
         if self.p:
+            self.timer.stop()
             self.p.terminate()
+
+        # Finaliza o adapter do ptracks para o core-gui
+        if self.adapter:
+            kill = "kill -9 $(pgrep -P " + str(self.adapter.pid) + ")"
+            print "Finalizando o adpater [%s]" % kill
+            os.system(kill)
+            self.adapter.terminate()
+
+        # Finaliza o ptracks
+        if self.ptracks:
+            kill = "kill -9 $(pgrep -P " + str(self.ptracks.pid) + ")"
+            print "Finalizando o ptracks [%s]" % kill
+            os.system(kill)
+            self.ptracks.terminate()
+
 
         # Limpa a barra de status da GUI
         self.statusbar.clearMessage()
+
+        # Habilita as ações de criar cenario e iniciar a simulação ATN
+        self.act_edit_scenario.setEnabled(True)
+        self.act_start_session.setEnabled(True)
+
+        # Habilita as ações para uma simulação ATN ativa
+        self.act_stop_session.setEnabled(False)
+        self.act_start_dump1090.setEnabled(False)
+        self.act_start_visil.setEnabled(False)
+        self.act_start_pilot.setEnabled(False)
+        self.act_add_aircraft.setEnabled(False)
+
+
+    # ---------------------------------------------------------------------------------------------
+    def cbk_start_pilot(self):
+        """
+        Inicia o piloto do ptracks
+        :return:
+        """
+        # Muda para o diretório onde o sistema do ptracks se encontra
+        l_cur_dir = os.getcwd()
+        os.chdir(self.ptracks_dir)
+
+        # Executa o piloto
+        self.pilot = subprocess.Popen(['python', 'piloto.py'], stdout=subprocess.PIPE,
+                                        stderr=subprocess.STDOUT)
+        print "PILOTO PID", self.pilot.pid
+
+        # Retorna para o diretório do simulador ATN
+        os.chdir(l_cur_dir)
+
+
+    # ---------------------------------------------------------------------------------------------
+    def cbk_start_visil(self):
+        """
+        Inicia a visualização do ptracks
+        :return:
+        """
+        # Muda para o diretório onde o sistema do ptracks se encontra
+        l_cur_dir = os.getcwd()
+        os.chdir(self.ptracks_dir)
+
+        # Executa o piloto
+        self.visil = subprocess.Popen(['python', 'visil.py'], stdout=subprocess.PIPE,
+                                        stderr=subprocess.STDOUT)
+        print "VISIL PID", self.visil.pid
+
+        # Retorna para o diretório do simulador ATN
+        os.chdir(l_cur_dir)
 
 
     # ---------------------------------------------------------------------------------------------

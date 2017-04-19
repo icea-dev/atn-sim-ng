@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 """
 ---------------------------------------------------------------------------------------------------
-wnd_main_atnsim
+wnd_trf
 
-janela principal do simulador
+janela de tráfegos do cenário de simulação
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
