@@ -6,7 +6,7 @@
         <destino>$destino</destino>
         <temptrafego>0</temptrafego>
         <coord>
-            <tipo>G</tipo>
+            <tipo>L</tipo>
             <cpoA>$latitude</cpoA>
             <cpoB>$longitude</cpoB>
         </coord>
