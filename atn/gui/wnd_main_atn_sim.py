@@ -69,11 +69,8 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
 
         self.timer = QtCore.QTimer()
 
-        self.act_stop_session.setEnabled(False)
-        self.act_start_dump1090.setEnabled(False)
-        self.act_start_visil.setEnabled(False)
-        self.act_start_pilot.setEnabled(False)
-        self.act_add_aircraft.setEnabled(False)
+        # Desabilita as ações para a sessão em tempo de execução
+        self.enabled_actions(False)
 
         self.act_db_edit.setEnabled(False)
         self.act_scenario_to_xml.setEnabled(False)
@@ -170,36 +167,11 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
             if self.act_edit_scenario.isEnabled() is False:
                 self.act_edit_scenario.setEnabled(True)
 
-            # Desabilita as ações para uma simulação ATN ativa
-            self.act_stop_session.setEnabled(False)
-            self.act_start_dump1090.setEnabled(False)
-            self.act_start_visil.setEnabled(False)
-            self.act_start_pilot.setEnabled(False)
-            self.act_add_aircraft.setEnabled(False)
+            # Desabilita as ações para uma sessão em tempo de execução
+            self.enabled_actions(False)
 
-            # Finaliza o adapter do ptracks para o core-gui
-            if self.adapter:
-                kill = "kill -9 $(pgrep -P " + str(self.adapter.pid) + ")"
-                os.system(kill)
-                self.adapter.terminate()
-
-            # Finaliza o ptracks
-            if self.ptracks:
-                kill = "kill -9 $(pgrep -P " + str(self.ptracks.pid) + ")"
-                os.system(kill)
-                self.ptracks.terminate()
-
-            # Finaliza a visualização do ptracks
-            if self.visil:
-                kill = "kill -9 $(pgrep -P " + str(self.visil.pid) + ")"
-                os.system(kill)
-                self.visil.terminate()
-
-            # Finaliza o piloto do ptracks
-            if self.pilot:
-                kill = "kill -9 $(pgrep -P " + str(self.pilot.pid) + ")"
-                os.system(kill)
-                self.pilot.terminate()
+            # Finaliza os processos iniciados.
+            self.kill_processes()
 
 
     # ---------------------------------------------------------------------------------------------
@@ -227,6 +199,24 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         # Desabilitar a ação de iniciar a simulação
         self.act_start_session.setEnabled(False)
         self.act_edit_scenario.setEnabled(False)
+
+
+    # ---------------------------------------------------------------------------------------------
+    def enabled_actions(self, status):
+        """
+        Habilita ous desabilita as ações do menu para o core-gui em tempo de execução da simulação do
+        cenário.
+
+        :param status: True habilita a ação e False desbilita.
+        :return:
+        """
+
+        # Desabilita as ações para uma simulação ATN ativa
+        self.act_stop_session.setEnabled(status)
+        self.act_start_dump1090.setEnabled(status)
+        self.act_start_visil.setEnabled(status)
+        self.act_start_pilot.setEnabled(status)
+        self.act_add_aircraft.setEnabled(status)
 
 
     # ---------------------------------------------------------------------------------------------
@@ -265,9 +255,14 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
             l_ret_val = self.create_new_ptracks_traf( l_file_path, l_traf_filename )
 
             # Arquivo de tráfego para o ptracks não foi criado, abandona a execução do
-            # cenário de simulação
+            # cenário de simulação, avisa do erro !
             if not l_ret_val:
                 return
+
+        '''
+        Temporariamente desabilitar a ação de verificar se um arquivo de tráfegos foi
+        modificado
+
         else:
             # Arquivo dos tráfegos existe, primeiro cria um arquivo de trafego temporário ...
             self.dlg_traf.populate_table(self.extract_anvs(l_file_path))
@@ -290,6 +285,7 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
 
                     if not l_ret_val:
                         return ;
+        '''
 
         # Monta o nome da sessão que será executada no core-gui
         l_split = l_file_path.split('/')
@@ -302,15 +298,11 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         # Executar o ptracks .....
         l_cur_dir = os.getcwd()
         os.chdir(self.ptracks_dir)
-
         self.adapter = subprocess.Popen(['python', 'adapter.py'], stdout=subprocess.PIPE,
                                         stderr=subprocess.STDOUT)
-        print "Adapter PID :", self.adapter.pid
 
         self.ptracks = subprocess.Popen(['python', 'newton.py', '-e', self.filename],
                                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        print "PTRACKS PID :", self.ptracks.pid
-
         os.chdir(l_cur_dir)
 
         # Apresenta as mensagens na barra de status
@@ -325,11 +317,7 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         self.act_start_session.setEnabled(False)
 
         # Habilita as ações para uma simulação ATN ativa
-        self.act_stop_session.setEnabled(True)
-        self.act_start_dump1090.setEnabled(True)
-        self.act_start_visil.setEnabled(True)
-        self.act_start_pilot.setEnabled(True)
-        self.act_add_aircraft.setEnabled(True)
+        self.enabled_actions(True)
 
 
     # ---------------------------------------------------------------------------------------------
@@ -425,39 +413,13 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
 
         l_sock.close()
 
-        # Finaliza a visualização do ptracks
-        if self.visil:
-            kill = "kill -9 $(pgrep -P " + str(self.visil.pid) + ")"
-            print "Finalizando o visil [%s]" % kill
-            os.system(kill)
-            self.visil.terminate()
-
-        # Finaliza o piloto do ptracks
-        if self.pilot:
-            kill = "kill -9 $(pgrep -P " + str(self.pilot.pid) + ")"
-            print "Finalizando o piloto [%s]" % kill
-            os.system(kill)
-            self.pilot.terminate()
-
         # Finaliza a core-gui
         if self.p:
             self.timer.stop()
             self.p.terminate()
 
-        # Finaliza o adapter do ptracks para o core-gui
-        if self.adapter:
-            kill = "kill -9 $(pgrep -P " + str(self.adapter.pid) + ")"
-            print "Finalizando o adpater [%s]" % kill
-            os.system(kill)
-            self.adapter.terminate()
-
-        # Finaliza o ptracks
-        if self.ptracks:
-            kill = "kill -9 $(pgrep -P " + str(self.ptracks.pid) + ")"
-            print "Finalizando o ptracks [%s]" % kill
-            os.system(kill)
-            self.ptracks.terminate()
-
+        # Finalizar os processos iniciados
+        self.kill_processes()
 
         # Limpa a barra de status da GUI
         self.statusbar.clearMessage()
@@ -466,12 +428,8 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         self.act_edit_scenario.setEnabled(True)
         self.act_start_session.setEnabled(True)
 
-        # Habilita as ações para uma simulação ATN ativa
-        self.act_stop_session.setEnabled(False)
-        self.act_start_dump1090.setEnabled(False)
-        self.act_start_visil.setEnabled(False)
-        self.act_start_pilot.setEnabled(False)
-        self.act_add_aircraft.setEnabled(False)
+        # Desabilita as ações para uma simulação ATN ativa
+        self.enabled_actions(False)
 
 
     # ---------------------------------------------------------------------------------------------
@@ -487,7 +445,6 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         # Executa o piloto
         self.pilot = subprocess.Popen(['python', 'piloto.py'], stdout=subprocess.PIPE,
                                         stderr=subprocess.STDOUT)
-        print "PILOTO PID", self.pilot.pid
 
         # Retorna para o diretório do simulador ATN
         os.chdir(l_cur_dir)
@@ -506,7 +463,6 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         # Executa o piloto
         self.visil = subprocess.Popen(['python', 'visil.py'], stdout=subprocess.PIPE,
                                         stderr=subprocess.STDOUT)
-        print "VISIL PID", self.visil.pid
 
         # Retorna para o diretório do simulador ATN
         os.chdir(l_cur_dir)
@@ -676,4 +632,38 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         return l_table_list
 
 
+    # ---------------------------------------------------------------------------------------------
+    def kill_processes(self):
+        """
+        Finaliza os processos que podem ser inciados pela GUI.
+        :return:
+        """
+        # Finaliza o adapter do ptracks para o core-gui
+
+        if self.adapter:
+            kill = "kill -9 $(pgrep -P " + str(self.adapter.pid) + ")"
+            os.system(kill)
+            self.adapter.terminate()
+
+        # Finaliza o ptracks
+        if self.ptracks:
+            kill = "kill -9 $(pgrep -P " + str(self.ptracks.pid) + ")"
+            os.system(kill)
+            self.ptracks.terminate()
+
+        # Finaliza a visualização do ptracks
+        if self.visil:
+            kill = "kill -9 $(pgrep -P " + str(self.visil.pid) + ")"
+            os.system(kill)
+            self.visil.terminate()
+
+        # Finaliza o piloto do ptracks
+        if self.pilot:
+            kill = "kill -9 $(pgrep -P " + str(self.pilot.pid) + ")"
+            os.system(kill)
+            self.pilot.terminate()
+
+
 # < the end>---------------------------------------------------------------------------------------
+
+
