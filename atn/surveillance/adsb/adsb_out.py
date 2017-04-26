@@ -66,13 +66,10 @@ class AdsbOut:
 
         if feed is None:
             self.feed = CoreFeed()
-
-            # Initiate readings from gps device (latitude, longitude, altitude)
-            # self.feed.gps_start()
-            self.feed.tracksrv_start()
-
         else:
             self.feed = feed
+
+        self.feed.start()
 
         # Resolving broadcast address of primary interface
         ipaddr = ni.ifaddresses(self.net_iface)[2][0]['addr']
@@ -200,14 +197,14 @@ class AdsbOut:
         # ICAO 24
         icao24 = self.feed.get_icao24()
 
+        # implementation of SPI
+        if spi:
+            sv = 3
+
         # implementation of SSR
         # Emergency Codes (7500-hijack; 7600-failure on the radio; 7700 - emergency)
         if (ssr == "7500") or (ssr == "7600") or (ssr == "7700"):
             sv = 1
-
-        # implementation of SPI
-        if spi:
-            sv = 3
 
         # NIC Supplement-B
         nicsb = 0
