@@ -48,6 +48,7 @@ import dlg_start as dstart_ui
 
 class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
 
+
     # ---------------------------------------------------------------------------------------------
     def __init__(self, f_parent=None):
         # init super class
@@ -64,6 +65,7 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         self.adapter = None
         self.visil = None
         self.pilot = None
+        self.db_edit = None
 
         self.loadConfigFile()
 
@@ -72,10 +74,8 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         # Desabilita as ações para a sessão em tempo de execução
         self.enabled_actions(False)
 
-        self.act_db_edit.setEnabled(False)
         self.act_scenario_to_xml.setEnabled(False)
         self.act_scenario_to_exe.setEnabled(False)
-
 
         # create signal and slots connections
         self.act_edit_scenario.triggered.connect(self.cbk_start_edit_mode)
@@ -83,6 +83,8 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         self.act_stop_session.triggered.connect(self.cbk_stop_session)
         self.act_start_pilot.triggered.connect(self.cbk_start_pilot)
         self.act_start_visil.triggered.connect(self.cbk_start_visil)
+
+        self.act_db_edit.triggered.connect(self.cbk_start_db_edit)
 
         self.act_quit.triggered.connect(QtGui.QApplication.quit)
 
@@ -466,6 +468,41 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
 
         # Retorna para o diretório do simulador ATN
         os.chdir(l_cur_dir)
+
+
+    # ---------------------------------------------------------------------------------------------
+    def cbk_start_db_edit(self):
+        """
+
+        :return:
+        """
+
+        # Se exitir algum processo iniciado e não finalizado, termina seu processamento.
+        if self.db_edit:
+            l_ret_code = self.db_edit.poll()
+            if l_ret_code is None:
+                l_msg = QtGui.QMessageBox()
+                l_msg.setIcon(QtGui.QMessageBox.Information)
+                l_msg_text = "The exercise manager is already running!"
+                l_msg.setText(l_msg_text)
+                l_msg.setWindowTitle("Manage Exercises")
+                l_msg.setStandardButtons(QtGui.QMessageBox.Ok)
+                l_msg.exec_()
+                return
+
+        # Muda para o diretório onde o sistema do ptracks se encontra
+        l_cur_dir = os.getcwd()
+        os.chdir(self.ptracks_dir)
+
+        # Inicia o core-gui no modo de edição
+        self.db_edit = subprocess.Popen(['python', 'dbEdit.py'], stdout=subprocess.PIPE,
+                                        stderr=subprocess.STDOUT)
+
+        # Retorna para o diretório do simulador ATN
+        os.chdir(l_cur_dir)
+
+        # Apresenta a mensagem na barra de status da GUI
+        self.statusbar.showMessage("Starting editing the ptracks database!")
 
 
     # ---------------------------------------------------------------------------------------------
