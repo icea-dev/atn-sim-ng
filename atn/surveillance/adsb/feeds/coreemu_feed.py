@@ -138,6 +138,9 @@ class CoreFeed(AdsbFeed):
     def get_type(self):
         return 0
 
+    def start(self):
+        self.tracksrv_start()
+
     def gps_start(self):
         t1 = threading.Thread(target=self.gps_read, args=())
         t1.start()

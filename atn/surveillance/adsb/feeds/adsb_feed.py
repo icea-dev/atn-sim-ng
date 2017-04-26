@@ -79,3 +79,11 @@ class AdsbFeed(object):
     @abstractmethod
     def get_type(self):
         raise NotImplementedError()
+
+    @abstractmethod
+    def is_track_updated(self):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def start(self):
+        raise NotImplementedError()
