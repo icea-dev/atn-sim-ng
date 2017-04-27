@@ -1,0 +1,17 @@
+.idea
+.pycheckrc
+*.pyc
+*.pyo
+*.out
+*.old
+*.log
+*.err
+*.docx
+*.doc
+*.bkp
+*.x
+*.tgz
+*.zip
+*~
+bkp
+images
