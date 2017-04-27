@@ -27,16 +27,26 @@ __date__ = "2017/04"
 
 # < imports >--------------------------------------------------------------------------------------
 import logging
+import netifaces as ni
+import socket
 import threading
 
 from .adsb_feed import AdsbFeed
 
+
 class CorePtracksFeed(AdsbFeed):
     """
-
+    Class that provides information for ADS-B Out transponders.
+    Receives the information from the aircraft of the track generator (ptracks).
+    The aircraft information is read through the CORE control network.
     """
+
     log_file = "core_ptracks_feed.log"
     log_level = logging.DEBUG
+
+    # Interface da rede de controle do CORE
+    ctrl_net_iface = "ctrl0"
+    ctrl_net_port = 4038
 
     # 'CA' Capability Field : 5 - Signifies Level 2 or above transponder, and the ability to set "CA"
     # code 7, and airbone
@@ -46,6 +56,8 @@ class CorePtracksFeed(AdsbFeed):
     # 0 : No ADS-B Emitter Category Information
     EMITTER_CATEGORY = 0
 
+    FT_TO_M = 0.3048
+    KT_TO_MPS = 0.51444444444
 
     # -------------------------------------------------------------------------------------------------
     def __init__(self):
@@ -59,19 +71,27 @@ class CorePtracksFeed(AdsbFeed):
 
         self.logger = logging.getLogger("core_ptracks_feed")
 
+        # Locking
+        self.data_lock = threading.Lock()
+
         # Init attributes aircraft data
-        self.ssr           = None
-        self.spi           = False
-        self.atitude       = 0
-        self.latitude      = 0
-        self.longitude     = 0
-        self.ground_speed  = 0
+        self.ssr = None
+        self.spi = False
+        self.atitude = 0
+        self.latitude = 0
+        self.longitude = 0
+        self.ground_speed = 0
         self.vertical_rate = 0
-        self.heading       = 0
-        self.callsign      = None
+        self.heading = 0
+        self.callsign = None
         self.aircraft_type = None
-        self.timestamp     = 0
-        self.icao24        = None
+        self.timestamp = 0
+        self.old_timestamp = 0
+        self.icao24 = None
+
+        # IP address of incoming messages
+        self.ctrl_net_host = ni.ifaddresses(self.ctrl_net_iface)[2][0]['addr']
+        logging.debug("Control Network host %s" % self.ctrl_net_host)
 
 
     # -------------------------------------------------------------------------------------------------
@@ -81,7 +101,11 @@ class CorePtracksFeed(AdsbFeed):
 
         :return: string
         """
-        return self.ssr
+        self.data_lock.acquire()
+        ssr = self.ssr
+        self.data_lock.release()
+
+        return ssr
 
 
     # -------------------------------------------------------------------------------------------------
@@ -90,7 +114,11 @@ class CorePtracksFeed(AdsbFeed):
         Returns the status of Special Pulse Identification (SPI) of aircraft
         :return: bool, True SPI is activated otherwise False
         """
-        return self.spi
+        self.data_lock.acquire()
+        spi = self.spi
+        self.data_lock.release()
+
+        return spi
 
 
     # -------------------------------------------------------------------------------------------------
@@ -99,7 +127,11 @@ class CorePtracksFeed(AdsbFeed):
         Returns the callsign of aircraft
         :return: string
         """
-        return self.callsign
+        self.data_lock.acquire()
+        callsign = self.callsign
+        self.data_lock.release()
+
+        return callsign
 
 
     # -------------------------------------------------------------------------------------------------
@@ -108,7 +140,13 @@ class CorePtracksFeed(AdsbFeed):
         Returns latitude, longitude and altitude of aircraft
         :return: (latitude in degrees, longitude in degress, altitude in meters)
         """
-        return self.latitude, self.longitude, self.altitude
+        self.data_lock.acquire()
+        latitude = self.latitude
+        longitude = self.longitude
+        altitude = self.altitude
+        self.data_lock.release()
+
+        return latitude, longitude, altitude
 
 
     # -------------------------------------------------------------------------------------------------
@@ -117,7 +155,13 @@ class CorePtracksFeed(AdsbFeed):
         Returns heading, vertical rate and ground speed of aircraft
         :return: (heading in degrees, vertical rate in meters per second, ground speed in meters per second)
         """
-        return self.heading, self.vertical_rate, self.ground_speed
+        self.data_lock.acquire()
+        heading = self.heading
+        vertical_rate = self.vertical_rate
+        ground_speed = self.ground_speed
+        self.data_lock.release()
+
+        return heading, vertical_rate, ground_speed
 
 
     # -------------------------------------------------------------------------------------------------
@@ -126,7 +170,11 @@ class CorePtracksFeed(AdsbFeed):
         Returns the ICAO 24 bit code identifier of aircraft
         :return: ICAO 24 bit code
         """
-        return self.icao24
+        self.data_lock.acquire()
+        icao24 = self.icao24
+        self.data_lock.release()
+
+        return icao24
 
 
     # -------------------------------------------------------------------------------------------------
@@ -156,40 +204,106 @@ class CorePtracksFeed(AdsbFeed):
         Check if aircraft data is updated.
         :return: bool, True if aircraft is updated otherwise False
         """
-        if self.tracksrv_perftype is None:
-            return False
-        if self.get_callsign() is None:
-            return False
-        return True
+        self.data_lock.acquire()
+        ret_code = ( self.old_timestamp < self.timestamp )
+        self.data_lock.release()
+
+        return ret_code
 
     # -------------------------------------------------------------------------------------------------
     def start(self):
         """
-        Starts reading aircraft data from CORE
+        Starts reading aircraft data from track generator (ptracks)
         :return:
         """
-        t1 = threading.Thread(target=self.core_read, args=())
+        t1 = threading.Thread(target=self.ptracks_read, args=())
         t1.start()
 
 
     # -------------------------------------------------------------------------------------------------
-    def core_read(self):
-        pass
+    def process_message(self, message):
+        """
+        Processes the message from the track generator.
+        Splits the message and store the aircraft information.
+
+        :param message: the track generator message
+        :return:
+        """
+        # ex: #1#7003#-1#4656.1#-16.48614#-47.947058#210.8#9.7#353.9#TAM6543#B737#21653.3006492#icao24
+
+        # Node number
+        msg_num = int(message[0])
+
+        # SSR
+        self.ssr = message[1]
+
+        # SPI
+        msg_spi = int(message[2])
+
+        # if spi > 0, SPI=ON, otherwise SPI=OFF
+        if msg_spi > 1:
+            self.spi = True
+        else:
+            self.spi = False
+
+        # Altitude (feet)
+        self.altitude = float(message[3])
+        self.altitude = self.altitude * self.FT_TO_M
+
+        # Latitude (degrees)
+        self.latitude = float(message[4])
+
+        # Longitude (degrees)
+        self.longitude = float(message[5])
+
+        # Ground speed (knots)
+        self.ground_speed = float(message[6])
+        self.ground_speed = self.ground_speed * self.KT_TO_MPS
+
+        # Vertical rate (m/s)
+        self.vertical_rate = float(message[7])
+
+        # Heading (degrees)
+        self.heading = float(message[8])
+
+        # Callsign
+        self.callsign = message[9]
+
+        # Aircraft performance type
+        self.aircraft_type = message[10]
+
+        # Timestamp
+        self.old_timestamp = self.timestamp
+        self.timestamp = float(message[11])
+
+        # ICAO 24 bit code
+        self.icao24 = message[12]
 
 
-'''
-msg_num = int(message[2])  # node id
-msg_ssr = message[3]
-msg_spi = int(message[4])  # if spi > 0, SPI=ON, otherwise SPI=OFF
-msg_alt = float(message[5])  # altitude (feet)
-msg_lat = float(message[6])  # latitude (degrees)
-msg_lon = float(message[7])  # longitude (degrees)
-msg_vel = float(message[8])  # velocity (knots)
-msg_cbr = float(message[9])  # climb rate (m/s)
-msg_azm = float(message[10])  # azimuth (degrees)
-msg_csg = message[11]  # callsign
-msg_per = message[12]  # aircraft performance type
-msg_tim = float(message[13])  # timestamp (see "hora de inicio")
-'''
+    # -------------------------------------------------------------------------------------------------
+    def ptracks_read(self):
+        """
+        Thread for reading the track generator (ptracks) data
+        :return:
+        """
+
+        # Create a socket for receiving ptracks messages
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        sock.bind((self.ctrl_net_host, self.ctrl_net_port))
+
+        logging.info("Listen on IP %s port %s " % (self.ctrl_net_host, str(self.net_port)))
+
+        while True:
+            # Buffer size is 1024 bytes
+            data, addr = sock.recvfrom(1024)
+            message = data.split("#")
+
+            logging.info("Data received [%s]" % data)
+            self.data_lock.acquire()
+            self.process_message(message)
+            self.data_lock.release()
+
 
 # < the end >--------------------------------------------------------------------------------------

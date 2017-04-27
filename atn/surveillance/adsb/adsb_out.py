@@ -32,6 +32,7 @@ import time
 import adsb_utils
 
 from .feeds.coreemu_feed import CoreFeed
+from .feeds.core_ptracks_feed import CorePtracksFeed
 
 __author__ = "Marcio Monteiro, Alexandre Magno"
 __version__ = "0.1"
@@ -426,9 +427,17 @@ if __name__ == '__main__':
 
     time.sleep(3)
 
+    feed_name = 'ptracks'
+
     name = None
+
     if len(sys.argv) > 1:
         name = sys.argv[1]
 
-    transponder = AdsbOut(nodename=name)
+    feed = None
+
+    if feed_name == 'ptracks':
+        feed = CorePtracksFeed()
+
+    transponder = AdsbOut(nodename=None, feed=feed)
     transponder.start()
