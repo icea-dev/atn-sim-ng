@@ -141,7 +141,10 @@ class AdsbOut:
         if message is None:
             return False
         if self.nodename is None:
-            self.net_sock.sendto(message, (self.net_dest, self.net_port))
+            lat, lon, alt = self.feed.get_position()
+
+            self.net_sock.sendto(message + " " + str(lat) + " " + str(lon) + " " +str(alt),
+                                 (self.net_dest, self.net_port))
             return True
         else:
             self.net_sock.sendto(message + " " + self.nodename, (self.net_dest, self.net_port))
