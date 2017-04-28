@@ -1,275 +1,396 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-#
-# Copyright 2016, ICEA
-#
-# This file is part of atn-sim
-#
-# atn-sim is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# atn-sim is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
+---------------------------------------------------------------------------------------------------
+Copyright 2016, ICEA
 
+This file is part of atn-sim
 
+atn-sim is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+atn-sim is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+revision 0.2  2017/abr  mlabru
+remoção da mysql
+
+revision 0.1  2016/dez  matiasims
+initial release (Linux/Python)
+---------------------------------------------------------------------------------------------------
+"""
+__version__ = "$revision: 0.2$"
+__author__ = "Milton Abrunhosa"
+__date__ = "2017/04"
+
+# < imports >--------------------------------------------------------------------------------------
+
+# Python library
 import ConfigParser
 import logging
 import math
-import MySQLdb
 import os
 import Queue
 import socket
+import sys
 import threading
 import time
 
-from .forwarders.dump1090_fwrd import Dump1090Forwarder
-from .forwarders.database_fwrd import DatabseForwarder
-from .forwarders.asterix_fwrd import AsterixForwarder
-from ..asterix.adsb_decoder import AdsBDecoder
-from ..asterix.asterix_encoder import AdsBAsterixEncode
+# atn-sim
+from atn.surveillance.adsb.forwarders.asterix_fwrd import AsterixForwarder
+from atn.surveillance.adsb.forwarders.dump1090_fwrd import Dump1090Forwarder
 
-import atn.core_utils as core_utils
-import atn.emane_utils as emane_utils
+from atn.surveillance.asterix.adsb_decoder import AdsBDecoder
+from atn.surveillance.asterix.asterix_encoder import AdsBAsterixEncode
+
+#import atn.core_utils as core_utils
+#import atn.emane_utils as emane_utils
 import atn.geo_utils as geo_utils
+import atn.location as location
 
-__author__ = "Ivan Matias"
-__version__ = "0.1"
-__date__ = "2016-dec-08"
+# < module data >----------------------------------------------------------------------------------
 
+# logger
+M_LOG_FILE = "adsb_in.log"
+M_LOG_LEVEL = logging.DEBUG
 
-class AdsbIn:
+# receiver
+M_NET_PORT = 30001
+M_MAX_REC_MSGS = 5000
+M_RECV_BUFF_SIZE = 1024
 
-    log_file = "adsbin.log"
-    log_level = logging.DEBUG
+# asterix server
+M_QUEUE_SIZE = 10
+M_ASTERIX_PORT = 15000
+M_ASTERIX_HOST = "localhost"
 
-    net_port = 30001
+# speed of light (m/s)
+M_LIGHT_SPEED = 299792458.
 
-    rec_msgs = []
-    max_rec_msgs = 5000
+# latitude central (CORE)
+M_LAT_REF = -13.869227
 
-    # Asterix
-    QUEUE_SIZE = 10
-    asterix_server = False
-    asterix_sic = None
-    asterix_rx_port = None
-    asterix_tx_port = None
-    asterix_dst = None
+# longitude central (CORE)
+M_LNG_REF = -49.918091
 
-    db_name = 'atn_sim'
-    db_user = 'atn_sim'
-    db_pass = 'atn_sim'
-    db_host = '172.17.255.254'
+# < class AdsbIn >---------------------------------------------------------------------------------
 
-    def __init__(self, config="adsbin.cfg", store_msgs=False):
-        # Logging
-        logging.basicConfig(filename=self.log_file, level=self.log_level, filemode='w',
-                            format='%(asctime)s %(levelname)s: %(message)s')
+class AdsbIn(object):
+    """
+    DOCUMENT ME!
+    """
+    # ---------------------------------------------------------------------------------------------
+    def __init__(self, ff_x, ff_y, ff_z, fs_config="adsb_in.cfg", fv_store_msgs=False):
+        """
+        constructor
+        
+        @param ff_(x, y, z): station position
+        @param fs_config: arquivo de configuração
+        @param fv_store_msgs: flag store messages (False)
+        """
+        # flag store messages
+        self.__v_store_rec_msgs = fv_store_msgs
 
-        self.store_rec_msgs = store_msgs
+        # destinations to which messages will be forwarded to
+        self.__lst_forwarders = []
 
-        # List of destination to which received messages will be forwarded to.
-        self.forwarders = []
+        # received messages
+        self.__lst_rec_msgs = []
 
-        # Id
+        # id
         self.id = None
 
-        # DB connection with general purposes
-        self.db = MySQLdb.connect(self.db_host, self.db_user, self.db_pass, self.db_name)
+        # asterix forwarder/server
+        self.__v_asterix_server = False
+        self.__i_asterix_rx_port = None
+        self.__i_asterix_tx_port = None
+        self.__i_asterix_sic = None
+        self.__s_asterix_dest = None
 
-        if os.path.exists(config):
-            conf = ConfigParser.ConfigParser()
-            conf.read(config)
+        # load configuration file
+        self.__load_config(fs_config)
 
-            self.id = conf.get("General", "id")
+        # create CORE location
+        self.__core_location = location.CLocation()
+        assert self.__core_location
 
-            # Reading destinations to forward received messages
-            for dst in conf.get("General", "destinations").split():
-                items = conf.items(dst)
-                d = {}
+        # configure reference point
+        self.__core_location.configure_values("0|0|{}|{}|2|50000".format(M_LAT_REF, M_LNG_REF))
 
-                for i in items:
-                    d[i[0]] = i[1]
+        # discover station location
+        self.__f_lat, self.__f_lng, self.__f_alt = self.__core_location.getgeo(ff_x, ff_y, ff_z)
+      
+    # ---------------------------------------------------------------------------------------------
+    def __estimate_toa(self, fs_message):
+        """
+        make a estimate of time of arrival
+        """
+        # clear to go
+        assert fs_message
 
-                if d["type"] == "dump1090":
-                    f = Dump1090Forwarder(items=d)
-                    f.set_timeout(0.5)
-                    self.forwarders.append(f)
-                elif d["type"] == "database":
-                    f = DatabseForwarder(sensor_id=self.id, items=d)
-                    self.forwarders.append(f)
-                elif d["type"] == "asterix":
-                    # Enable Asterix Server
-                    self.asterix_server = True
+        # split message
+        llst_msg = fs_message.split()
+        logging.debug("llst_msg: {}".format(llst_msg))
 
-                    # Asterix parameters
-                    self.asterix_sic = int(d["sic"])
-                    self.asterix_rx_port = 15000
-                    self.asterix_tx_port = int(d["port"])
-                    self.asterix_dst = d["server"]
+        # ads-b message
+        ls_msg_adsb = llst_msg[0]
+        
+        # received position
+        lf_rcv_lat = float(llst_msg[1])
+        lf_rcv_lon = float(llst_msg[2])
+        lf_rcv_alt = float(llst_msg[3])
 
-                    # Forwards to local Asterix Server, which is listening on localhost:15000
-                    d["server"] = "127.0.0.1"
-                    d["port"] = self.asterix_rx_port
+        # convert lat/lng to enu 
+        lf_x, lf_y, lf_z = geo_utils.geog2enu(lf_rcv_lat, lf_rcv_lon, lf_rcv_alt, 
+                                              self.__f_lat, self.__f_lng, self.__f_alt)
 
-                    # Create forwarder
-                    f = AsterixForwarder(items=d)
-                    self.forwarders.append(f)
+        # euclidean distance
+        lf_dist = math.sqrt(lf_x * lf_x + lf_y * lf_y + lf_z * lf_z)
+        logging.debug("lf_dist: {}".format(lf_dist))
+
+        # return ads-b message, estimated time (distance / speed of light)
+        return ls_msg_adsb, lf_dist / M_LIGHT_SPEED
+
+    # ---------------------------------------------------------------------------------------------
+    def __load_config(self, fs_config):
+        """
+        load configuration from file
+        
+        @param fs_config: configuration file
+        """    
+        # configuration file exists ?
+        if os.path.exists(fs_config):
+            # create parser
+            l_parser = ConfigParser.ConfigParser()
+
+            # load file through parser
+            l_parser.read(fs_config)
+
+            # set id
+            self.id = l_parser.get("General", "id")
+
+            # reading destinations to forward received messages...
+            for l_dest in l_parser.get("General", "destinations").split():
+                # items from destination
+                llst_items = l_parser.items(l_dest)
+
+                # init key=value dictionary
+                ldct_options = {}
+
+                # for all items...
+                for lt_item in llst_items:
+                    # put item (key, value) on dictionary
+                    ldct_options[lt_item[0]] = lt_item[1]
+
+                # destiny is dump1090 ? 
+                if ldct_options["type"].lower() == "dump1090":
+                    # create dump 1090 forwarder
+                    l_fwdr = Dump1090Forwarder(items=ldct_options)
+                    assert l_fwdr
+                    
+                    l_fwdr.set_timeout(0.5)
+                    
+                    # put on forwarders list
+                    self.__lst_forwarders.append(l_fwdr)
+
+                # destiny is database ?
+                elif ldct_options["type"].lower() == "database":
+                    # create database forwarder
+                    l_fwdr = DatabseForwarder(sensor_id=self.id, items=ldct_options)
+                    assert l_fwdr
+                    
+                    # put on forwarders list
+                    self.__lst_forwarders.append(l_fwdr)
+
+                # destiny is asterix ?
+                elif ldct_options["type"].lower() == "asterix":
+                    # enable asterix server
+                    self.__v_asterix_server = True
+
+                    # asterix parameters
+                    self.__i_asterix_sic = int(ldct_options["sic"])
+                    self.__i_asterix_rx_port = M_ASTERIX_PORT
+                    self.__i_asterix_tx_port = int(ldct_options["port"])
+                    self.__s_asterix_dest = ldct_options["server"]
+
+                    # forwards to local asterix server, which is listening on localhost:15000
+                    ldct_options["server"] = M_ASTERIX_HOST
+                    ldct_options["port"] = M_ASTERIX_PORT
+
+                    # create asterix forwarder
+                    l_fwdr = AsterixForwarder(items=ldct_options)
+                    assert l_fwdr 
+
+                    # put on forwarders list
+                    self.__lst_forwarders.append(l_fwdr)
+
+        # senão,...
         else:
             self.id = core_utils.get_node_name()
 
-        # Discover self location
-        cursor = self.db.cursor()
-        cursor.execute("SELECT B.id from node A, nem B where A.id=B.node_id and A.name='%s'" % self.id)
-        result = cursor.fetchone()
-
-        if result is not None:
-            self.nemid = int(result[0])
-
-            location = emane_utils.get_nem_location(self.nemid)
-
-            self.latitude = location['latitude']
-            self.longitude = location['longitude']
-            self.altitude = location['altitude']
-
-    def _start_asterix_server(self):
-
-        print "Intializing Asterix Server..."
-
-        sic = self.asterix_sic
-        rx_port = self.asterix_rx_port
-        tx_port = self.asterix_tx_port
-        net = self.asterix_dst
-
-        queue = Queue.Queue(self.QUEUE_SIZE)
-
-        # Create an object to decode ADS-B Message
-        decoder = AdsBDecoder(sic)
-        decoder.create_socket(rx_port)
-        decoder.set_queue(queue)
-        decoder.start_thread()
-
-        # Create an object to encode ASTERIX
-        encoder = AdsBAsterixEncode(sic)
-        encoder.create_socket(tx_port)
-        encoder.set_net(net)
-        encoder.set_queue(queue)
-        encoder.start_thread()
-
-    def start(self):
-        t1 = threading.Thread(target=self._start, args=())
-        t1.start()
-
-        # If receiver contains an Asterix destination ...
-        if self.asterix_server:
-            t2 = threading.Thread(target=self._start_asterix_server, args=())
-            t2.start()
-
-    def _start(self):
-        print "  ,---.  ,------.   ,---.        ,-----.          ,--.         "
-        print " /  O  \ |  .-.  \ '   .-',-----.|  |) /_         |  |,--,--,  "
-        print "|  .-.  ||  |  \  :`.  `-.'-----'|  .-.  \        |  ||      \ "
-        print "|  | |  ||  '--'  /.-'    |      |  '--' /        |  ||  ||  | "
-        print "`--' `--'`-------' `-----'       `------'         `--'`--''--' "
-
-        # Create a socket for receiving ADS-B messages
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        sock.bind(('', self.net_port))
-
-        logging.info("Waiting on port :" + str(self.net_port))
-
-        t0 = time.time()
-        num_msgs = 0
-
-        while True:
-
-            # Buffer size is 1024 bytes
-            message_raw, addr = sock.recvfrom(1024)
-            splits = message_raw.split()
-
-            if len(splits) > 1:
-                message = splits[0]
-                tx_node = splits[1]
-                toa_est = self.estimate_toa(tx_node)
-            else:
-                message = splits[0]
-                tx_node = None
-                toa_est = None
-
-            # Time of arrival
-            toa = time.time()
-
-            # Debugging info
-            # self.logger.info("Received message from " + str(addr) + " : " + data + " at t=%.20f" % toa)
-
-            if self.store_rec_msgs:
-                if len(self.rec_msgs) <= self.max_rec_msgs:
-                    self.store_msg(message)
-
-            # Forward received ADS-B message to all configured forwarders
-            for f in self.forwarders:
-                # f.forward(message, toa_est, tx_node, self.id)
-                f.forward(message, toa_est)
-
-            # Logging
-            t1 = time.time()
-            num_msgs += 1
-
-            if t1 - t0 > 30:
-                logging.info("Throughput = %f msgs/sec" % (num_msgs/(t1-t0)))
-                t0 = time.time()
-                num_msgs = 0
-
-    def stop(self):
-        pass
-
-    def store_msg(self, message):
-        self.rec_msgs.append(message)
-
+    # ---------------------------------------------------------------------------------------------
     def retrieve_msg(self):
-        if len(self.rec_msgs) > 0:
-            return self.rec_msgs.pop()
-        else:
-            return None
+        """
+        DOCUMENT ME!
+        """
+        if len(self.__lst_rec_msgs) > 0:
+            return self.__lst_rec_msgs.pop()
 
-    def estimate_toa(self, tx_node):
-        query_tx = "SELECT B.latitude, B.longitude, B.altitude FROM node A, nem B WHERE A.name='%s' and A.id=B.node_id" % tx_node
-        cursor = self.db.cursor()
-
-        cursor.execute(query_tx)
-        result_tx = cursor.fetchone()
-
-        if result_tx is not None:
-            tx_lat = float(result_tx[0])
-            tx_lon = float(result_tx[1])
-            tx_alt = float(result_tx[2])
-
-            cursor.close()
-
-            x, y, z = geo_utils.geog2enu(tx_lat, tx_lon, tx_alt, self.latitude, self.longitude, self.altitude)
-
-            h1 = math.sqrt(x*x + y*y)
-            dt = math.sqrt(h1*h1 + z*z)
-
-            # The speed of light
-            E = 299792458.0
-
-            toa = dt / E
-
-            return toa
-
+        # return
         return None
 
+    # ---------------------------------------------------------------------------------------------
+    def __init_asterix_server(self):
+        """
+        intialize asterix server
+        """
+        # warning
+        print "intializing asterix server..."
 
-if __name__ == '__main__':
+        # create message queue
+        l_queue = Queue.Queue(M_QUEUE_SIZE)
+        assert l_queue 
 
-    transponder = AdsbIn()
-    transponder.start()
+        # create a decoder for ADS-B messages
+        l_decoder = AdsBDecoder(self.__i_asterix_sic)
+        assert l_decoder
+
+        l_decoder.create_socket(self.__i_asterix_rx_port)
+        l_decoder.set_queue(l_queue)
+        l_decoder.start_thread()
+
+        # create a encoder to ASTERIX
+        l_encoder = AdsBAsterixEncode(self.__i_asterix_sic)
+        assert l_encoder
+
+        l_encoder.create_socket(self.__i_asterix_tx_port)
+        l_encoder.set_net(self.__s_asterix_dest)
+        l_encoder.set_queue(l_queue)
+        l_encoder.start_thread()
+
+    # ---------------------------------------------------------------------------------------------
+    def run(self):
+        """
+        run adsb-in
+        """
+        # create receive messages thread
+        l_thr_1 = threading.Thread(target=self.__receive)
+        assert l_thr_1
+
+        # start thread
+        l_thr_1.start()
+
+        # if receiver contains an asterix destination...
+        if self.__v_asterix_server:
+            # create asterix server threads
+            self.__init_asterix_server()
+
+    # ---------------------------------------------------------------------------------------------
+    def __receive(self):
+        """
+        loop de recebimento das mensagens ADS-B
+        """
+        # create a socket for receiving ADS-B messages
+        l_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        assert l_sock
+
+        # setup socket
+        l_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        l_sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+
+        # bind socket
+        l_sock.bind(('', M_NET_PORT))
+
+        # logger
+        logging.info("waiting on port: {}".format(M_NET_PORT))
+
+        # initial time
+        lf_now = time.time()
+
+        # initmessage counter
+        li_num_msgs = 0
+
+        # loop forever...
+        while True:
+            # block 'til receive message (buffer size is 1024 bytes)
+            ls_message, l_addr_from = l_sock.recvfrom(M_RECV_BUFF_SIZE)
+            
+            if ls_message:
+                # estimate TOA (time-of-arrival)
+                ls_msg_adsb, lf_toa_est = self.__estimate_toa(ls_message)
+                logging.debug("ls_msg_adsb: {}".format(ls_msg_adsb))
+                logging.debug("lf_toa_est: {}".format(lf_toa_est))
+
+            # senão,...
+            else:
+                # next message 
+                continue
+
+            # logger
+            logging.info("received message {} from {} at {.20f}".format(ls_msg_adsb, l_addr_from, time.time()))
+
+            # store messages ?
+            if self.__v_store_rec_msgs:
+                if len(self.__lst_rec_msgs) <= M_MAX_REC_MSGS:
+                    self.__lst_rec_msgs.append(ls_msg_adsb)
+
+            # for all configured forwarders...
+            for l_fwdr in self.__lst_forwarders:
+                # forward received ADS-B message
+                l_fwdr.forward(ls_msg_adsb, lf_toa_est)
+
+            # elapsed time (seg)
+            lf_dif = time.time() - lf_now
+
+            # increment message counter
+            li_num_msgs += 1
+
+            # 30 seconds ?
+            if lf_dif > 30:
+                # logger
+                logging.info("throughput: {} msgs/sec".format(li_num_msgs / lf_dif))
+
+                # reset initial time
+                lf_now = time.time()
+
+                # reset message counter
+                li_num_msgs = 0
+
+# -------------------------------------------------------------------------------------------------
+def main():
+    """
+    jump start
+    """
+    # show logo
+    print "  ,---.  ,------.   ,---.        ,-----.          ,--.         "
+    print " /  O  \ |  .-.  \ '   .-',-----.|  |) /_         |  |,--,--,  "
+    print "|  .-.  ||  |  \  :`.  `-.'-----'|  .-.  \        |  ||      \ "
+    print "|  | |  ||  '--'  /.-'    |      |  '--' /        |  ||  ||  | "
+    print "`--' `--'`-------' `-----'       `------'         `--'`--''--' "
+
+    # create ADS-B in 
+    l_transponder = AdsbIn(float(sys.argv[1]), float(sys.argv[2]), float(sys.argv[3]))
+    assert l_transponder
+
+    # execute ADS-B in
+    l_transponder.run()
+
+# -------------------------------------------------------------------------------------------------
+# this is the bootstrap process
+
+if "__main__" == __name__:
+
+    # logger
+    logging.basicConfig(filename=M_LOG_FILE, level=M_LOG_LEVEL)
+
+    # jump start
+    main()
+
+# < the end >--------------------------------------------------------------------------------------
