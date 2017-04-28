@@ -91,7 +91,7 @@ class CorePtracksFeed(AdsbFeed):
 
         # IP address of incoming messages
         self.ctrl_net_host = ni.ifaddresses(self.ctrl_net_iface)[2][0]['addr']
-        logging.debug("Control Network host %s" % self.ctrl_net_host)
+        logging.debug("Control Network host %s port %s" % (self.ctrl_net_host, self.ctrl_net_port))
 
 
     # -------------------------------------------------------------------------------------------------
@@ -217,6 +217,7 @@ class CorePtracksFeed(AdsbFeed):
         Starts reading aircraft data from track generator (ptracks)
         :return:
         """
+        logging.info("Starting core ptracks feed ...")
         t1 = threading.Thread(target=self.ptracks_read, args=())
         t1.start()
 
@@ -287,14 +288,15 @@ class CorePtracksFeed(AdsbFeed):
         Thread for reading the track generator (ptracks) data
         :return:
         """
-
+        logging.info ("Starting ptracks read")
         # Create a socket for receiving ptracks messages
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        sock.setsockopt(socket.SOL_SOCKET, 25, self.ctrl_net_iface+'\0')
+
         sock.bind((self.ctrl_net_host, self.ctrl_net_port))
 
-        logging.info("Listen on IP %s port %s " % (self.ctrl_net_host, str(self.net_port)))
+        logging.info("Listen on IP %s port %s " % (self.ctrl_net_host, str(self.ctrl_net_port)))
 
         while True:
             # Buffer size is 1024 bytes
