@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'wnd_main_atn_sim.ui'
 #
-# Created: Thu Apr  6 11:31:12 2017
+# Created: Tue May  2 09:46:05 2017
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -74,6 +74,7 @@ class Ui_CWndMainATNSim(object):
         self.act_edit_scenario.setObjectName(_fromUtf8("act_edit_scenario"))
         self.act_start_session = QtGui.QAction(CWndMainATNSim)
         icon1 = QtGui.QIcon()
+        icon1.addPixmap(QtGui.QPixmap(_fromUtf8(":/gui/start-session-2.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         icon1.addPixmap(QtGui.QPixmap(_fromUtf8(":/gui/start-session-1.png")), QtGui.QIcon.Normal, QtGui.QIcon.On)
         self.act_start_session.setIcon(icon1)
         self.act_start_session.setObjectName(_fromUtf8("act_start_session"))

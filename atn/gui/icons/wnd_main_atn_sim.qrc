@@ -1,5 +1,7 @@
 <RCC>
   <qresource prefix="gui">
+    <file>pause-session-2.png</file>
+    <file>start-session-2.png</file>
     <file>pilot-military-48.png</file>
     <file>pilot-military.png</file>
     <file>pilot.png</file>

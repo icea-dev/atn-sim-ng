@@ -44,6 +44,12 @@ import wnd_main_atn_sim_ui as wmain_ui
 import dlg_trf as dtraf_ui
 import dlg_start as dstart_ui
 
+try:
+    _fromUtf8 = QtCore.QString.fromUtf8
+except AttributeError:
+    def _fromUtf8(s):
+        return s
+
 # < class CWndMainATNSim >-------------------------------------------------------------------------
 
 class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
@@ -94,6 +100,13 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
 
         self.dlg_start = dstart_ui.CDlgStart()
 
+        # Icons
+        self.iconPause = QtGui.QIcon()
+        self.iconPause.addPixmap(QtGui.QPixmap(_fromUtf8(":/gui/pause-session-2.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.iconPlay = QtGui.QIcon()
+        self.iconPlay.addPixmap(QtGui.QPixmap(_fromUtf8(":/gui/start-session-2.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+
+        self.is_session_pause = False ;
 
     # ---------------------------------------------------------------------------------------------
     def loadConfigFile(self, config="atn-sim-gui.cfg"):
@@ -175,6 +188,14 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
             # Finaliza os processos iniciados.
             self.kill_processes()
 
+            # Reinicializa a flag de congelar/descongelar o gerador de pistas
+            self.is_session_pause = False
+
+            # Restabelece os ícones e o texto da ação
+            self.act_start_session.setIcon(self.iconPlay)
+            self.act_start_session.setText("Start ATN simulation")
+
+
 
     # ---------------------------------------------------------------------------------------------
     def cbk_start_edit_mode(self):
@@ -230,6 +251,24 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
 
         :return:
         """
+        if self.act_start_session.text() == "Pause ATN simulation":
+            self.act_start_session.setIcon(self.iconPlay)
+            self.act_start_session.setText("Start ATN simulation")
+            self.is_session_pause = True
+            l_status_msg = "The scenario: " + self.filename + " has been paused!"
+            self.statusbar.showMessage(l_status_msg)
+            # Enviar a mensagem de pausa para o gerador de pistas
+            return
+
+        self.act_start_session.setIcon(self.iconPause)
+        self.act_start_session.setText("Pause ATN simulation")
+
+        if self.is_session_pause:
+            # Enviar a mensagem de descongelar o exercício para o gerador de pistas.
+            self.is_session_pause = False
+            l_status_msg = "Running the scenario: " + self.filename
+            self.statusbar.showMessage(l_status_msg)
+            return
 
         # Seleciona o arquivo cenário de simulação em XML
         l_file_path = QtGui.QFileDialog.getOpenFileName(self, 'Open simulation scenario - XML',
@@ -237,6 +276,8 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
 
         # Nenhum arquivo selecionado, termina o processamento
         if not l_file_path:
+            self.act_start_session.setIcon(self.iconPlay)
+            self.act_start_session.setText("Start ATN simulation")
             return
 
         # Obtém o nome do arquivo do cenário de simulação sem a extensão.
@@ -259,6 +300,8 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
             # Arquivo de tráfego para o ptracks não foi criado, abandona a execução do
             # cenário de simulação, avisa do erro !
             if not l_ret_val:
+                self.act_start_session.setIcon(self.iconPlay)
+                self.act_start_session.setText("Start ATN simulation")
                 return
 
         '''
@@ -316,7 +359,6 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
 
         # Desabilita as ações de criar cenario e iniciar a simulação ATN
         self.act_edit_scenario.setEnabled(False)
-        self.act_start_session.setEnabled(False)
 
         # Habilita as ações para uma simulação ATN ativa
         self.enabled_actions(True)
@@ -428,10 +470,16 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
 
         # Habilita as ações de criar cenario e iniciar a simulação ATN
         self.act_edit_scenario.setEnabled(True)
-        self.act_start_session.setEnabled(True)
 
         # Desabilita as ações para uma simulação ATN ativa
         self.enabled_actions(False)
+
+        # Reinicializa a flag de congelar/descongelar o gerador de pistas
+        self.is_session_pause = False
+
+        # Restabelece os ícones e o texto da ação
+        self.act_start_session.setIcon(self.iconPlay)
+        self.act_start_session.setText("Start ATN simulation")
 
 
     # ---------------------------------------------------------------------------------------------
