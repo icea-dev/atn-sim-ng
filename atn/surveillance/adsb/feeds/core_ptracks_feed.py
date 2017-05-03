@@ -231,7 +231,7 @@ class CorePtracksFeed(AdsbFeed):
         :param message: the track generator message
         :return:
         """
-        # ex: #1#7003#-1#4656.1#-16.48614#-47.947058#210.8#9.7#353.9#TAM6543#B737#21653.3006492#icao24
+        # ex: 1#7003#-1#4656.1#-16.48614#-47.947058#210.8#9.7#353.9#TAM6543#B737#21653.3006492#icao24
 
         # Node number
         msg_num = int(message[0])
