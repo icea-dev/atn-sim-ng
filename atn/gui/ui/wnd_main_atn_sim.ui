@@ -152,9 +152,9 @@ p, li { white-space: pre-wrap; }
   </action>
   <action name="act_start_session">
    <property name="icon">
-    <iconset>
-     <normalon>:/gui/start-session-1.png</normalon>
-    </iconset>
+    <iconset resource="../icons/wnd_main_atn_sim.qrc">
+     <normaloff>:/gui/start-session-2.png</normaloff>
+     <normalon>:/gui/start-session-1.png</normalon>:/gui/start-session-2.png</iconset>
    </property>
    <property name="text">
     <string>Start ATN simulation</string>
