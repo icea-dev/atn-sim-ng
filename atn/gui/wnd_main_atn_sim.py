@@ -37,12 +37,15 @@ from string import Template
 from core.api import coreapi
 
 import os
+import logging
 import socket
 import subprocess
 import ConfigParser
+import netifaces as ni
 import wnd_main_atn_sim_ui as wmain_ui
 import dlg_trf as dtraf_ui
 import dlg_start as dstart_ui
+import re
 
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
@@ -54,6 +57,9 @@ except AttributeError:
 
 class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
 
+    # Interface da rede de controle do CORE
+    ctrl_net_iface = "ctrl0net"
+
 
     # ---------------------------------------------------------------------------------------------
     def __init__(self, f_parent=None):
@@ -62,6 +68,14 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
 
         # create main menu ui
         self.setupUi(self)
+
+        log = logging.getLogger("CWndMainATNSim::__init__")
+        log.setLevel(logging.WARNING)
+
+        # Create the socket
+        self.ptracks_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        # Make the socket multicast-aware, and set TTL.
+        self.ptracks_sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 2)
 
         # core-gui process
         self.p = None
@@ -73,7 +87,17 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         self.pilot = None
         self.db_edit = None
 
-        self.loadConfigFile()
+        # canal do ptracks
+        self.canal = 4
+
+        # Leitura do arquivo de configuração
+        self.load_config_file()
+
+        # Leitura do arquivo de configuração do ptracks
+        self.load_ptracks_config_file(os.path.join(self.ptracks_dir, "tracks.cfg"))
+
+        self.net_tracks_cnfg = self.D_NET_CNFG + "." + str(self.canal)
+        logging.info("Multicast address of ptracks cnfg %s" % self.net_tracks_cnfg)
 
         self.timer = QtCore.QTimer()
 
@@ -106,10 +130,30 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         self.iconPlay = QtGui.QIcon()
         self.iconPlay.addPixmap(QtGui.QPixmap(_fromUtf8(":/gui/start-session-2.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
 
-        self.is_session_pause = False ;
+        self.is_session_pause = False
+
 
     # ---------------------------------------------------------------------------------------------
-    def loadConfigFile(self, config="atn-sim-gui.cfg"):
+    def get_ptracks_data(self, data):
+        """
+        Obtém a informação do arquivo do ptracks que contém as definições globais que o
+        gerador de pistas (ptracks) utiliza.
+        :param data: o tipo da informação a ser recuperada
+        :return: string
+        """
+        # Monta o comando a ser executado
+        cmd = "cat " + self.ptracks_dir + "/control/common/glb_defs.py" + " | grep " + data
+        output = subprocess.check_output(cmd, shell=True)
+        values = output.split('=')
+
+        if len(values[1]) > 2:
+            values = values[1].split(' ')
+
+        return values[1]
+
+
+    # ---------------------------------------------------------------------------------------------
+    def load_config_file(self, config="atn-sim-gui.cfg"):
         """
         Faz a leitura de um arquivo de configuração para carregar o diretório do arquivo do cenário
         da simulação criado pelo CORE e do diretório do gerador de informações de alvos ptracks.
@@ -117,7 +161,6 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         :param config: nome do arquivo de configuração.
         :return:
         """
-
         if os.path.exists(config):
             conf = ConfigParser.ConfigParser()
             conf.read(config)
@@ -129,6 +172,41 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
             self.ptracks_dir = os.path.join(os.environ['HOME'], 'ptracks')
 
         self.ptracks_data_dir = os.path.join(self.ptracks_dir, 'data')
+
+
+    # ---------------------------------------------------------------------------------------------
+    def load_ptracks_config_file(self,config_file):
+        """
+        Carrega as informações para enviar mensagens de configuração para o gerador de pistas
+        (ptracks)
+        :param config_file: o nome do arquivo de configuração do ptracks
+        :return: none
+        """
+        log = logging.getLogger("CWndMainATNSim::load_ptracks_config_file")
+        log.setLevel(logging.WARNING)
+
+        if os.path.exists(config_file):
+            conf = ConfigParser.ConfigParser()
+            conf.read(config_file)
+
+            self.D_NET_CNFG = conf.get("net", "cnfg")
+            self.D_NET_PORT = conf.get("net", "port")
+        else:
+            self.D_NET_CNFG = self.get_ptracks_data('D_NET_CNFG')
+            self.D_NET_PORT = self.get_ptracks_data('D_NET_PORT')
+
+        log.info("NET_CNFG [%s]" % self.D_NET_CNFG)
+        log.info("NET_PORT [%s]" % self.D_NET_PORT)
+
+        self.D_MSG_VRS = self.get_ptracks_data('D_MSG_VRS')
+        self.D_MSG_FRZ = self.get_ptracks_data('D_MSG_FRZ')
+        self.D_MSG_UFZ = self.get_ptracks_data('D_MSG_UFZ')
+
+        self.D_MSG_VRS.strip('\n')
+
+        log.info("MSG_VRS [%s]" % self.D_MSG_VRS)
+        log.info("MSG_FRZ [%s]" % self.D_MSG_FRZ)
+        log.info("MSG_UFZ [%s]" % self.D_MSG_UFZ)
 
 
     # ---------------------------------------------------------------------------------------------
@@ -196,7 +274,6 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
             self.act_start_session.setText("Start ATN simulation")
 
 
-
     # ---------------------------------------------------------------------------------------------
     def cbk_start_edit_mode(self):
         """
@@ -251,23 +328,32 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
 
         :return:
         """
+
         if self.act_start_session.text() == "Pause ATN simulation":
             self.act_start_session.setIcon(self.iconPlay)
             self.act_start_session.setText("Start ATN simulation")
             self.is_session_pause = True
             l_status_msg = "The scenario: " + self.filename + " has been paused!"
             self.statusbar.showMessage(l_status_msg)
+
             # Enviar a mensagem de pausa para o gerador de pistas
+            message = str(int(self.D_MSG_VRS)) + "#" + self.D_MSG_FRZ
+            self.send_multicast_data(data=message, port=int(self.D_NET_PORT),
+                                     addr=self.net_tracks_cnfg)
             return
 
         self.act_start_session.setIcon(self.iconPause)
         self.act_start_session.setText("Pause ATN simulation")
 
         if self.is_session_pause:
-            # Enviar a mensagem de descongelar o exercício para o gerador de pistas.
             self.is_session_pause = False
             l_status_msg = "Running the scenario: " + self.filename
             self.statusbar.showMessage(l_status_msg)
+
+            # Enviar a mensagem de descongelar para o gerador de pistas
+            message = str(int(self.D_MSG_VRS)) + "#" + self.D_MSG_UFZ
+            self.send_multicast_data(data=message, port=int(self.D_NET_PORT),
+                                     addr=self.net_tracks_cnfg)
             return
 
         # Seleciona o arquivo cenário de simulação em XML
@@ -346,7 +432,7 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         self.adapter = subprocess.Popen(['python', 'adapter.py'], stdout=subprocess.PIPE,
                                         stderr=subprocess.STDOUT)
 
-        self.ptracks = subprocess.Popen(['python', 'newton.py', '-e', self.filename],
+        self.ptracks = subprocess.Popen(['python', 'newton.py', '-e', self.filename, '-c', str(self.canal)],
                                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         os.chdir(l_cur_dir)
 
@@ -748,6 +834,21 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
             os.system(kill)
             self.pilot.terminate()
 
+
+    # ---------------------------------------------------------------------------------------------
+    def send_multicast_data(self,data,port,addr):
+        """
+
+        :param data:
+        :param port:
+        :param addr:
+        :return:
+        """
+
+        print "sending data: [%s] to [%s:%s]" % (data, addr, port)
+
+        # Send the data
+        self.ptracks_sock.sendto(data, (addr, port))
 
 # < the end>---------------------------------------------------------------------------------------
 
