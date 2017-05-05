@@ -95,6 +95,7 @@ class CorePtracksFeed(AdsbFeed):
 
 
     # -------------------------------------------------------------------------------------------------
+    @abstractmethod
     def get_ssr(self):
         """
          Returns the current squawk code of the aircraft.
@@ -109,6 +110,7 @@ class CorePtracksFeed(AdsbFeed):
 
 
     # -------------------------------------------------------------------------------------------------
+    @abstractmethod
     def get_spi(self):
         """
         Returns the status of Special Pulse Identification (SPI) of aircraft
@@ -122,6 +124,7 @@ class CorePtracksFeed(AdsbFeed):
 
 
     # -------------------------------------------------------------------------------------------------
+    @abstractmethod
     def get_callsign(self):
         """
         Returns the callsign of aircraft
@@ -135,6 +138,7 @@ class CorePtracksFeed(AdsbFeed):
 
 
     # -------------------------------------------------------------------------------------------------
+    @abstractmethod
     def get_position(self):
         """
         Returns latitude, longitude and altitude of aircraft
@@ -150,6 +154,7 @@ class CorePtracksFeed(AdsbFeed):
 
 
     # -------------------------------------------------------------------------------------------------
+    @abstractmethod
     def get_velocity(self):
         """
         Returns heading, vertical rate and ground speed of aircraft
@@ -165,6 +170,7 @@ class CorePtracksFeed(AdsbFeed):
 
 
     # -------------------------------------------------------------------------------------------------
+    @abstractmethod
     def get_icao24(self):
         """
         Returns the ICAO 24 bit code identifier of aircraft
@@ -178,6 +184,7 @@ class CorePtracksFeed(AdsbFeed):
 
 
     # -------------------------------------------------------------------------------------------------
+    @abstractmethod
     def get_capabilities(self):
         """
         Returns the capability of an ADS-B trasnmitting installation that is based on a Mode-S transponder
@@ -188,6 +195,7 @@ class CorePtracksFeed(AdsbFeed):
 
 
     # -------------------------------------------------------------------------------------------------
+    @abstractmethod
     def get_type(self):
         """
         Returns the field that shall be used the identify particular aircraft or vehicle types within
@@ -199,6 +207,7 @@ class CorePtracksFeed(AdsbFeed):
 
 
     # -------------------------------------------------------------------------------------------------
+    @abstractmethod
     def is_track_updated(self):
         """
         Check if aircraft data is updated.
@@ -212,6 +221,7 @@ class CorePtracksFeed(AdsbFeed):
 
 
     # -------------------------------------------------------------------------------------------------
+    @abstractmethod
     def start(self):
         """
         Starts reading aircraft data from track generator (ptracks)
