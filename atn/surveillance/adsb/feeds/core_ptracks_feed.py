@@ -205,7 +205,8 @@ class CorePtracksFeed(AdsbFeed):
         :return: bool, True if aircraft is updated otherwise False
         """
         self.data_lock.acquire()
-        ret_code = ( self.old_timestamp < self.timestamp )
+        logging.debug("Old timestamp %s - timestamp %s" % (str(self.old_timestamp), str(self.timestamp)))
+        ret_code = ( self.old_timestamp <= self.timestamp )
         self.data_lock.release()
 
         return ret_code

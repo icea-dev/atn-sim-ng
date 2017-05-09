@@ -191,6 +191,7 @@ class AdsbIn(object):
 
                 # destiny is dump1090 ? 
                 if ldct_options["type"].lower() == "dump1090":
+                    logging.debug("Creating dump1090 forward ....")
                     # create dump 1090 forwarder
                     l_fwdr = Dump1090Forwarder(items=ldct_options)
                     assert l_fwdr
@@ -345,6 +346,7 @@ class AdsbIn(object):
             # for all configured forwarders...
             for l_fwdr in self.__lst_forwarders:
                 # forward received ADS-B message
+                logging.info("forward message {}".format(ls_msg_adsb))
                 l_fwdr.forward(ls_msg_adsb, lf_toa_est)
 
             # elapsed time (seg)

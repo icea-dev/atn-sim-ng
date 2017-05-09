@@ -143,7 +143,10 @@ class AdsbOut:
         if self.nodename is None:
             lat, lon, alt = self.feed.get_position()
 
-            self.net_sock.sendto(message + " " + str(lat) + " " + str(lon) + " " +str(alt),
+            msg = message + " " + str(lat) + " " + str(lon) + " " +str(alt)
+            print "Enviando para %s:%s a mensagem : %s" % ( self.net_dest, self.net_port, msg )
+
+            self.net_sock.sendto(msg ,
                                  (self.net_dest, self.net_port))
             return True
         else:
@@ -158,6 +161,7 @@ class AdsbOut:
         icao24 = self.feed.get_icao24()
 
         if not self.feed.is_track_updated():
+            self.logger.debug("Track is not updated!")
             return None
 
         # Binary
@@ -171,6 +175,7 @@ class AdsbOut:
     def generate_airborne_position(self):
 
         if not self.feed.is_track_updated():
+            self.logger.debug("Track is not updated!")
             return None
 
         # Capabilities
@@ -283,6 +288,7 @@ class AdsbOut:
         """
 
         if not self.feed.is_track_updated():
+            self.logger.debug("Track is not updated!")
             return None
 
         (heading, vertical_rate, ground_speed) = self.feed.get_velocity()

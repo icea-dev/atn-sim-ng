@@ -429,10 +429,10 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         # Executar o ptracks .....
         l_cur_dir = os.getcwd()
         os.chdir(self.ptracks_dir)
-        self.adapter = subprocess.Popen(['sh', 'adapter'], stdout=subprocess.PIPE,
+        self.adapter = subprocess.Popen(['python', 'adapter.py'], stdout=subprocess.PIPE,
                                         stderr=subprocess.STDOUT)
 
-        self.ptracks = subprocess.Popen(['sh', 'newton', '-e', self.filename, '-c', str(self.canal)],
+        self.ptracks = subprocess.Popen(['python', 'newton.py', '-e', self.filename, '-c', str(self.canal)],
                                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         os.chdir(l_cur_dir)
 
@@ -579,7 +579,7 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         os.chdir(self.ptracks_dir)
 
         # Executa o piloto
-        self.pilot = subprocess.Popen(['sh', 'piloto'], stdout=subprocess.PIPE,
+        self.pilot = subprocess.Popen(['python', 'piloto.py'], stdout=subprocess.PIPE,
                                         stderr=subprocess.STDOUT)
 
         # Retorna para o diretório do simulador ATN
@@ -597,7 +597,7 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         os.chdir(self.ptracks_dir)
 
         # Executa o piloto
-        self.visil = subprocess.Popen(['sh', 'visil'], stdout=subprocess.PIPE,
+        self.visil = subprocess.Popen(['python', 'visil.py'], stdout=subprocess.PIPE,
                                         stderr=subprocess.STDOUT)
 
         # Retorna para o diretório do simulador ATN
