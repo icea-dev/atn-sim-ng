@@ -334,7 +334,7 @@ class AdsbIn(object):
                 continue
 
             # logger
-            logging.info("received message {} from {} at {.20f}".format(ls_msg_adsb, l_addr_from, time.time()))
+            logging.info("received message {} from {} at {}".format(ls_msg_adsb, l_addr_from, time.time()))
 
             # store messages ?
             if self.__v_store_rec_msgs:
