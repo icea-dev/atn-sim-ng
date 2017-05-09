@@ -201,13 +201,13 @@ class AdsbIn(object):
                     self.__lst_forwarders.append(l_fwdr)
 
                 # destiny is database ?
-                elif ldct_options["type"].lower() == "database":
+                #elif ldct_options["type"].lower() == "database":
                     # create database forwarder
-                    l_fwdr = DatabseForwarder(sensor_id=self.id, items=ldct_options)
-                    assert l_fwdr
+                    #l_fwdr = DatabseForwarder(sensor_id=self.id, items=ldct_options)
+                    #assert l_fwdr
                     
                     # put on forwarders list
-                    self.__lst_forwarders.append(l_fwdr)
+                    #self.__lst_forwarders.append(l_fwdr)
 
                 # destiny is asterix ?
                 elif ldct_options["type"].lower() == "asterix":
@@ -233,7 +233,8 @@ class AdsbIn(object):
 
         # senão,...
         else:
-            self.id = core_utils.get_node_name()
+            #self.id = core_utils.get_node_name()
+            self.id = None
 
     # ---------------------------------------------------------------------------------------------
     def retrieve_msg(self):
