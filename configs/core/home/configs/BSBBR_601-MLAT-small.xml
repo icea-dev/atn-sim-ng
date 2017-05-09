@@ -1,0 +1,513 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scenario compiled="true" name="BSBBR_601-MLAT-small.xml" version="1.0" xmlns="nmfPlan" xmlns:CORE="coreSpecific">
+  <network id="net0" name="net0">
+    <type>ethernet</type>
+    <alias domain="COREID">51793</alias>
+    <member type="interface">n19/eth1</member>
+    <member type="interface">n21/eth0</member>
+    <member type="channel">net0/chan0</member>
+    <channel id="net0/chan0" name="chan0">
+      <type>ethernet</type>
+      <member index="0" type="interface">n19/eth1</member>
+      <member index="1" type="interface">n21/eth0</member>
+    </channel>
+  </network>
+  <network id="n18" name="n18">
+    <point lat="-17.4027267275" lon="-47.9400643831" type="gps"/>
+    <type>ethernet</type>
+    <hub id="n18/n18" name="n18">
+      <type domain="CORE">hub</type>
+      <interface id="n18/n18/e0" name="e0"/>
+      <interface id="n18/n18/e1" name="e1"/>
+      <interface id="n18/n18/e2" name="e2"/>
+      <interface id="n18/n18/e3" name="e3"/>
+      <alias domain="COREID">18</alias>
+      <point lat="-17.4027267275" lon="-47.9400643831" type="gps"/>
+    </hub>
+    <member type="interface">n5/eth1</member>
+    <member type="interface">n18/n18/e0</member>
+    <member type="interface">n13/eth1</member>
+    <member type="interface">n18/n18/e1</member>
+    <member type="interface">n19/eth0</member>
+    <member type="interface">n18/n18/e2</member>
+    <member type="interface">n4/eth1</member>
+    <member type="interface">n18/n18/e3</member>
+    <member type="channel">n18/chan0</member>
+    <member type="channel">n18/chan1</member>
+    <member type="channel">n18/chan2</member>
+    <member type="channel">n18/chan3</member>
+    <channel id="n18/chan0" name="chan0">
+      <type>ethernet</type>
+      <member index="0" type="interface">n5/eth1</member>
+      <member index="1" type="interface">n18/n18/e0</member>
+    </channel>
+    <channel id="n18/chan1" name="chan1">
+      <type>ethernet</type>
+      <member index="0" type="interface">n13/eth1</member>
+      <member index="1" type="interface">n18/n18/e1</member>
+    </channel>
+    <channel id="n18/chan2" name="chan2">
+      <type>ethernet</type>
+      <member index="0" type="interface">n19/eth0</member>
+      <member index="1" type="interface">n18/n18/e2</member>
+    </channel>
+    <channel id="n18/chan3" name="chan3">
+      <type>ethernet</type>
+      <member index="0" type="interface">n4/eth1</member>
+      <member index="1" type="interface">n18/n18/e3</member>
+    </channel>
+  </network>
+  <network id="net1" name="net1">
+    <type>ethernet</type>
+    <alias domain="COREID">21432</alias>
+    <member type="interface">n16/eth1</member>
+    <member type="interface">n13/eth2</member>
+    <member type="channel">net1/chan0</member>
+    <channel id="net1/chan0" name="chan0">
+      <type>ethernet</type>
+      <member index="0" type="interface">n16/eth1</member>
+      <member index="1" type="interface">n13/eth2</member>
+    </channel>
+  </network>
+  <network id="net2" name="net2">
+    <type>ethernet</type>
+    <alias domain="COREID">30876</alias>
+    <member type="interface">n2/eth1</member>
+    <member type="interface">n5/eth2</member>
+    <member type="channel">net2/chan0</member>
+    <channel id="net2/chan0" name="chan0">
+      <type>ethernet</type>
+      <member index="0" type="interface">n2/eth1</member>
+      <member index="1" type="interface">n5/eth2</member>
+    </channel>
+  </network>
+  <network id="wlan31" name="wlan31">
+    <point lat="-14.2407090177" lon="-45.8332035489" type="gps"/>
+    <type>wireless</type>
+    <alias domain="COREID">31</alias>
+    <member type="interface">n1/eth0</member>
+    <member type="interface">n2/eth0</member>
+    <member type="interface">n3/eth0</member>
+    <member type="interface">n4/eth0</member>
+    <member type="interface">n5/eth0</member>
+    <member type="interface">n10/eth0</member>
+    <member type="interface">n13/eth0</member>
+    <member type="interface">n14/eth0</member>
+    <member type="interface">n16/eth0</member>
+    <member type="interface">n20/eth0</member>
+    <member type="channel">wlan31/wireless</member>
+    <channel id="wlan31/wireless" name="wireless">
+      <type domain="CORE">emane_rfpipe</type>
+      <parameter name="enablepromiscuousmode">off</parameter>
+      <parameter name="datarate">1M</parameter>
+      <parameter name="flowcontrolenable">off</parameter>
+      <parameter name="flowcontroltokens">10</parameter>
+      <parameter name="pcrcurveuri">/usr/share/emane/xml/models/mac/rfpipe/rfpipepcr.xml</parameter>
+      <parameter name="jitter">0.0</parameter>
+      <parameter name="delay">0.0</parameter>
+      <parameter name="radiometricenable">off</parameter>
+      <parameter name="radiometricreportinterval">1.0</parameter>
+      <parameter name="neighbormetricdeletetime">60.0</parameter>
+      <parameter name="bandwidth">1M</parameter>
+      <parameter name="frequency">1.090G</parameter>
+      <parameter name="frequencyofinterest">1.090G</parameter>
+      <parameter name="subid">1</parameter>
+      <parameter name="systemnoisefigure">4.0</parameter>
+      <parameter name="txpower">100.0</parameter>
+      <parameter name="fixedantennagain">0.0</parameter>
+      <parameter name="fixedantennagainenable">on</parameter>
+      <parameter name="noisemode">none</parameter>
+      <parameter name="noisebinsize">20</parameter>
+      <parameter name="propagationmodel">freespace</parameter>
+      <member index="0" type="interface">n1/eth0</member>
+      <member index="1" type="interface">n2/eth0</member>
+      <member index="2" type="interface">n3/eth0</member>
+      <member index="3" type="interface">n4/eth0</member>
+      <member index="4" type="interface">n5/eth0</member>
+      <member index="5" type="interface">n10/eth0</member>
+      <member index="6" type="interface">n13/eth0</member>
+      <member index="7" type="interface">n14/eth0</member>
+      <member index="8" type="interface">n16/eth0</member>
+      <member index="9" type="interface">n20/eth0</member>
+    </channel>
+  </network>
+  <host id="n1" name="n1">
+    <type domain="CORE">PC</type>
+    <interface id="n1/eth0" name="eth0">
+      <member index="0" type="channel">wlan31/wireless</member>
+      <member type="network">wlan31</member>
+      <address type="mac">00:00:00:aa:00:05</address>
+      <address type="IPv4">10.0.0.21/24</address>
+      <address type="IPv6">2001::21/128</address>
+    </interface>
+    <alias domain="COREID">1</alias>
+    <point lat="-14.8280814619" lon="-47.656286223" type="gps"/>
+    <CORE:services name="n1">
+      <service name="DefaultRoute" startup_idx="80"/>
+      <service name="AdsbIn" startup_idx="50"/>
+    </CORE:services>
+  </host>
+  <host id="n2" name="n2">
+    <type domain="CORE">ground-station</type>
+    <interface id="n2/eth0" name="eth0">
+      <member index="1" type="channel">wlan31/wireless</member>
+      <member type="network">wlan31</member>
+      <address type="mac">00:00:00:aa:00:06</address>
+      <address type="IPv4">10.0.0.1/24</address>
+      <address type="IPv6">2001::1/128</address>
+    </interface>
+    <interface id="n2/eth1" name="eth1">
+      <member index="0" type="channel">net2/chan0</member>
+      <member type="network">net2</member>
+      <address type="mac">00:00:00:aa:00:10</address>
+      <address type="IPv4">10.0.3.1/24</address>
+      <address type="IPv6">2001:3::1/64</address>
+    </interface>
+    <alias domain="COREID">2</alias>
+    <point lat="-14.0831650347" lon="-49.4030984872" type="gps"/>
+    <CORE:services name="n2">
+      <service name="zebra" startup_idx="35"/>
+      <service name="OSPFv3MDR" startup_idx="40"/>
+      <service name="IPForward" startup_idx="5"/>
+      <service name="GPSd" startup_idx="50"/>
+      <service custom="True" name="AdsbIn" startup_idx="50">
+        <file name="adsbin.cfg">
+[General]
+id = n2
+destinations = Dump1090 MySQL
+
+[Dump1090]
+type = dump1090
+server = localhost
+port = 30001
+
+[MySQL]
+type   = mysql
+dbname = mlat
+dbuser = mlat
+dbpass = mlat
+server = 172.17.255.254
+</file>
+        <file name="adsbin.sh"/>
+        <command type="start">sh adsbin.sh</command>
+      </service>
+    </CORE:services>
+  </host>
+  <host id="n3" name="n3">
+    <type domain="CORE">aircraft</type>
+    <interface id="n3/eth0" name="eth0">
+      <member index="2" type="channel">wlan31/wireless</member>
+      <member type="network">wlan31</member>
+      <address type="mac">00:00:00:aa:00:01</address>
+      <address type="IPv4">10.0.0.3/24</address>
+      <address type="IPv6">2001::3/128</address>
+    </interface>
+    <alias domain="COREID">3</alias>
+    <point lat="-20.8312072402" lon="-44.6577141939" type="gps"/>
+  </host>
+  <host id="n4" name="n4">
+    <type domain="CORE">ground-station</type>
+    <interface id="n4/eth0" name="eth0">
+      <member index="3" type="channel">wlan31/wireless</member>
+      <member type="network">wlan31</member>
+      <address type="mac">00:00:00:aa:00:00</address>
+      <address type="IPv4">10.0.0.4/24</address>
+      <address type="IPv6">2001::4/128</address>
+    </interface>
+    <interface id="n4/eth1" name="eth1">
+      <member index="0" type="channel">n18/chan3</member>
+      <member type="network">n18</member>
+      <address type="mac">00:00:00:aa:00:0f</address>
+      <address type="IPv4">10.0.1.3/24</address>
+      <address type="IPv6">2001:1::3/64</address>
+    </interface>
+    <alias domain="COREID">4</alias>
+    <point lat="-15.2586421098" lon="-47.8988661098" type="gps"/>
+    <CORE:services name="n4">
+      <service name="zebra" startup_idx="35"/>
+      <service name="OSPFv3MDR" startup_idx="40"/>
+      <service name="IPForward" startup_idx="5"/>
+      <service name="GPSd" startup_idx="50"/>
+      <service name="Dump1090" startup_idx="50"/>
+      <service custom="True" name="AdsbIn" startup_idx="50">
+        <file name="adsbin.cfg">
+[General]
+id = n4
+destinations = Dump1090 MySQL
+
+[Dump1090]
+type = dump1090
+server = localhost
+port = 30001
+
+[MySQL]
+type   = mysql
+dbname = mlat
+dbuser = mlat
+dbpass = mlat
+server = 172.17.255.254
+</file>
+        <file name="adsbin.sh"/>
+        <command type="start">sh adsbin.sh</command>
+      </service>
+    </CORE:services>
+  </host>
+  <host id="n5" name="n5">
+    <type domain="CORE">ground-station</type>
+    <interface id="n5/eth0" name="eth0">
+      <member index="4" type="channel">wlan31/wireless</member>
+      <member type="network">wlan31</member>
+      <address type="mac">00:00:00:aa:00:07</address>
+      <address type="IPv4">10.0.0.2/24</address>
+      <address type="IPv6">2001::2/128</address>
+    </interface>
+    <interface id="n5/eth1" name="eth1">
+      <member index="0" type="channel">n18/chan0</member>
+      <member type="network">n18</member>
+      <address type="mac">00:00:00:aa:00:0a</address>
+      <address type="IPv4">10.0.1.1/24</address>
+      <address type="IPv6">2001:1::1/64</address>
+    </interface>
+    <interface id="n5/eth2" name="eth2">
+      <member index="1" type="channel">net2/chan0</member>
+      <member type="network">net2</member>
+      <address type="mac">00:00:00:aa:00:11</address>
+      <address type="IPv4">10.0.3.2/24</address>
+      <address type="IPv6">2001:3::2/64</address>
+    </interface>
+    <alias domain="COREID">5</alias>
+    <point lat="-17.6120604234" lon="-49.3750919052" type="gps"/>
+    <CORE:services name="n5">
+      <service name="zebra" startup_idx="35"/>
+      <service name="OSPFv3MDR" startup_idx="40"/>
+      <service name="IPForward" startup_idx="5"/>
+      <service name="GPSd" startup_idx="50"/>
+      <service custom="True" name="AdsbIn" startup_idx="50">
+        <file name="adsbin.cfg">
+[General]
+id = n5
+destinations = Dump1090 MySQL
+
+[Dump1090]
+type = dump1090
+server = localhost
+port = 30001
+
+[MySQL]
+type   = mysql
+dbname = mlat
+dbuser = mlat
+dbpass = mlat
+server = 172.17.255.254
+</file>
+        <file name="adsbin.sh"/>
+        <command type="start">sh adsbin.sh</command>
+      </service>
+    </CORE:services>
+  </host>
+  <host id="n10" name="n10">
+    <type domain="CORE">aircraft</type>
+    <interface id="n10/eth0" name="eth0">
+      <member index="5" type="channel">wlan31/wireless</member>
+      <member type="network">wlan31</member>
+      <address type="mac">00:00:00:aa:00:02</address>
+      <address type="IPv4">10.0.0.10/24</address>
+      <address type="IPv6">2001::10/128</address>
+    </interface>
+    <alias domain="COREID">10</alias>
+    <point lat="-20.009164477" lon="-45.1757817175" type="gps"/>
+  </host>
+  <host id="n13" name="n13">
+    <type domain="CORE">ground-station</type>
+    <interface id="n13/eth0" name="eth0">
+      <member index="6" type="channel">wlan31/wireless</member>
+      <member type="network">wlan31</member>
+      <address type="mac">00:00:00:aa:00:08</address>
+      <address type="IPv4">10.0.0.5/24</address>
+      <address type="IPv6">2001::5/128</address>
+    </interface>
+    <interface id="n13/eth1" name="eth1">
+      <member index="0" type="channel">n18/chan1</member>
+      <member type="network">n18</member>
+      <address type="mac">00:00:00:aa:00:0b</address>
+      <address type="IPv4">10.0.1.2/24</address>
+      <address type="IPv6">2001:1::2/64</address>
+    </interface>
+    <interface id="n13/eth2" name="eth2">
+      <member index="1" type="channel">net1/chan0</member>
+      <member type="network">net1</member>
+      <address type="mac">00:00:00:aa:00:13</address>
+      <address type="IPv4">10.0.4.2/24</address>
+      <address type="IPv6">2001:4::2/64</address>
+    </interface>
+    <alias domain="COREID">13</alias>
+    <point lat="-17.6105780563" lon="-46.2006404987" type="gps"/>
+    <CORE:services name="n13">
+      <service name="zebra" startup_idx="35"/>
+      <service name="OSPFv3MDR" startup_idx="40"/>
+      <service name="IPForward" startup_idx="5"/>
+      <service name="GPSd" startup_idx="50"/>
+      <service custom="True" name="AdsbIn" startup_idx="50">
+        <file name="adsbin.cfg">
+[General]
+id = n13
+destinations = Dump1090 MySQL
+
+[Dump1090]
+type = dump1090
+server = localhost
+port = 30001
+
+[MySQL]
+type   = mysql
+dbname = mlat
+dbuser = mlat
+dbpass = mlat
+server = 172.17.255.254
+</file>
+        <file name="adsbin.sh"/>
+        <command type="start">sh adsbin.sh</command>
+      </service>
+    </CORE:services>
+  </host>
+  <host id="n14" name="n14">
+    <type domain="CORE">aircraft</type>
+    <interface id="n14/eth0" name="eth0">
+      <member index="7" type="channel">wlan31/wireless</member>
+      <member type="network">wlan31</member>
+      <address type="mac">00:00:00:aa:00:03</address>
+      <address type="IPv4">10.0.0.14/24</address>
+      <address type="IPv6">2001::14/128</address>
+    </interface>
+    <alias domain="COREID">14</alias>
+    <point lat="-21.2545190244" lon="-44.2423089543" type="gps"/>
+  </host>
+  <host id="n16" name="n16">
+    <type domain="CORE">ground-station</type>
+    <interface id="n16/eth0" name="eth0">
+      <member index="8" type="channel">wlan31/wireless</member>
+      <member type="network">wlan31</member>
+      <address type="mac">00:00:00:aa:00:09</address>
+      <address type="IPv4">10.0.0.13/24</address>
+      <address type="IPv6">2001::13/128</address>
+    </interface>
+    <interface id="n16/eth1" name="eth1">
+      <member index="0" type="channel">net1/chan0</member>
+      <member type="network">net1</member>
+      <address type="mac">00:00:00:aa:00:12</address>
+      <address type="IPv4">10.0.4.1/24</address>
+      <address type="IPv6">2001:4::1/64</address>
+    </interface>
+    <alias domain="COREID">16</alias>
+    <point lat="-14.451676914" lon="-46.1818781943" type="gps"/>
+    <CORE:services name="n16">
+      <service name="zebra" startup_idx="35"/>
+      <service name="OSPFv3MDR" startup_idx="40"/>
+      <service name="IPForward" startup_idx="5"/>
+      <service name="GPSd" startup_idx="50"/>
+      <service custom="True" name="AdsbIn" startup_idx="50">
+        <file name="adsbin.cfg">
+[General]
+id = n16
+destinations = Dump1090 MySQL
+
+[Dump1090]
+type = dump1090
+server = localhost
+port = 30001
+
+[MySQL]
+type   = mysql
+dbname = mlat
+dbuser = mlat
+dbpass = mlat
+server = 172.17.255.254
+</file>
+        <file name="adsbin.sh"/>
+        <command type="start">sh adsbin.sh</command>
+      </service>
+    </CORE:services>
+  </host>
+  <host id="n19" name="n19">
+    <type domain="CORE">host</type>
+    <interface id="n19/eth0" name="eth0">
+      <member index="0" type="channel">n18/chan2</member>
+      <member type="network">n18</member>
+      <address type="mac">00:00:00:aa:00:0c</address>
+      <address type="IPv4">10.0.1.10/24</address>
+      <address type="IPv6">2001:1::10/64</address>
+    </interface>
+    <interface id="n19/eth1" name="eth1">
+      <member index="0" type="channel">net0/chan0</member>
+      <member type="network">net0</member>
+      <address type="mac">00:00:00:aa:00:0d</address>
+      <address type="IPv4">10.0.2.10/24</address>
+      <address type="IPv6">2001:2::10/64</address>
+    </interface>
+    <alias domain="COREID">19</alias>
+    <point lat="-17.7322124861" lon="-47.945394084" type="gps"/>
+  </host>
+  <host id="n20" name="n20">
+    <type domain="CORE">aircraft</type>
+    <interface id="n20/eth0" name="eth0">
+      <member index="9" type="channel">wlan31/wireless</member>
+      <member type="network">wlan31</member>
+      <address type="mac">00:00:00:aa:00:04</address>
+      <address type="IPv4">10.0.0.20/24</address>
+      <address type="IPv6">2001::20/128</address>
+    </interface>
+    <alias domain="COREID">20</alias>
+    <point lat="-21.3118105231" lon="-43.972059948" type="gps"/>
+  </host>
+  <host id="n21" name="n21">
+    <type domain="CORE">host</type>
+    <interface id="n21/eth0" name="eth0">
+      <member index="1" type="channel">net0/chan0</member>
+      <member type="network">net0</member>
+      <address type="mac">00:00:00:aa:00:0e</address>
+      <address type="IPv4">10.0.2.11/24</address>
+      <address type="IPv6">2001:2::11/64</address>
+    </interface>
+    <alias domain="COREID">21</alias>
+    <point lat="-17.7506209497" lon="-46.2062864383" type="gps"/>
+    <CORE:services name="n21">
+      <service name="DefaultRoute" startup_idx="80"/>
+      <service name="SSH" startup_idx="80"/>
+      <service name="Dump1090" startup_idx="50"/>
+    </CORE:services>
+  </host>
+  <CORE:defaultservices>
+    <device type="PC">
+      <service name="DefaultRoute"/>
+    </device>
+    <device type="aircraft">
+      <service name="zebra"/>
+      <service name="OSPFv3MDR"/>
+      <service name="IPForward"/>
+      <service name="DefaultMulticastRoute"/>
+      <service name="GPSd"/>
+      <service name="AdsbOut"/>
+    </device>
+    <device type="ground-station">
+      <service name="zebra"/>
+      <service name="OSPFv3MDR"/>
+      <service name="IPForward"/>
+      <service name="GPSd"/>
+      <service name="AdsbIn"/>
+    </device>
+    <device type="host">
+      <service name="DefaultRoute"/>
+      <service name="SSH"/>
+    </device>
+  </CORE:defaultservices>
+  <CORE:sessionconfig>
+    <origin alt="2.0" lat="-13.869227" lon="-49.918091" scale100="50000.0"/>
+    <options>
+      <parameter name="controlnet">172.17.0.0/16</parameter>
+    </options>
+    <metadata>
+      <parameter name="global_options">interface_names=no ip_addresses=no ipv6_addresses=no node_labels=yes link_labels=yes show_api=no background_images=no annotations=yes grid=yes traffic_start=0</parameter>
+      <parameter name="canvas c1">{name {Canvas1}} {refpt {0 0 -13.869227 -49.918091 2.0}} {scale {50000.0}} {size {1000 900}}</parameter>
+    </metadata>
+  </CORE:sessionconfig>
+</scenario>
