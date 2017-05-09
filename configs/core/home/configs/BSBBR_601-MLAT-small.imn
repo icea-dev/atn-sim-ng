@@ -23,29 +23,7 @@ node n4 {
 	custom-config-id service:AdsbIn
 	custom-command AdsbIn
 	config {
-	files=('adsbin.cfg', 'adsbin.sh', )
-	}
-    }
-    custom-config {
-	custom-config-id service:AdsbIn:adsbin.cfg
-	custom-command adsbin.cfg
-	config {
-	[General]
-	id = n4
-	destinations = Dump1090 MySQL
-	
-	[Dump1090]
-	type = dump1090
-	server = localhost
-	port = 30001
-	
-	[MySQL]
-	type   = mysql
-	dbname = mlat
-	dbuser = mlat
-	dbpass = mlat
-	server = 172.17.255.254
-	
+	files=('adsb_in.cfg', 'adsb_in.sh', )
 	}
     }
 }
@@ -267,29 +245,7 @@ node n2 {
 	custom-config-id service:AdsbIn
 	custom-command AdsbIn
 	config {
-	files=('adsbin.cfg', 'adsbin.sh', )
-	}
-    }
-    custom-config {
-	custom-config-id service:AdsbIn:adsbin.cfg
-	custom-command adsbin.cfg
-	config {
-	[General]
-	id = n2
-	destinations = Dump1090 MySQL
-	
-	[Dump1090]
-	type = dump1090
-	server = localhost
-	port = 30001
-	
-	[MySQL]
-	type   = mysql
-	dbname = mlat
-	dbuser = mlat
-	dbpass = mlat
-	server = 172.17.255.254
-	
+	files=('adsb_in.cfg', 'adsb_in.sh', )
 	}
     }
     services {zebra OSPFv3MDR vtysh IPForward GPSd AdsbIn}
@@ -325,29 +281,7 @@ node n5 {
 	custom-config-id service:AdsbIn
 	custom-command AdsbIn
 	config {
-	files=('adsbin.cfg', 'adsbin.sh', )
-	}
-    }
-    custom-config {
-	custom-config-id service:AdsbIn:adsbin.cfg
-	custom-command adsbin.cfg
-	config {
-	[General]
-	id = n5
-	destinations = Dump1090 MySQL
-	
-	[Dump1090]
-	type = dump1090
-	server = localhost
-	port = 30001
-	
-	[MySQL]
-	type   = mysql
-	dbname = mlat
-	dbuser = mlat
-	dbpass = mlat
-	server = 172.17.255.254
-	
+	files=('adsb_in.cfg', 'adsb_in.sh', )
 	}
     }
 }
@@ -382,29 +316,7 @@ node n13 {
 	custom-config-id service:AdsbIn
 	custom-command AdsbIn
 	config {
-	files=('adsbin.cfg', 'adsbin.sh', )
-	}
-    }
-    custom-config {
-	custom-config-id service:AdsbIn:adsbin.cfg
-	custom-command adsbin.cfg
-	config {
-	[General]
-	id = n13
-	destinations = Dump1090 MySQL
-	
-	[Dump1090]
-	type = dump1090
-	server = localhost
-	port = 30001
-	
-	[MySQL]
-	type   = mysql
-	dbname = mlat
-	dbuser = mlat
-	dbpass = mlat
-	server = 172.17.255.254
-	
+	files=('adsb_in.cfg', 'adsb_in.sh', )
 	}
     }
 }
@@ -434,29 +346,7 @@ node n16 {
 	custom-config-id service:AdsbIn
 	custom-command AdsbIn
 	config {
-	files=('adsbin.cfg', 'adsbin.sh', )
-	}
-    }
-    custom-config {
-	custom-config-id service:AdsbIn:adsbin.cfg
-	custom-command adsbin.cfg
-	config {
-	[General]
-	id = n16
-	destinations = Dump1090 MySQL
-	
-	[Dump1090]
-	type = dump1090
-	server = localhost
-	port = 30001
-	
-	[MySQL]
-	type   = mysql
-	dbname = mlat
-	dbuser = mlat
-	dbpass = mlat
-	server = 172.17.255.254
-	
+	files=('adsb_in.cfg', 'adsb_in.sh', )
 	}
     }
 }

@@ -18,7 +18,7 @@ ${IP}        	   Endereço IP do destino das mensagens ASTERIX.
 O arquivo de configuração do serviço AdsBIn tem que ser modificado para 
 incluir a transmissão das mensagens ADS-B para o AsterixServer.
 
-Configuração do adsbin.cfg
+Configuração do adsb_in.cfg
 
 [General]
 id = ${node.name}

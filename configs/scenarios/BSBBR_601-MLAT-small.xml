@@ -171,7 +171,7 @@
       <service name="IPForward" startup_idx="5"/>
       <service name="GPSd" startup_idx="50"/>
       <service custom="True" name="AdsbIn" startup_idx="50">
-        <file name="adsbin.cfg">
+        <file name="adsb_in.cfg">
 [General]
 id = n2
 destinations = Dump1090 MySQL
@@ -188,8 +188,8 @@ dbuser = mlat
 dbpass = mlat
 server = 172.17.255.254
 </file>
-        <file name="adsbin.sh"/>
-        <command type="start">sh adsbin.sh</command>
+        <file name="adsb_in.sh"/>
+        <command type="start">sh adsb_in.sh</command>
       </service>
     </CORE:services>
   </host>
@@ -230,7 +230,7 @@ server = 172.17.255.254
       <service name="GPSd" startup_idx="50"/>
       <service name="Dump1090" startup_idx="50"/>
       <service custom="True" name="AdsbIn" startup_idx="50">
-        <file name="adsbin.cfg">
+        <file name="adsb_in.cfg">
 [General]
 id = n4
 destinations = Dump1090 MySQL
@@ -247,8 +247,8 @@ dbuser = mlat
 dbpass = mlat
 server = 172.17.255.254
 </file>
-        <file name="adsbin.sh"/>
-        <command type="start">sh adsbin.sh</command>
+        <file name="adsb_in.sh"/>
+        <command type="start">sh adsb_in.sh</command>
       </service>
     </CORE:services>
   </host>
@@ -283,7 +283,7 @@ server = 172.17.255.254
       <service name="IPForward" startup_idx="5"/>
       <service name="GPSd" startup_idx="50"/>
       <service custom="True" name="AdsbIn" startup_idx="50">
-        <file name="adsbin.cfg">
+        <file name="adsb_in.cfg">
 [General]
 id = n5
 destinations = Dump1090 MySQL
@@ -300,8 +300,8 @@ dbuser = mlat
 dbpass = mlat
 server = 172.17.255.254
 </file>
-        <file name="adsbin.sh"/>
-        <command type="start">sh adsbin.sh</command>
+        <file name="adsb_in.sh"/>
+        <command type="start">sh adsb_in.sh</command>
       </service>
     </CORE:services>
   </host>
@@ -348,7 +348,7 @@ server = 172.17.255.254
       <service name="IPForward" startup_idx="5"/>
       <service name="GPSd" startup_idx="50"/>
       <service custom="True" name="AdsbIn" startup_idx="50">
-        <file name="adsbin.cfg">
+        <file name="adsb_in.cfg">
 [General]
 id = n13
 destinations = Dump1090 MySQL
@@ -365,8 +365,8 @@ dbuser = mlat
 dbpass = mlat
 server = 172.17.255.254
 </file>
-        <file name="adsbin.sh"/>
-        <command type="start">sh adsbin.sh</command>
+        <file name="adsb_in.sh"/>
+        <command type="start">sh adsb_in.sh</command>
       </service>
     </CORE:services>
   </host>
@@ -406,7 +406,7 @@ server = 172.17.255.254
       <service name="IPForward" startup_idx="5"/>
       <service name="GPSd" startup_idx="50"/>
       <service custom="True" name="AdsbIn" startup_idx="50">
-        <file name="adsbin.cfg">
+        <file name="adsb_in.cfg">
 [General]
 id = n16
 destinations = Dump1090 MySQL
@@ -423,8 +423,8 @@ dbuser = mlat
 dbpass = mlat
 server = 172.17.255.254
 </file>
-        <file name="adsbin.sh"/>
-        <command type="start">sh adsbin.sh</command>
+        <file name="adsb_in.sh"/>
+        <command type="start">sh adsb_in.sh</command>
       </service>
     </CORE:services>
   </host>

@@ -168,13 +168,13 @@ node n4 {
 	custom-config-id service:AdsbIn
 	custom-command AdsbIn
 	config {
-	files=('adsbin.cfg', 'adsbin.sh', )
+	files=('adsb_in.cfg', 'adsb_in.sh', )
 	starttime=5
 	}
     }
     custom-config {
-	custom-config-id service:AdsbIn:adsbin.cfg
-	custom-command adsbin.cfg
+	custom-config-id service:AdsbIn:adsb_in.cfg
+	custom-command adsb_in.cfg
 	config {
 	[General]
 	id = n4

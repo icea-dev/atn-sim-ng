@@ -2,14 +2,26 @@
 <scenario compiled="true" name="BSBBR_601-MLAT-small.xml" version="1.0" xmlns="nmfPlan" xmlns:CORE="coreSpecific">
   <network id="net0" name="net0">
     <type>ethernet</type>
-    <alias domain="COREID">51793</alias>
-    <member type="interface">n19/eth1</member>
-    <member type="interface">n21/eth0</member>
+    <alias domain="COREID">51154</alias>
+    <member type="interface">n16/eth1</member>
+    <member type="interface">n13/eth2</member>
     <member type="channel">net0/chan0</member>
     <channel id="net0/chan0" name="chan0">
       <type>ethernet</type>
-      <member index="0" type="interface">n19/eth1</member>
-      <member index="1" type="interface">n21/eth0</member>
+      <member index="0" type="interface">n16/eth1</member>
+      <member index="1" type="interface">n13/eth2</member>
+    </channel>
+  </network>
+  <network id="net1" name="net1">
+    <type>ethernet</type>
+    <alias domain="COREID">26288</alias>
+    <member type="interface">n2/eth1</member>
+    <member type="interface">n5/eth2</member>
+    <member type="channel">net1/chan0</member>
+    <channel id="net1/chan0" name="chan0">
+      <type>ethernet</type>
+      <member index="0" type="interface">n2/eth1</member>
+      <member index="1" type="interface">n5/eth2</member>
     </channel>
   </network>
   <network id="n18" name="n18">
@@ -57,28 +69,16 @@
       <member index="1" type="interface">n18/n18/e3</member>
     </channel>
   </network>
-  <network id="net1" name="net1">
-    <type>ethernet</type>
-    <alias domain="COREID">21432</alias>
-    <member type="interface">n16/eth1</member>
-    <member type="interface">n13/eth2</member>
-    <member type="channel">net1/chan0</member>
-    <channel id="net1/chan0" name="chan0">
-      <type>ethernet</type>
-      <member index="0" type="interface">n16/eth1</member>
-      <member index="1" type="interface">n13/eth2</member>
-    </channel>
-  </network>
   <network id="net2" name="net2">
     <type>ethernet</type>
-    <alias domain="COREID">30876</alias>
-    <member type="interface">n2/eth1</member>
-    <member type="interface">n5/eth2</member>
+    <alias domain="COREID">14879</alias>
+    <member type="interface">n19/eth1</member>
+    <member type="interface">n21/eth0</member>
     <member type="channel">net2/chan0</member>
     <channel id="net2/chan0" name="chan0">
       <type>ethernet</type>
-      <member index="0" type="interface">n2/eth1</member>
-      <member index="1" type="interface">n5/eth2</member>
+      <member index="0" type="interface">n19/eth1</member>
+      <member index="1" type="interface">n21/eth0</member>
     </channel>
   </network>
   <network id="wlan31" name="wlan31">
@@ -157,8 +157,8 @@
       <address type="IPv6">2001::1/128</address>
     </interface>
     <interface id="n2/eth1" name="eth1">
-      <member index="0" type="channel">net2/chan0</member>
-      <member type="network">net2</member>
+      <member index="0" type="channel">net1/chan0</member>
+      <member type="network">net1</member>
       <address type="mac">00:00:00:aa:00:10</address>
       <address type="IPv4">10.0.3.1/24</address>
       <address type="IPv6">2001:3::1/64</address>
@@ -171,25 +171,9 @@
       <service name="IPForward" startup_idx="5"/>
       <service name="GPSd" startup_idx="50"/>
       <service custom="True" name="AdsbIn" startup_idx="50">
-        <file name="adsbin.cfg">
-[General]
-id = n2
-destinations = Dump1090 MySQL
-
-[Dump1090]
-type = dump1090
-server = localhost
-port = 30001
-
-[MySQL]
-type   = mysql
-dbname = mlat
-dbuser = mlat
-dbpass = mlat
-server = 172.17.255.254
-</file>
-        <file name="adsbin.sh"/>
-        <command type="start">sh adsbin.sh</command>
+        <file name="adsb_in.cfg"/>
+        <file name="adsb_in.sh"/>
+        <command type="start">sh adsb_in.sh</command>
       </service>
     </CORE:services>
   </host>
@@ -203,7 +187,7 @@ server = 172.17.255.254
       <address type="IPv6">2001::3/128</address>
     </interface>
     <alias domain="COREID">3</alias>
-    <point lat="-20.8312072402" lon="-44.6577141939" type="gps"/>
+    <point lat="-15.8559707642" lon="-48.1998473085" type="gps"/>
   </host>
   <host id="n4" name="n4">
     <type domain="CORE">ground-station</type>
@@ -230,25 +214,9 @@ server = 172.17.255.254
       <service name="GPSd" startup_idx="50"/>
       <service name="Dump1090" startup_idx="50"/>
       <service custom="True" name="AdsbIn" startup_idx="50">
-        <file name="adsbin.cfg">
-[General]
-id = n4
-destinations = Dump1090 MySQL
-
-[Dump1090]
-type = dump1090
-server = localhost
-port = 30001
-
-[MySQL]
-type   = mysql
-dbname = mlat
-dbuser = mlat
-dbpass = mlat
-server = 172.17.255.254
-</file>
-        <file name="adsbin.sh"/>
-        <command type="start">sh adsbin.sh</command>
+        <file name="adsb_in.cfg"/>
+        <file name="adsb_in.sh"/>
+        <command type="start">sh adsb_in.sh</command>
       </service>
     </CORE:services>
   </host>
@@ -269,8 +237,8 @@ server = 172.17.255.254
       <address type="IPv6">2001:1::1/64</address>
     </interface>
     <interface id="n5/eth2" name="eth2">
-      <member index="1" type="channel">net2/chan0</member>
-      <member type="network">net2</member>
+      <member index="1" type="channel">net1/chan0</member>
+      <member type="network">net1</member>
       <address type="mac">00:00:00:aa:00:11</address>
       <address type="IPv4">10.0.3.2/24</address>
       <address type="IPv6">2001:3::2/64</address>
@@ -283,25 +251,9 @@ server = 172.17.255.254
       <service name="IPForward" startup_idx="5"/>
       <service name="GPSd" startup_idx="50"/>
       <service custom="True" name="AdsbIn" startup_idx="50">
-        <file name="adsbin.cfg">
-[General]
-id = n5
-destinations = Dump1090 MySQL
-
-[Dump1090]
-type = dump1090
-server = localhost
-port = 30001
-
-[MySQL]
-type   = mysql
-dbname = mlat
-dbuser = mlat
-dbpass = mlat
-server = 172.17.255.254
-</file>
-        <file name="adsbin.sh"/>
-        <command type="start">sh adsbin.sh</command>
+        <file name="adsb_in.cfg"/>
+        <file name="adsb_in.sh"/>
+        <command type="start">sh adsb_in.sh</command>
       </service>
     </CORE:services>
   </host>
@@ -315,7 +267,7 @@ server = 172.17.255.254
       <address type="IPv6">2001::10/128</address>
     </interface>
     <alias domain="COREID">10</alias>
-    <point lat="-20.009164477" lon="-45.1757817175" type="gps"/>
+    <point lat="-14.984985472" lon="-48.6482667122" type="gps"/>
   </host>
   <host id="n13" name="n13">
     <type domain="CORE">ground-station</type>
@@ -334,8 +286,8 @@ server = 172.17.255.254
       <address type="IPv6">2001:1::2/64</address>
     </interface>
     <interface id="n13/eth2" name="eth2">
-      <member index="1" type="channel">net1/chan0</member>
-      <member type="network">net1</member>
+      <member index="1" type="channel">net0/chan0</member>
+      <member type="network">net0</member>
       <address type="mac">00:00:00:aa:00:13</address>
       <address type="IPv4">10.0.4.2/24</address>
       <address type="IPv6">2001:4::2/64</address>
@@ -348,25 +300,9 @@ server = 172.17.255.254
       <service name="IPForward" startup_idx="5"/>
       <service name="GPSd" startup_idx="50"/>
       <service custom="True" name="AdsbIn" startup_idx="50">
-        <file name="adsbin.cfg">
-[General]
-id = n13
-destinations = Dump1090 MySQL
-
-[Dump1090]
-type = dump1090
-server = localhost
-port = 30001
-
-[MySQL]
-type   = mysql
-dbname = mlat
-dbuser = mlat
-dbpass = mlat
-server = 172.17.255.254
-</file>
-        <file name="adsbin.sh"/>
-        <command type="start">sh adsbin.sh</command>
+        <file name="adsb_in.cfg"/>
+        <file name="adsb_in.sh"/>
+        <command type="start">sh adsb_in.sh</command>
       </service>
     </CORE:services>
   </host>
@@ -380,7 +316,7 @@ server = 172.17.255.254
       <address type="IPv6">2001::14/128</address>
     </interface>
     <alias domain="COREID">14</alias>
-    <point lat="-21.2545190244" lon="-44.2423089543" type="gps"/>
+    <point lat="-16.1209945485" lon="-47.5513702302" type="gps"/>
   </host>
   <host id="n16" name="n16">
     <type domain="CORE">ground-station</type>
@@ -392,8 +328,8 @@ server = 172.17.255.254
       <address type="IPv6">2001::13/128</address>
     </interface>
     <interface id="n16/eth1" name="eth1">
-      <member index="0" type="channel">net1/chan0</member>
-      <member type="network">net1</member>
+      <member index="0" type="channel">net0/chan0</member>
+      <member type="network">net0</member>
       <address type="mac">00:00:00:aa:00:12</address>
       <address type="IPv4">10.0.4.1/24</address>
       <address type="IPv6">2001:4::1/64</address>
@@ -406,25 +342,9 @@ server = 172.17.255.254
       <service name="IPForward" startup_idx="5"/>
       <service name="GPSd" startup_idx="50"/>
       <service custom="True" name="AdsbIn" startup_idx="50">
-        <file name="adsbin.cfg">
-[General]
-id = n16
-destinations = Dump1090 MySQL
-
-[Dump1090]
-type = dump1090
-server = localhost
-port = 30001
-
-[MySQL]
-type   = mysql
-dbname = mlat
-dbuser = mlat
-dbpass = mlat
-server = 172.17.255.254
-</file>
-        <file name="adsbin.sh"/>
-        <command type="start">sh adsbin.sh</command>
+        <file name="adsb_in.cfg"/>
+        <file name="adsb_in.sh"/>
+        <command type="start">sh adsb_in.sh</command>
       </service>
     </CORE:services>
   </host>
@@ -438,8 +358,8 @@ server = 172.17.255.254
       <address type="IPv6">2001:1::10/64</address>
     </interface>
     <interface id="n19/eth1" name="eth1">
-      <member index="0" type="channel">net0/chan0</member>
-      <member type="network">net0</member>
+      <member index="0" type="channel">net2/chan0</member>
+      <member type="network">net2</member>
       <address type="mac">00:00:00:aa:00:0d</address>
       <address type="IPv4">10.0.2.10/24</address>
       <address type="IPv6">2001:2::10/64</address>
@@ -457,13 +377,13 @@ server = 172.17.255.254
       <address type="IPv6">2001::20/128</address>
     </interface>
     <alias domain="COREID">20</alias>
-    <point lat="-21.3118105231" lon="-43.972059948" type="gps"/>
+    <point lat="-15.8537891252" lon="-46.7079034301" type="gps"/>
   </host>
   <host id="n21" name="n21">
     <type domain="CORE">host</type>
     <interface id="n21/eth0" name="eth0">
-      <member index="1" type="channel">net0/chan0</member>
-      <member type="network">net0</member>
+      <member index="1" type="channel">net2/chan0</member>
+      <member type="network">net2</member>
       <address type="mac">00:00:00:aa:00:0e</address>
       <address type="IPv4">10.0.2.11/24</address>
       <address type="IPv6">2001:2::11/64</address>
