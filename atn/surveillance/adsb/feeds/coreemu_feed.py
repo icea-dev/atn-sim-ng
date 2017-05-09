@@ -21,13 +21,13 @@
 
 import binascii
 import logging
-import MySQLdb
+#import MySQLdb
 import os
 import random
 import time
 import threading
 
-from gps3 import gps3
+#from gps3 import gps3
 
 from .adsb_feed import AdsbFeed
 
@@ -92,7 +92,7 @@ class CoreFeed(AdsbFeed):
         self.nem_id = core_utils.get_nem_id(node_name=self.node_name, session_id=self.session_id)
         self.node_number = core_utils.get_node_number(node_name=self.node_name, session_id=self.session_id)
 
-        self.db = MySQLdb.connect(self.tracksrv_dbhost, self.tracksrv_dbuser, self.tracksrv_dbpass, self.tracksrv_dbname)
+        self.db = None # MySQLdb.connect(self.tracksrv_dbhost, self.tracksrv_dbuser, self.tracksrv_dbpass, self.tracksrv_dbname)
 
         self._init_transponder()
 
@@ -150,8 +150,8 @@ class CoreFeed(AdsbFeed):
         t1.start()
 
     def gps_read(self):
-        gps_socket = gps3.GPSDSocket()
-        data_stream = gps3.DataStream()
+        gps_socket = None #gps3.GPSDSocket()
+        data_stream = None #gps3.DataStream()
         gps_socket.connect()
         gps_socket.watch()
 
@@ -226,7 +226,7 @@ class CoreFeed(AdsbFeed):
                 self.tracksrv_perftype = perftype
 
                 cursor.close()
-            except MySQLdb.Error as e:
+            except Exception as e: #MySQLdb.Error as e:
                 self.logger.error("MySQL Error [%d]: %s" % (e.args[0], e.args[1]))
             finally:
                 cursor.close()
