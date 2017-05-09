@@ -23,12 +23,12 @@ node n4 {
 	custom-config-id service:AdsbIn
 	custom-command AdsbIn
 	config {
-	files=('adsbin.cfg', 'adsbin.sh', )
+	files=('adsb_in.cfg', 'adsb_in.sh', )
 	}
     }
     custom-config {
-	custom-config-id service:AdsbIn:adsbin.cfg
-	custom-command adsbin.cfg
+	custom-config-id service:AdsbIn:adsb_in.cfg
+	custom-command adsb_in.cfg
 	config {
 	[General]
 	id = n4
@@ -267,12 +267,12 @@ node n2 {
 	custom-config-id service:AdsbIn
 	custom-command AdsbIn
 	config {
-	files=('adsbin.cfg', 'adsbin.sh', )
+	files=('adsb_in.cfg', 'adsb_in.sh', )
 	}
     }
     custom-config {
-	custom-config-id service:AdsbIn:adsbin.cfg
-	custom-command adsbin.cfg
+	custom-config-id service:AdsbIn:adsb_in.cfg
+	custom-command adsb_in.cfg
 	config {
 	[General]
 	id = n2
@@ -325,12 +325,12 @@ node n5 {
 	custom-config-id service:AdsbIn
 	custom-command AdsbIn
 	config {
-	files=('adsbin.cfg', 'adsbin.sh', )
+	files=('adsb_in.cfg', 'adsb_in.sh', )
 	}
     }
     custom-config {
-	custom-config-id service:AdsbIn:adsbin.cfg
-	custom-command adsbin.cfg
+	custom-config-id service:AdsbIn:adsb_in.cfg
+	custom-command adsb_in.cfg
 	config {
 	[General]
 	id = n5
@@ -382,12 +382,12 @@ node n13 {
 	custom-config-id service:AdsbIn
 	custom-command AdsbIn
 	config {
-	files=('adsbin.cfg', 'adsbin.sh', )
+	files=('adsb_in.cfg', 'adsb_in.sh', )
 	}
     }
     custom-config {
-	custom-config-id service:AdsbIn:adsbin.cfg
-	custom-command adsbin.cfg
+	custom-config-id service:AdsbIn:adsb_in.cfg
+	custom-command adsb_in.cfg
 	config {
 	[General]
 	id = n13
@@ -434,12 +434,12 @@ node n16 {
 	custom-config-id service:AdsbIn
 	custom-command AdsbIn
 	config {
-	files=('adsbin.cfg', 'adsbin.sh', )
+	files=('adsb_in.cfg', 'adsb_in.sh', )
 	}
     }
     custom-config {
-	custom-config-id service:AdsbIn:adsbin.cfg
-	custom-command adsbin.cfg
+	custom-config-id service:AdsbIn:adsb_in.cfg
+	custom-command adsb_in.cfg
 	config {
 	[General]
 	id = n16
