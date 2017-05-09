@@ -26,28 +26,6 @@ node n4 {
 	files=('adsb_in.cfg', 'adsb_in.sh', )
 	}
     }
-    custom-config {
-	custom-config-id service:AdsbIn:adsb_in.cfg
-	custom-command adsb_in.cfg
-	config {
-	[General]
-	id = n4
-	destinations = Dump1090 MySQL
-	
-	[Dump1090]
-	type = dump1090
-	server = localhost
-	port = 30001
-	
-	[MySQL]
-	type   = mysql
-	dbname = mlat
-	dbuser = mlat
-	dbpass = mlat
-	server = 172.17.255.254
-	
-	}
-    }
 }
 
 node n31 {
@@ -270,28 +248,6 @@ node n2 {
 	files=('adsb_in.cfg', 'adsb_in.sh', )
 	}
     }
-    custom-config {
-	custom-config-id service:AdsbIn:adsb_in.cfg
-	custom-command adsb_in.cfg
-	config {
-	[General]
-	id = n2
-	destinations = Dump1090 MySQL
-	
-	[Dump1090]
-	type = dump1090
-	server = localhost
-	port = 30001
-	
-	[MySQL]
-	type   = mysql
-	dbname = mlat
-	dbuser = mlat
-	dbpass = mlat
-	server = 172.17.255.254
-	
-	}
-    }
     services {zebra OSPFv3MDR vtysh IPForward GPSd AdsbIn}
 }
 
@@ -326,28 +282,6 @@ node n5 {
 	custom-command AdsbIn
 	config {
 	files=('adsb_in.cfg', 'adsb_in.sh', )
-	}
-    }
-    custom-config {
-	custom-config-id service:AdsbIn:adsb_in.cfg
-	custom-command adsb_in.cfg
-	config {
-	[General]
-	id = n5
-	destinations = Dump1090 MySQL
-	
-	[Dump1090]
-	type = dump1090
-	server = localhost
-	port = 30001
-	
-	[MySQL]
-	type   = mysql
-	dbname = mlat
-	dbuser = mlat
-	dbpass = mlat
-	server = 172.17.255.254
-	
 	}
     }
 }
@@ -385,28 +319,6 @@ node n13 {
 	files=('adsb_in.cfg', 'adsb_in.sh', )
 	}
     }
-    custom-config {
-	custom-config-id service:AdsbIn:adsb_in.cfg
-	custom-command adsb_in.cfg
-	config {
-	[General]
-	id = n13
-	destinations = Dump1090 MySQL
-	
-	[Dump1090]
-	type = dump1090
-	server = localhost
-	port = 30001
-	
-	[MySQL]
-	type   = mysql
-	dbname = mlat
-	dbuser = mlat
-	dbpass = mlat
-	server = 172.17.255.254
-	
-	}
-    }
 }
 
 node n16 {
@@ -435,28 +347,6 @@ node n16 {
 	custom-command AdsbIn
 	config {
 	files=('adsb_in.cfg', 'adsb_in.sh', )
-	}
-    }
-    custom-config {
-	custom-config-id service:AdsbIn:adsb_in.cfg
-	custom-command adsb_in.cfg
-	config {
-	[General]
-	id = n16
-	destinations = Dump1090 MySQL
-	
-	[Dump1090]
-	type = dump1090
-	server = localhost
-	port = 30001
-	
-	[MySQL]
-	type   = mysql
-	dbname = mlat
-	dbuser = mlat
-	dbpass = mlat
-	server = 172.17.255.254
-	
 	}
     }
 }
