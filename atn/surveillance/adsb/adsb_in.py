@@ -87,11 +87,11 @@ class AdsbIn(object):
     DOCUMENT ME!
     """
     # ---------------------------------------------------------------------------------------------
-    def __init__(self, ff_x, ff_y, ff_z, fs_config="adsb_in.cfg", fv_store_msgs=False):
+    def __init__(self, ff_lat, ff_lng, ff_alt, fs_config="adsb_in.cfg", fv_store_msgs=False):
         """
         constructor
         
-        @param ff_(x, y, z): station position
+        @param ff_(lat, lng, alt): station position
         @param fs_config: arquivo de configuração
         @param fv_store_msgs: flag store messages (False)
         """
@@ -104,6 +104,11 @@ class AdsbIn(object):
         # received messages
         self.__lst_rec_msgs = []
 
+        # station location
+        self.__f_lat = ff_lat
+        self.__f_lng = ff_lng
+        self.__f_alt = ff_alt
+      
         # id
         self.id = None
 
@@ -117,16 +122,6 @@ class AdsbIn(object):
         # load configuration file
         self.__load_config(fs_config)
 
-        # create CORE location
-        self.__core_location = location.CLocation()
-        assert self.__core_location
-
-        # configure reference point
-        self.__core_location.configure_values("0|0|{}|{}|2|50000".format(M_LAT_REF, M_LNG_REF))
-
-        # discover station location
-        self.__f_lat, self.__f_lng, self.__f_alt = self.__core_location.getgeo(ff_x, ff_y, ff_z)
-      
     # ---------------------------------------------------------------------------------------------
     def __estimate_toa(self, fs_message):
         """
