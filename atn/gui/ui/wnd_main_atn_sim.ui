@@ -144,7 +144,7 @@ p, li { white-space: pre-wrap; }
   <action name="act_edit_scenario">
    <property name="icon">
     <iconset resource="../icons/wnd_main_atn_sim.qrc">
-     <normaloff>:/gui/edit-mode.png</normaloff>:/gui/edit-mode.png</iconset>
+     <normaloff>:/gui/network-workgroup.png</normaloff>:/gui/network-workgroup.png</iconset>
    </property>
    <property name="text">
     <string>Create a scenario</string>

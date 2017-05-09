@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'wnd_main_atn_sim.ui'
 #
-# Created: Tue May  2 09:46:05 2017
+# Created: Fri May  5 10:36:27 2017
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -69,7 +69,7 @@ class Ui_CWndMainATNSim(object):
         CWndMainATNSim.addToolBar(QtCore.Qt.TopToolBarArea, self.toolBar)
         self.act_edit_scenario = QtGui.QAction(CWndMainATNSim)
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap(_fromUtf8(":/gui/edit-mode.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon.addPixmap(QtGui.QPixmap(_fromUtf8(":/gui/network-workgroup.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.act_edit_scenario.setIcon(icon)
         self.act_edit_scenario.setObjectName(_fromUtf8("act_edit_scenario"))
         self.act_start_session = QtGui.QAction(CWndMainATNSim)
