@@ -2,23 +2,35 @@
 <scenario compiled="true" name="BSBBR_601-MLAT-small.xml" version="1.0" xmlns="nmfPlan" xmlns:CORE="coreSpecific">
   <network id="net0" name="net0">
     <type>ethernet</type>
-    <alias domain="COREID">51154</alias>
-    <member type="interface">n16/eth1</member>
-    <member type="interface">n13/eth2</member>
+    <alias domain="COREID">37769</alias>
+    <member type="interface">n19/eth1</member>
+    <member type="interface">n21/eth0</member>
     <member type="channel">net0/chan0</member>
     <channel id="net0/chan0" name="chan0">
+      <type>ethernet</type>
+      <member index="0" type="interface">n19/eth1</member>
+      <member index="1" type="interface">n21/eth0</member>
+    </channel>
+  </network>
+  <network id="net1" name="net1">
+    <type>ethernet</type>
+    <alias domain="COREID">34114</alias>
+    <member type="interface">n16/eth1</member>
+    <member type="interface">n13/eth2</member>
+    <member type="channel">net1/chan0</member>
+    <channel id="net1/chan0" name="chan0">
       <type>ethernet</type>
       <member index="0" type="interface">n16/eth1</member>
       <member index="1" type="interface">n13/eth2</member>
     </channel>
   </network>
-  <network id="net1" name="net1">
+  <network id="net2" name="net2">
     <type>ethernet</type>
-    <alias domain="COREID">26288</alias>
+    <alias domain="COREID">18445</alias>
     <member type="interface">n2/eth1</member>
     <member type="interface">n5/eth2</member>
-    <member type="channel">net1/chan0</member>
-    <channel id="net1/chan0" name="chan0">
+    <member type="channel">net2/chan0</member>
+    <channel id="net2/chan0" name="chan0">
       <type>ethernet</type>
       <member index="0" type="interface">n2/eth1</member>
       <member index="1" type="interface">n5/eth2</member>
@@ -67,18 +79,6 @@
       <type>ethernet</type>
       <member index="0" type="interface">n4/eth1</member>
       <member index="1" type="interface">n18/n18/e3</member>
-    </channel>
-  </network>
-  <network id="net2" name="net2">
-    <type>ethernet</type>
-    <alias domain="COREID">14879</alias>
-    <member type="interface">n19/eth1</member>
-    <member type="interface">n21/eth0</member>
-    <member type="channel">net2/chan0</member>
-    <channel id="net2/chan0" name="chan0">
-      <type>ethernet</type>
-      <member index="0" type="interface">n19/eth1</member>
-      <member index="1" type="interface">n21/eth0</member>
     </channel>
   </network>
   <network id="wlan31" name="wlan31">
@@ -157,8 +157,8 @@
       <address type="IPv6">2001::1/128</address>
     </interface>
     <interface id="n2/eth1" name="eth1">
-      <member index="0" type="channel">net1/chan0</member>
-      <member type="network">net1</member>
+      <member index="0" type="channel">net2/chan0</member>
+      <member type="network">net2</member>
       <address type="mac">00:00:00:aa:00:10</address>
       <address type="IPv4">10.0.3.1/24</address>
       <address type="IPv6">2001:3::1/64</address>
@@ -237,8 +237,8 @@
       <address type="IPv6">2001:1::1/64</address>
     </interface>
     <interface id="n5/eth2" name="eth2">
-      <member index="1" type="channel">net1/chan0</member>
-      <member type="network">net1</member>
+      <member index="1" type="channel">net2/chan0</member>
+      <member type="network">net2</member>
       <address type="mac">00:00:00:aa:00:11</address>
       <address type="IPv4">10.0.3.2/24</address>
       <address type="IPv6">2001:3::2/64</address>
@@ -286,8 +286,8 @@
       <address type="IPv6">2001:1::2/64</address>
     </interface>
     <interface id="n13/eth2" name="eth2">
-      <member index="1" type="channel">net0/chan0</member>
-      <member type="network">net0</member>
+      <member index="1" type="channel">net1/chan0</member>
+      <member type="network">net1</member>
       <address type="mac">00:00:00:aa:00:13</address>
       <address type="IPv4">10.0.4.2/24</address>
       <address type="IPv6">2001:4::2/64</address>
@@ -328,8 +328,8 @@
       <address type="IPv6">2001::13/128</address>
     </interface>
     <interface id="n16/eth1" name="eth1">
-      <member index="0" type="channel">net0/chan0</member>
-      <member type="network">net0</member>
+      <member index="0" type="channel">net1/chan0</member>
+      <member type="network">net1</member>
       <address type="mac">00:00:00:aa:00:12</address>
       <address type="IPv4">10.0.4.1/24</address>
       <address type="IPv6">2001:4::1/64</address>
@@ -358,8 +358,8 @@
       <address type="IPv6">2001:1::10/64</address>
     </interface>
     <interface id="n19/eth1" name="eth1">
-      <member index="0" type="channel">net2/chan0</member>
-      <member type="network">net2</member>
+      <member index="0" type="channel">net0/chan0</member>
+      <member type="network">net0</member>
       <address type="mac">00:00:00:aa:00:0d</address>
       <address type="IPv4">10.0.2.10/24</address>
       <address type="IPv6">2001:2::10/64</address>
@@ -382,8 +382,8 @@
   <host id="n21" name="n21">
     <type domain="CORE">host</type>
     <interface id="n21/eth0" name="eth0">
-      <member index="1" type="channel">net2/chan0</member>
-      <member type="network">net2</member>
+      <member index="1" type="channel">net0/chan0</member>
+      <member type="network">net0</member>
       <address type="mac">00:00:00:aa:00:0e</address>
       <address type="IPv4">10.0.2.11/24</address>
       <address type="IPv6">2001:2::11/64</address>
