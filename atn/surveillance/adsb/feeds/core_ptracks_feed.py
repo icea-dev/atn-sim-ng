@@ -77,7 +77,7 @@ class CorePtracksFeed(AdsbFeed):
         # Init attributes aircraft data
         self.ssr = None
         self.spi = False
-        self.atitude = 0
+        self.altitude = 0
         self.latitude = 0
         self.longitude = 0
         self.ground_speed = 0
