@@ -41,11 +41,12 @@ import logging
 import socket
 import subprocess
 import ConfigParser
+import ipcalc
+import webbrowser as web
 import netifaces as ni
 import wnd_main_atn_sim_ui as wmain_ui
 import dlg_trf as dtraf_ui
 import dlg_start as dstart_ui
-import re
 
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
@@ -76,6 +77,12 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         self.ptracks_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         # Make the socket multicast-aware, and set TTL.
         self.ptracks_sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 2)
+
+        # Node number of Dump1090
+        self.node_number_Dump1090 = None
+
+        # Endereço da rede de controle do CORE
+        self.control_net = None
 
         # core-gui process
         self.p = None
@@ -111,6 +118,7 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         self.act_edit_scenario.triggered.connect(self.cbk_start_edit_mode)
         self.act_start_session.triggered.connect(self.cbk_start_session)
         self.act_stop_session.triggered.connect(self.cbk_stop_session)
+        self.act_start_dump1090.triggered.connect(self.cbk_start_dump1090)
         self.act_start_pilot.triggered.connect(self.cbk_start_pilot)
         self.act_start_visil.triggered.connect(self.cbk_start_visil)
 
@@ -273,6 +281,10 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
             self.act_start_session.setIcon(self.iconPlay)
             self.act_start_session.setText("Start ATN simulation")
 
+            # Restabelece as condiçoes iniciais para sessão do CORE
+            self.control_net = None
+            self.node_number_Dump1090 = None
+
 
     # ---------------------------------------------------------------------------------------------
     def cbk_start_edit_mode(self):
@@ -299,24 +311,6 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         # Desabilitar a ação de iniciar a simulação
         self.act_start_session.setEnabled(False)
         self.act_edit_scenario.setEnabled(False)
-
-
-    # ---------------------------------------------------------------------------------------------
-    def enabled_actions(self, status):
-        """
-        Habilita ous desabilita as ações do menu para o core-gui em tempo de execução da simulação do
-        cenário.
-
-        :param status: True habilita a ação e False desbilita.
-        :return:
-        """
-
-        # Desabilita as ações para uma simulação ATN ativa
-        self.act_stop_session.setEnabled(status)
-        self.act_start_dump1090.setEnabled(status)
-        self.act_start_visil.setEnabled(status)
-        self.act_start_pilot.setEnabled(status)
-        self.act_add_aircraft.setEnabled(status)
 
 
     # ---------------------------------------------------------------------------------------------
@@ -360,6 +354,12 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         l_file_path = QtGui.QFileDialog.getOpenFileName(self, 'Open simulation scenario - XML',
                                                         self.scenario_dir, 'XML files (*.xml)')
 
+        # Encontra o número do nó onde está sendo executado Dump1090
+        self.node_number_Dump1090 = self.extract_host_id_dump1090(l_file_path)
+
+        # Encontra o enderço da rede de controle do CORE
+        self.control_net = self.extract_control_net(l_file_path)
+
         # Nenhum arquivo selecionado, termina o processamento
         if not l_file_path:
             self.act_start_session.setIcon(self.iconPlay)
@@ -389,34 +389,6 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
                 self.act_start_session.setIcon(self.iconPlay)
                 self.act_start_session.setText("Start ATN simulation")
                 return
-
-        '''
-        Temporariamente desabilitar a ação de verificar se um arquivo de tráfegos foi
-        modificado
-
-        else:
-            # Arquivo dos tráfegos existe, primeiro cria um arquivo de trafego temporário ...
-            self.dlg_traf.populate_table(self.extract_anvs(l_file_path))
-            l_tmp_traf_filename = os.path.join(os.environ['HOME'], 'atn-sim/atn/gui') + "/" \
-                                  + self.filename + ".trf.xml"
-            self.create_ptracks_traf(self.dlg_traf.get_data(), l_tmp_traf_filename)
-
-            # Compara com o arquivo que já existe para verificar se existe alguma diferença
-            if self.diff_files(l_traf_filename, l_tmp_traf_filename):
-                self.dlg_start.set_title(self.filename)
-                l_ret_val = self.dlg_start.exec_()
-
-                # Cancelamento da execução do cenário de simulação
-                if QtGui.QDialog.Rejected == l_ret_val:
-                    return
-
-                # Cria um novo arquivo de aeronaves
-                if 1 == l_ret_val:
-                    l_ret_val = self.create_new_ptracks_traf ( l_file_path, l_traf_filename )
-
-                    if not l_ret_val:
-                        return ;
-        '''
 
         # Monta o nome da sessão que será executada no core-gui
         l_split = l_file_path.split('/')
@@ -448,45 +420,6 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
 
         # Habilita as ações para uma simulação ATN ativa
         self.enabled_actions(True)
-
-
-    # ---------------------------------------------------------------------------------------------
-    def create_new_ptracks_traf ( self, f_scenario_file, f_traf_filename ):
-        """
-        A partir de um cenário de simulação, criado pelo core-gui pelo modo de edição, cria um
-        arquivo de tráfegos, em XML, para o sistema do ptracks (cinemática das aeronaves da simulação).
-
-        :param f_scenario_file: arquivo do cenário de simulação.
-        :param f_traf_filename: arquivo de tráfegos para o ptracks.
-        :return: True se o arquivo de tráfegos foi criado com sucesso caso contrário False.
-        """
-
-        # Extrai as informações do arquivo do cenário de simulação e popula a tabela da
-        # janela de diálogo de aeronaves
-        self.dlg_traf.populate_table ( self.extract_anvs ( f_scenario_file ) )
-
-        # Coloca o nome do arquivo do cenário de simulação na barra de título da janela de diálogo.
-        self.dlg_traf.set_title(self.filename)
-
-        # Abre a janela de diálogo
-        l_ret_val = self.dlg_traf.exec_()
-
-        # Verifica o código de retorno da janela de diálogo, caso desista da operação
-        # Avisa o usuário do erro de criação do arquivo de tráfegos.
-        if QtGui.QDialog.Rejected == l_ret_val:
-            l_msg = QtGui.QMessageBox()
-            l_msg.setIcon(QtGui.QMessageBox.Critical)
-            l_msg_text = "Error creating file: %s" % f_traf_filename
-            l_msg.setText(l_msg_text)
-            l_msg.setWindowTitle("Start Session")
-            l_msg.setStandardButtons(QtGui.QMessageBox.Ok)
-            l_msg.exec_()
-
-            return False
-        else:
-            # Cria o arquivo de tráfegos para o ptracks.
-            self.create_ptracks_traf(self.dlg_traf.get_data(), f_traf_filename )
-            return True
 
 
     # ---------------------------------------------------------------------------------------------
@@ -567,6 +500,49 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         self.act_start_session.setIcon(self.iconPlay)
         self.act_start_session.setText("Start ATN simulation")
 
+        # Não existe sessão do CORE sendo executada.
+        self.node_number_Dump1090 = None
+        self.control_net = None
+
+
+    # ---------------------------------------------------------------------------------------------
+    def cbk_start_dump1090(self):
+        """
+        Inicia o firefox para apresentar os dados ADS-B enviados ao aplicativo Dump1090
+        :return:
+        """
+        # Lista de ip's
+
+        browser_ok = False
+
+        # Verifica se existe um nó dentro do CORE executando o Dump1090
+        if self.node_number_Dump1090:
+            if self.control_net:
+                # Calcula os endereços disponíveis para cada no na rede de controle do CORE
+                net = ipcalc.Network(str(self.control_net))
+
+                lst_ip = []
+                for ip in net:
+                    lst_ip.append(str(ip))
+
+                # Obtém o endereço IP do nó do Dump1090
+                ip_dump1090 = lst_ip [ self.node_number_Dump1090 ]
+                url = "http://" + str(ip_dump1090) + ":8080"
+
+                browser = web.get('firefox')
+                browser.open('http://172.17.0.19:8080')
+
+                browser_ok = True
+
+        if not browser_ok:
+            l_msg = QtGui.QMessageBox()
+            l_msg.setIcon(QtGui.QMessageBox.Information)
+            l_msg_text = "There is no Dump1090 service running on CORE!"
+            l_msg.setText(l_msg_text)
+            l_msg.setWindowTitle("Start browser Dump1090")
+            l_msg.setStandardButtons(QtGui.QMessageBox.Ok)
+            l_msg.exec_()
+
 
     # ---------------------------------------------------------------------------------------------
     def cbk_start_pilot(self):
@@ -646,6 +622,63 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         :return:
         """
         pass
+
+
+    # ---------------------------------------------------------------------------------------------
+    def enabled_actions(self, status):
+        """
+        Habilita ous desabilita as ações do menu para o core-gui em tempo de execução da simulação do
+        cenário.
+
+        :param status: True habilita a ação e False desbilita.
+        :return:
+        """
+
+        # Desabilita as ações para uma simulação ATN ativa
+        self.act_stop_session.setEnabled(status)
+        self.act_start_dump1090.setEnabled(status)
+        self.act_start_visil.setEnabled(status)
+        self.act_start_pilot.setEnabled(status)
+        self.act_add_aircraft.setEnabled(status)
+
+
+    # ---------------------------------------------------------------------------------------------
+    def create_new_ptracks_traf ( self, f_scenario_file, f_traf_filename ):
+        """
+        A partir de um cenário de simulação, criado pelo core-gui pelo modo de edição, cria um
+        arquivo de tráfegos, em XML, para o sistema do ptracks (cinemática das aeronaves da simulação).
+
+        :param f_scenario_file: arquivo do cenário de simulação.
+        :param f_traf_filename: arquivo de tráfegos para o ptracks.
+        :return: True se o arquivo de tráfegos foi criado com sucesso caso contrário False.
+        """
+
+        # Extrai as informações do arquivo do cenário de simulação e popula a tabela da
+        # janela de diálogo de aeronaves
+        self.dlg_traf.populate_table ( self.extract_anvs ( f_scenario_file ) )
+
+        # Coloca o nome do arquivo do cenário de simulação na barra de título da janela de diálogo.
+        self.dlg_traf.set_title(self.filename)
+
+        # Abre a janela de diálogo
+        l_ret_val = self.dlg_traf.exec_()
+
+        # Verifica o código de retorno da janela de diálogo, caso desista da operação
+        # Avisa o usuário do erro de criação do arquivo de tráfegos.
+        if QtGui.QDialog.Rejected == l_ret_val:
+            l_msg = QtGui.QMessageBox()
+            l_msg.setIcon(QtGui.QMessageBox.Critical)
+            l_msg_text = "Error creating file: %s" % f_traf_filename
+            l_msg.setText(l_msg_text)
+            l_msg.setWindowTitle("Start Session")
+            l_msg.setStandardButtons(QtGui.QMessageBox.Ok)
+            l_msg.exec_()
+
+            return False
+        else:
+            # Cria o arquivo de tráfegos para o ptracks.
+            self.create_ptracks_traf(self.dlg_traf.get_data(), f_traf_filename )
+            return True
 
 
     # ---------------------------------------------------------------------------------------------
@@ -804,6 +837,175 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
 
 
     # ---------------------------------------------------------------------------------------------
+    def extract_host_id_dump1090(self, f_xml_filename):
+        """ Extrai o número do nó do CORE que está sendo executado o Dump1090
+
+        :param f_xml_filename: arquivo XML do cenário do CORE.
+        :return: o numero do nó do CORE do Dump1090
+        """
+        # cria o QFile para o arquivo XML
+        l_data_file = QtCore.QFile(f_xml_filename)
+        assert l_data_file is not None
+
+        # abre o arquivo XML
+        l_data_file.open(QtCore.QIODevice.ReadOnly)
+
+        # cria o documento XML
+        l_xdoc_aer = QtXml.QDomDocument("scenario")
+        assert l_xdoc_aer is not None
+
+        l_xdoc_aer.setContent(l_data_file)
+
+        # fecha o arquivo
+        l_data_file.close()
+
+        # obtém o elemento raíz do documento
+        l_elem_root = l_xdoc_aer.documentElement()
+        assert l_elem_root is not None
+
+        # cria uma lista com os elementos
+        l_node_list = l_elem_root.elementsByTagName("host")
+
+        # para todos os nós na lista...
+        for li_ndx in xrange(l_node_list.length()):
+
+            l_element = l_node_list.at(li_ndx).toElement()
+            assert l_element is not None
+
+            if "host" != l_element.tagName():
+                continue
+
+            # obtém o primeiro nó da sub-árvore
+            l_node = l_element.firstChild()
+            assert l_node is not None
+
+            lv_host_ok = False
+
+            # percorre a sub-árvore
+            while not l_node.isNull():
+                # tenta converter o nó em um elemento
+                l_element = l_node.toElement()
+                assert l_element is not None
+
+                # o nó é um elemento ?
+                if not l_element.isNull():
+
+                    if "alias" == l_element.tagName():
+                        if l_element.hasAttribute("domain"):
+                            if "COREID" == l_element.attribute("domain"):
+                                li_ntrf = int(l_element.text())
+
+                    if "CORE:services" == l_element.tagName():
+                        l_node_svc = l_element.firstChild()
+
+                        while not l_node_svc.isNull():
+                            l_elm_svc = l_node_svc.toElement()
+                            assert l_elm_svc is not None
+
+                            if not l_elm_svc.isNull():
+                                if "service" == l_elm_svc.tagName():
+                                    if l_elm_svc.hasAttribute("name"):
+                                        if "Dump1090" == l_elm_svc.attribute("name"):
+                                            lv_host_ok = True
+
+                            l_node_svc = l_node_svc.nextSibling()
+                            assert l_node_svc is not None
+
+
+                # próximo nó
+                l_node = l_node.nextSibling()
+                assert l_node is not None
+
+            # achou aircraft ?
+            if lv_host_ok:
+                return li_ntrf
+
+        return None
+
+
+    # ---------------------------------------------------------------------------------------------
+    def extract_control_net(self, f_xml_filename):
+        """
+        Extrai o endereço da rede de controle do CORE
+        :param f_xml_filename: o arquivo xml do cenário do CORE
+        :return: endereço da rede de controle do CORE
+        """
+        # cria o QFile para o arquivo XML
+        l_data_file = QtCore.QFile(f_xml_filename)
+        assert l_data_file is not None
+
+        # abre o arquivo XML
+        l_data_file.open(QtCore.QIODevice.ReadOnly)
+
+        # cria o documento XML
+        l_xdoc_aer = QtXml.QDomDocument("scenario")
+        assert l_xdoc_aer is not None
+
+        l_xdoc_aer.setContent(l_data_file)
+
+        # fecha o arquivo
+        l_data_file.close()
+
+        # obtém o elemento raíz do documento
+        l_elem_root = l_xdoc_aer.documentElement()
+        assert l_elem_root is not None
+
+        # cria uma lista com os elementos
+        l_node_list = l_elem_root.elementsByTagName("CORE:sessionconfig")
+
+        # para todos os nós na lista...
+        for li_ndx in xrange(l_node_list.length()):
+
+            l_element = l_node_list.at(li_ndx).toElement()
+            assert l_element is not None
+
+            if "CORE:sessionconfig" != l_element.tagName():
+                continue
+
+            # obtém o primeiro nó da sub-árvore
+            l_node = l_element.firstChild()
+            assert l_node is not None
+
+            lv_net_session_ok = False
+
+            # percorre a sub-árvore
+            while not l_node.isNull():
+                # tenta converter o nó em um elemento
+                l_element = l_node.toElement()
+                assert l_element is not None
+
+                # o nó é um elemento ?
+                if not l_element.isNull():
+
+                    if "options" == l_element.tagName():
+                        l_node_opt = l_element.firstChild()
+
+                        while not l_node_opt.isNull():
+                            l_elm_opt = l_node_opt.toElement()
+                            assert l_elm_opt is not None
+
+                            if not l_elm_opt.isNull():
+                                if "parameter" == l_elm_opt.tagName():
+                                    if l_elm_opt.hasAttribute("name"):
+                                        if "controlnet" == l_elm_opt.attribute("name"):
+                                            ls_controle_net = l_elm_opt.text()
+                                            lv_net_session_ok = True
+
+                            l_node_opt = l_node_opt.nextSibling()
+                            assert l_node_opt is not None
+
+                # próximo nó
+                l_node = l_node.nextSibling()
+                assert l_node is not None
+
+            # achou aircraft ?
+            if lv_net_session_ok:
+                return ls_controle_net
+
+        return None
+
+
+    # ---------------------------------------------------------------------------------------------
     def kill_processes(self):
         """
         Finaliza os processos que podem ser inciados pela GUI.
@@ -849,6 +1051,7 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
 
         # Send the data
         self.ptracks_sock.sendto(data, (addr, port))
+
 
 # < the end>---------------------------------------------------------------------------------------
 
