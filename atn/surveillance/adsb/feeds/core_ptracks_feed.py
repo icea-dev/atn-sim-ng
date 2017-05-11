@@ -161,7 +161,8 @@ class CorePtracksFeed(AdsbFeed):
         ground_speed = self.ground_speed
         self.data_lock.release()
 
-        return heading, vertical_rate, ground_speed
+        # Esperar ajuste no ptracks, com a informação do ptracks não funciona !!!! Tem que ser zero.
+        return heading, 0, ground_speed
 
 
     # -------------------------------------------------------------------------------------------------
