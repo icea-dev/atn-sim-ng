@@ -1,25 +1,37 @@
-#!/usr/bin/env python
-#
-# Copyright 2010, 2012 Nick Foster
-#
-# This file is part of gr-air-modes
-#
-# gr-air-modes is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 3, or (at your option)
-# any later version.
-#
-# gr-air-modes is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with gr-air-modes; see the file COPYING.  If not, write to
-# the Free Software Foundation, Inc., 51 Franklin Street,
-# Boston, MA 02110-1301, USA.
-#
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+"""
+---------------------------------------------------------------------------------------------------
+Copyright 2010, 2012 Nick Foster
 
+This file is part of gr-air-modes
+
+gr-air-modes is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 3, or (at your option)
+any later version.
+
+gr-air-modes is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with gr-air-modes; see the file COPYING.  If not, write to
+the Free Software Foundation, Inc., 51 Franklin Street,
+Boston, MA 02110-1301, USA.
+
+revision 0.1  2016              Alexandre MagnoMarcio Monteiro
+revision 0.2  2017/May/11       Ivan Matias
+
+initial release (Linux/Python)
+---------------------------------------------------------------------------------------------------
+"""
+__version__ = "$revision: 0.2$"
+__author__ = "Ivan Matias"
+__date__ = "2017/05"
+
+# < imports >------------------------------------------------------------------
 import math
 import time
 
@@ -326,8 +338,11 @@ def encode_header(df, ca, icao_addr):
     # CA (3-bit)
     msg += bin(ca)[2:].zfill(3)
 
-    # ICAO Address (24-bit)
-    msg += bin(int(icao_addr, 16))[2:].zfill(24)
+    # ICAO Address (24-bit), verifica se é possível codificar o endereço icao 24 bit code
+    if icao_addr is not None:
+        msg += bin(int(icao_addr, 16))[2:].zfill(24)
+    else:
+        msg = None
 
     return msg
 
@@ -341,6 +356,9 @@ def encode_aircraft_id(ca, icao24, aircraft_cat, callsign, df=17, es_type=4):
     n = len(callsign)
 
     msg = encode_header(df, ca, icao24)
+
+    if msg is None:
+        return msg
 
     # Putting all to uppercase, just in case
     callsign = str(callsign).upper()
@@ -369,6 +387,9 @@ def encode_aircraft_id(ca, icao24, aircraft_cat, callsign, df=17, es_type=4):
 def encode_airborne_position(ca, icao_addr, lat, lon, sv, nicsb, alt, t_flag, f_flag, es_type=11, df=17):
 
     msg = encode_header(df, ca, icao_addr)
+
+    if msg is None:
+        return None
 
     # Extended Squitter Type (5 bit)
     msg += bin(es_type)[2:].zfill(5)
@@ -437,6 +458,9 @@ def encode_airborne_velocity(ca, icao24, es_subtype, ic_flag, reserved_a,
 
     # Mode-S header
     msg = encode_header(df, ca, icao24)
+
+    if msg is None:
+        return msg
 
     # Extended Squitter Type (5 bit)
     msg += bin(type_code)[2:].zfill(5)
