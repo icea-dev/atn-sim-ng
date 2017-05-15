@@ -79,7 +79,7 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         self.ptracks_sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 2)
 
         # Node number of Dump1090
-        self.node_number_Dump1090 = None
+        self.node_number_Dump1090 = []
 
         # Endereço da rede de controle do CORE
         self.control_net = None
@@ -283,7 +283,7 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
 
             # Restabelece as condiçoes iniciais para sessão do CORE
             self.control_net = None
-            self.node_number_Dump1090 = None
+            self.node_number_Dump1090 = []
 
 
     # ---------------------------------------------------------------------------------------------
@@ -501,7 +501,7 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         self.act_start_session.setText("Start ATN simulation")
 
         # Não existe sessão do CORE sendo executada.
-        self.node_number_Dump1090 = None
+        self.node_number_Dump1090 = []
         self.control_net = None
 
 
@@ -516,7 +516,7 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         browser_ok = False
 
         # Verifica se existe um nó dentro do CORE executando o Dump1090
-        if self.node_number_Dump1090:
+        if len (self.node_number_Dump1090) > 0:
             if self.control_net:
                 # Calcula os endereços disponíveis para cada no na rede de controle do CORE
                 net = ipcalc.Network(str(self.control_net))
@@ -525,12 +525,15 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
                 for ip in net:
                     lst_ip.append(str(ip))
 
-                # Obtém o endereço IP do nó do Dump1090
-                ip_dump1090 = lst_ip [ self.node_number_Dump1090 ]
-                url = "http://" + str(ip_dump1090) + ":8080"
-
+                i = 0
                 browser = web.get('firefox')
-                browser.open('http://172.17.0.19:8080')
+                while i < len(self.node_number_Dump1090):
+                    # Obtém o endereço IP do nó do Dump1090
+                    ip_dump1090 = lst_ip[self.node_number_Dump1090[i]]
+                    url = "http://" + str(ip_dump1090) + ":8080"
+                    # Abre uma aba no browser com a url do serviço do Dump1090
+                    browser.open_new_tab(url)
+                    i = i + 1
 
                 browser_ok = True
 
@@ -841,7 +844,7 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         """ Extrai o número do nó do CORE que está sendo executado o Dump1090
 
         :param f_xml_filename: arquivo XML do cenário do CORE.
-        :return: o numero do nó do CORE do Dump1090
+        :return: uma lista com os nós do CORE com o serviço Dump1090
         """
         # cria o QFile para o arquivo XML
         l_data_file = QtCore.QFile(f_xml_filename)
@@ -866,6 +869,8 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         # cria uma lista com os elementos
         l_node_list = l_elem_root.elementsByTagName("host")
 
+        ll_node_nbrs = []
+
         # para todos os nós na lista...
         for li_ndx in xrange(l_node_list.length()):
 
@@ -880,6 +885,7 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
             assert l_node is not None
 
             lv_host_ok = False
+            li_ntrf = None
 
             # percorre a sub-árvore
             while not l_node.isNull():
@@ -918,9 +924,9 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
 
             # achou aircraft ?
             if lv_host_ok:
-                return li_ntrf
+                ll_node_nbrs.append(li_ntrf)
 
-        return None
+        return ll_node_nbrs
 
 
     # ---------------------------------------------------------------------------------------------
