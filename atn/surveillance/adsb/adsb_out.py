@@ -226,7 +226,12 @@ class AdsbOut:
         :return:
         """
         ca = self.feed.get_capabilities()
-        callsign = self.feed.get_callsign().replace("_","")
+        callsign = self.feed.get_callsign()
+
+        if callsign is None:
+            return None
+        callsign = callsign.replace("_", "")
+
         air_type = self.feed.get_type()
         icao24 = self.feed.get_icao24()
 
