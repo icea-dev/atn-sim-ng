@@ -32,7 +32,7 @@ __date__ = "2017/04"
 
 # < imports >--------------------------------------------------------------------------------------
 
-# Python library
+# python library
 import ConfigParser
 import logging
 import math
@@ -44,22 +44,23 @@ import threading
 import time
 
 # atn-sim
-from atn.surveillance.adsb.forwarders.asterix_fwrd import AsterixForwarder
-from atn.surveillance.adsb.forwarders.dump1090_fwrd import Dump1090Forwarder
+import atn.surveillance.adsb.forwarders.asterix_fwrd as fast
+import atn.surveillance.adsb.forwarders.buster_fwrd as fbstr
+import atn.surveillance.adsb.forwarders.dump1090_fwrd as f1090
 
-from atn.surveillance.asterix.adsb_decoder import AdsBDecoder
-from atn.surveillance.asterix.asterix_encoder import AdsBAsterixEncode
+import atn.surveillance.asterix.adsb_decoder as dcdr
+import atn.surveillance.asterix.asterix_encoder as ecdr
 
 #import atn.core_utils as core_utils
 #import atn.emane_utils as emane_utils
 import atn.geo_utils as geo_utils
-import atn.location as location
 
-# < module data >----------------------------------------------------------------------------------
+# < module defs >----------------------------------------------------------------------------------
 
 # logger
+M_LOG = logging.getLogger(__name__)
+M_LOG.setLevel(logging.DEBUG)
 M_LOG_FILE = "adsb_in.log"
-M_LOG_LEVEL = logging.DEBUG
 
 # receiver
 M_NET_PORT = 30001
@@ -67,18 +68,14 @@ M_MAX_REC_MSGS = 5000
 M_RECV_BUFF_SIZE = 1024
 
 # asterix server
-M_QUEUE_SIZE = 10
 M_ASTERIX_PORT = 15000
 M_ASTERIX_HOST = "localhost"
 
 # speed of light (m/s)
 M_LIGHT_SPEED = 299792458.
 
-# latitude central (CORE)
-M_LAT_REF = -13.869227
-
-# longitude central (CORE)
-M_LNG_REF = -49.918091
+# tempo para estatística (s)
+M_TIM_STAT = 30
 
 # < class AdsbIn >---------------------------------------------------------------------------------
 
@@ -87,22 +84,16 @@ class AdsbIn(object):
     DOCUMENT ME!
     """
     # ---------------------------------------------------------------------------------------------
-    def __init__(self, ff_lat, ff_lng, ff_alt, fs_config="adsb_in.cfg", fv_store_msgs=False):
+    def __init__(self, fi_id, ff_lat, ff_lng, ff_alt, fs_config="adsb_in.cfg"):
         """
         constructor
         
+        @param fi_id: sensor id
         @param ff_(lat, lng, alt): station position
         @param fs_config: arquivo de configuração
-        @param fv_store_msgs: flag store messages (False)
         """
-        # flag store messages
-        self.__v_store_rec_msgs = fv_store_msgs
-
         # destinations to which messages will be forwarded to
         self.__lst_forwarders = []
-
-        # received messages
-        self.__lst_rec_msgs = []
 
         # station location
         self.__f_lat = ff_lat
@@ -110,8 +101,8 @@ class AdsbIn(object):
         self.__f_alt = ff_alt
       
         # id
-        self.id = None
-
+        self.__i_id = fi_id
+        
         # asterix forwarder/server
         self.__v_asterix_server = False
         self.__i_asterix_rx_port = None
@@ -132,7 +123,7 @@ class AdsbIn(object):
 
         # split message
         llst_msg = fs_message.split()
-        logging.debug("llst_msg: {}".format(llst_msg))
+        M_LOG.debug("llst_msg: {}".format(llst_msg))
 
         # ads-b message
         ls_msg_adsb = llst_msg[0]
@@ -148,10 +139,39 @@ class AdsbIn(object):
 
         # euclidean distance
         lf_dist = math.sqrt(lf_x * lf_x + lf_y * lf_y + lf_z * lf_z)
-        logging.debug("lf_dist: {}".format(lf_dist))
+        M_LOG.debug("lf_dist: {}".format(lf_dist))
 
         # return ads-b message, estimated time (distance / speed of light)
         return ls_msg_adsb, lf_dist / M_LIGHT_SPEED
+
+    # ---------------------------------------------------------------------------------------------
+    def __init_asterix_server(self):
+        """
+        intialize asterix server
+        """
+        # show
+        print "intializing asterix server..."
+
+        # create message queue
+        l_queue = Queue.Queue()
+        assert l_queue 
+
+        # create a decoder for ADS-B messages
+        l_decoder = dcdr.AdsBDecoder(self.__i_asterix_sic)
+        assert l_decoder
+
+        l_decoder.create_socket(self.__i_asterix_rx_port)
+        l_decoder.set_queue(l_queue)
+        l_decoder.start_thread()
+
+        # create a encoder to ASTERIX
+        l_encoder = ecdr.AdsBAsterixEncode(self.__i_asterix_sic)
+        assert l_encoder
+
+        l_encoder.create_socket(self.__i_asterix_tx_port)
+        l_encoder.set_net(self.__s_asterix_dest)
+        l_encoder.set_queue(l_queue)
+        l_encoder.start_thread()
 
     # ---------------------------------------------------------------------------------------------
     def __load_config(self, fs_config):
@@ -163,114 +183,134 @@ class AdsbIn(object):
         # configuration file exists ?
         if os.path.exists(fs_config):
             # create parser
-            l_parser = ConfigParser.ConfigParser()
-
+            l_cparser = ConfigParser.ConfigParser()
+            assert l_cparser
+          
             # load file through parser
-            l_parser.read(fs_config)
-
-            # set id
-            self.id = l_parser.get("General", "id")
+            l_cparser.read(fs_config)
 
             # reading destinations to forward received messages...
-            for l_dest in l_parser.get("General", "destinations").split():
-                # items from destination
-                llst_items = l_parser.items(l_dest)
+            for l_dest in l_cparser.get("glb", "destinations").split():
+                # get section items as tuples list
+                llst_items = l_cparser.items(l_dest)
 
                 # init key=value dictionary
-                ldct_options = {}
+                ldct_dest = {}
 
                 # for all items...
                 for lt_item in llst_items:
                     # put item (key, value) on dictionary
-                    ldct_options[lt_item[0]] = lt_item[1]
-
-                # destiny is dump1090 ? 
-                if ldct_options["type"].lower() == "dump1090":
-                    logging.debug("Creating dump1090 forward ....")
-                    # create dump 1090 forwarder
-                    l_fwdr = Dump1090Forwarder(items=ldct_options)
-                    assert l_fwdr
-                    
-                    l_fwdr.set_timeout(0.5)
-                    
-                    # put on forwarders list
-                    self.__lst_forwarders.append(l_fwdr)
-
-                # destiny is database ?
-                #elif ldct_options["type"].lower() == "database":
-                    # create database forwarder
-                    #l_fwdr = DatabseForwarder(sensor_id=self.id, items=ldct_options)
-                    #assert l_fwdr
-                    
-                    # put on forwarders list
-                    #self.__lst_forwarders.append(l_fwdr)
+                    ldct_dest[lt_item[0]] = lt_item[1]
 
                 # destiny is asterix ?
-                elif ldct_options["type"].lower() == "asterix":
+                if "asterix" == ldct_dest["type"].lower():
                     # enable asterix server
                     self.__v_asterix_server = True
 
                     # asterix parameters
-                    self.__i_asterix_sic = int(ldct_options["sic"])
+                    self.__i_asterix_sic = int(ldct_dest["sic"])
                     self.__i_asterix_rx_port = M_ASTERIX_PORT
-                    self.__i_asterix_tx_port = int(ldct_options["port"])
-                    self.__s_asterix_dest = ldct_options["server"]
+                    self.__i_asterix_tx_port = int(ldct_dest["port"])
+                    self.__s_asterix_dest = ldct_dest["server"]
 
                     # forwards to local asterix server, which is listening on localhost:15000
-                    ldct_options["server"] = M_ASTERIX_HOST
-                    ldct_options["port"] = M_ASTERIX_PORT
+                    ldct_dest["server"] = M_ASTERIX_HOST
+                    ldct_dest["port"] = M_ASTERIX_PORT
 
                     # create asterix forwarder
-                    l_fwdr = AsterixForwarder(items=ldct_options)
+                    l_fwdr = fast.AsterixForwarder(items=ldct_dest)
                     assert l_fwdr 
 
                     # put on forwarders list
                     self.__lst_forwarders.append(l_fwdr)
 
-        # senão,...
-        else:
-            #self.id = core_utils.get_node_name()
-            self.id = None
+                # destiny is dump1090 ? 
+                elif "dump1090" == ldct_dest["type"].lower():
+                    # create dump 1090 forwarder
+                    l_fwdr = f1090.Dump1090Forwarder(items=ldct_dest)
+                    assert l_fwdr
+                    
+                    # set timeout
+                    l_fwdr.set_timeout(0.5)
+                    
+                    # put on forwarders list
+                    self.__lst_forwarders.append(l_fwdr)
+                
+                # destiny is buster server ?
+                elif "buster" == ldct_dest["type"].lower():
+                    # create buster server forwarder
+                    l_fwdr = fbstr.BusterForwarder(fi_id=self.__i_id, f_options=ldct_dest)
+                    assert l_fwdr
+                    
+                    # put on forwarders list
+                    self.__lst_forwarders.append(l_fwdr)
 
     # ---------------------------------------------------------------------------------------------
-    def retrieve_msg(self):
+    def __receive(self):
         """
-        DOCUMENT ME!
+        loop de recebimento das mensagens ADS-B
         """
-        if len(self.__lst_rec_msgs) > 0:
-            return self.__lst_rec_msgs.pop()
+        # create a socket for receiving ADS-B messages
+        l_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        assert l_sock
 
-        # return
-        return None
+        # setup socket
+        l_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        l_sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 
-    # ---------------------------------------------------------------------------------------------
-    def __init_asterix_server(self):
-        """
-        intialize asterix server
-        """
-        # warning
-        print "intializing asterix server..."
+        # bind socket
+        l_sock.bind(("", M_NET_PORT))
 
-        # create message queue
-        l_queue = Queue.Queue(M_QUEUE_SIZE)
-        assert l_queue 
+        # show
+        print "waiting on port: {}".format(M_NET_PORT)
 
-        # create a decoder for ADS-B messages
-        l_decoder = AdsBDecoder(self.__i_asterix_sic)
-        assert l_decoder
+        # initial time
+        lf_now = time.time()
 
-        l_decoder.create_socket(self.__i_asterix_rx_port)
-        l_decoder.set_queue(l_queue)
-        l_decoder.start_thread()
+        # init message counter
+        li_num_msgs = 0
 
-        # create a encoder to ASTERIX
-        l_encoder = AdsBAsterixEncode(self.__i_asterix_sic)
-        assert l_encoder
+        # loop forever...
+        while True:
+            # block 'til receive message (buffer size is 1024 bytes)
+            ls_message, l_addr = l_sock.recvfrom(M_RECV_BUFF_SIZE)
+            
+            if ls_message:
+                # estimate TOA (time-of-arrival)
+                ls_msg_adsb, lf_toa_est = self.__estimate_toa(ls_message)
+                M_LOG.debug("ls_msg_adsb: {}".format(ls_msg_adsb))
+                M_LOG.debug("lf_toa_est: {}".format(lf_toa_est))
 
-        l_encoder.create_socket(self.__i_asterix_tx_port)
-        l_encoder.set_net(self.__s_asterix_dest)
-        l_encoder.set_queue(l_queue)
-        l_encoder.start_thread()
+            # senão,...
+            else:
+                # next message 
+                continue
+
+            # logger
+            M_LOG.info("received message {} from {} at {}".format(ls_msg_adsb, l_addr, time.time()))
+
+            # for all configured forwarders...
+            for l_fwdr in self.__lst_forwarders:
+                # forward received ADS-B message
+                M_LOG.info("forward message {}".format(ls_msg_adsb))
+                l_fwdr.forward(ls_msg_adsb, lf_toa_est)
+
+            # elapsed time (seg)
+            lf_dif = time.time() - lf_now
+
+            # increment message counter
+            li_num_msgs += 1
+
+            # tempo da estatística ?
+            if lf_dif >= M_TIM_STAT:
+                # logger
+                M_LOG.info("throughput: {} msgs/sec".format(li_num_msgs / lf_dif))
+
+                # reset initial time
+                lf_now = time.time()
+
+                # reset message counter
+                li_num_msgs = 0
 
     # ---------------------------------------------------------------------------------------------
     def run(self):
@@ -289,78 +329,6 @@ class AdsbIn(object):
             # create asterix server threads
             self.__init_asterix_server()
 
-    # ---------------------------------------------------------------------------------------------
-    def __receive(self):
-        """
-        loop de recebimento das mensagens ADS-B
-        """
-        # create a socket for receiving ADS-B messages
-        l_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        assert l_sock
-
-        # setup socket
-        l_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        l_sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-
-        # bind socket
-        l_sock.bind(('', M_NET_PORT))
-
-        # logger
-        logging.info("waiting on port: {}".format(M_NET_PORT))
-
-        # initial time
-        lf_now = time.time()
-
-        # initmessage counter
-        li_num_msgs = 0
-
-        # loop forever...
-        while True:
-            # block 'til receive message (buffer size is 1024 bytes)
-            ls_message, l_addr_from = l_sock.recvfrom(M_RECV_BUFF_SIZE)
-            
-            if ls_message:
-                # estimate TOA (time-of-arrival)
-                ls_msg_adsb, lf_toa_est = self.__estimate_toa(ls_message)
-                logging.debug("ls_msg_adsb: {}".format(ls_msg_adsb))
-                logging.debug("lf_toa_est: {}".format(lf_toa_est))
-
-            # senão,...
-            else:
-                # next message 
-                continue
-
-            # logger
-            logging.info("received message {} from {} at {}".format(ls_msg_adsb, l_addr_from, time.time()))
-
-            # store messages ?
-            if self.__v_store_rec_msgs:
-                if len(self.__lst_rec_msgs) <= M_MAX_REC_MSGS:
-                    self.__lst_rec_msgs.append(ls_msg_adsb)
-
-            # for all configured forwarders...
-            for l_fwdr in self.__lst_forwarders:
-                # forward received ADS-B message
-                logging.info("forward message {}".format(ls_msg_adsb))
-                l_fwdr.forward(ls_msg_adsb, lf_toa_est)
-
-            # elapsed time (seg)
-            lf_dif = time.time() - lf_now
-
-            # increment message counter
-            li_num_msgs += 1
-
-            # 30 seconds ?
-            if lf_dif > 30:
-                # logger
-                logging.info("throughput: {} msgs/sec".format(li_num_msgs / lf_dif))
-
-                # reset initial time
-                lf_now = time.time()
-
-                # reset message counter
-                li_num_msgs = 0
-
 # -------------------------------------------------------------------------------------------------
 def main():
     """
@@ -374,7 +342,7 @@ def main():
     print "`--' `--'`-------' `-----'       `------'         `--'`--''--' "
 
     # create ADS-B in 
-    l_transponder = AdsbIn(float(sys.argv[1]), float(sys.argv[2]), float(sys.argv[3]))
+    l_transponder = AdsbIn(int(sys.argv[1]), float(sys.argv[2]), float(sys.argv[3]), float(sys.argv[4]))
     assert l_transponder
 
     # execute ADS-B in
@@ -386,7 +354,7 @@ def main():
 if "__main__" == __name__:
 
     # logger
-    logging.basicConfig(filename=M_LOG_FILE, level=M_LOG_LEVEL)
+    logging.basicConfig(filename=M_LOG_FILE, filemode="w", format="%(asctime)s %(levelname)s: %(message)s")
 
     # jump start
     main()

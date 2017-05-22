@@ -57,6 +57,7 @@ class AsterixForwarder(AdsbForwarder):
 
         if self.verbose:
             self.logger.disabled = False
+
         else:
             self.logger.disabled = True
 
@@ -92,8 +93,8 @@ class AsterixForwarder(AdsbForwarder):
                 self.logger.info("ASTERIX SERVER : " + str(message).upper() + "\n")
 
             return True
-        else:
-            return False
+
+        return False
 
     def forward(self, message, time_of_arrival=None, tx_id=None, rx_id=None):
         """Forwarding the ADS-B message
@@ -121,3 +122,4 @@ class AsterixForwarder(AdsbForwarder):
 
         """
         return "ASTERIX SERVER IP...: " + self.ip_destination + ":" + str(self.port_d)
+        

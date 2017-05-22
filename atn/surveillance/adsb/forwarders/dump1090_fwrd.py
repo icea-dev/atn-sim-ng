@@ -41,6 +41,7 @@ class Dump1090Forwarder(AdsbForwarder):
 
         if self.verbose:
             self.logger.disabled = False
+
         else:
             self.logger.disabled = True
 
@@ -49,6 +50,7 @@ class Dump1090Forwarder(AdsbForwarder):
         if items is not None:
             self.ip_destination = items["server"]
             self.tcp_port_d = int(items["port"])
+
         else:
             self.ip_destination = server
             self.tcp_port_d = port
@@ -58,10 +60,12 @@ class Dump1090Forwarder(AdsbForwarder):
 
     def connect(self):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
         try:
             self.s.settimeout(self.timeout)
             self.s.connect((self.ip_destination, self.tcp_port_d))
             return True
+
         except socket.error:
             self.s = None
             return False
@@ -77,8 +81,8 @@ class Dump1090Forwarder(AdsbForwarder):
                 self.logger.info("DUMP1090 : " + "*" + str(message).upper() + ";\n")
 
             return True
-        else:
-            return False
+
+        return False
 
     def disconnect(self):
         if self.s:
