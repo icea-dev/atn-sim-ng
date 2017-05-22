@@ -87,7 +87,7 @@ M_ODD_MSG = 1
 
 class CBusterServer(object):
     """
-    DOCUMENT ME!
+    BusterServer class
     """
     # ---------------------------------------------------------------------------------------------
     def __init__(self, fs_config="buster_server.cfg"):
@@ -216,7 +216,6 @@ class CBusterServer(object):
                 else:
                     # save item (created, sensor_id, toa)
                     llst_ans.append([l_key, llst_data[0], llst_data[2]])
-
                     
         # return
         return llst_ans
@@ -230,20 +229,20 @@ class CBusterServer(object):
         if M_ODD_MSG == int(dcdr.get_oe_flag(ls_adsb_msg)):
             # save odd message
             self.__dct_lst_odd[fi_icao24] = ls_adsb_msg
-            t0 = 0
-            t1 = 1
+            l_t0 = 0
+            l_t1 = 1
 
         # senão, is even...
         else:
             # save even message
             self.__dct_lst_even[fi_icao24] = ls_adsb_msg
-            t0 = 1
-            t1 = 0
+            l_t0 = 1
+            l_t1 = 0
 
         # received both parts of message ?
         if (fi_icao24 in self.__dct_lst_odd) and (fi_icao24 in self.__dct_lst_even):
             # if CPR cannot be decoded, the method returns (None, None)
-            lf_lat, lf_lng = dcdr.get_position(self.__dct_lst_even[fi_icao24], self.__dct_lst_odd[fi_icao24], t0, t1)
+            lf_lat, lf_lng = dcdr.get_position(self.__dct_lst_even[fi_icao24], self.__dct_lst_odd[fi_icao24], l_t0, l_t1)
 
             # decoded ?
             if lf_lat and lf_lng:
@@ -490,7 +489,7 @@ class CBusterServer(object):
             # distance inside acceptable range ?
             if lf_dist_2d <= M_THRESHOLD:
                 # accept message
-                M_LOG.info("process_msg:'%s'\t%d\t%s[PASS]%s" % (fs_adsb_msg, lf_dist_2d, bcolors.OKBLUE, bcolors.ENDC))
+                M_LOG.info("process_msg:'%s'\t%d\t%s[OK]%s" % (fs_adsb_msg, lf_dist_2d, bcolors.OKBLUE, bcolors.ENDC))
 
                 # for all forwarders...
                 for l_frwd in self.__lst_forwarders:
@@ -500,7 +499,7 @@ class CBusterServer(object):
             # senão,...
             else:
                 # drop message
-                M_LOG.warning("process_msg:'%s'\t%d\t%s[DROP]%s" % (fs_adsb_msg, lf_dist_2d, bcolors.FAIL, bcolors.ENDC))
+                M_LOG.warning("process_msg:'%s'\t%d\t%s[FAIL]%s" % (fs_adsb_msg, lf_dist_2d, bcolors.FAIL, bcolors.ENDC))
 
         # delete processed messages 
         self.__count_messages(fs_adsb_msg, True)
