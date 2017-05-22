@@ -1,24 +1,35 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-#
-# Copyright 2016, ICEA
-#
-# This file is part of atn-sim
-#
-# atn-sim is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# atn-sim is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
+---------------------------------------------------------------------------------------------------
+Copyright 2016, ICEA
 
+This file is part of atn-sim
 
+atn-sim is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+atn-sim is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+revision 0.1  2016/December/08  Marcio Monteiro, Alexandre Magno
+revision 0.2  2017/April        Ivan Matias
+
+initial release (Linux/Python)
+
+---------------------------------------------------------------------------------------------------
+"""
+__version__ = "$revision: 0.2$"
+__author__ = "Ivan Matias"
+__date__ = "2017/05"
+
+# < imports >------------------------------------------------------------------
 import ipcalc
 import logging
 import math
@@ -34,11 +45,7 @@ import adsb_utils
 from .feeds.coreemu_feed import CoreFeed
 from .feeds.core_ptracks_feed import CorePtracksFeed
 
-__author__ = "Marcio Monteiro, Alexandre Magno"
-__version__ = "0.1"
-__date__ = "2016-dec-08"
-
-
+# < class AdsbOut >------------------------------------------------------------
 class AdsbOut:
 
     net_port = 30001
@@ -55,8 +62,13 @@ class AdsbOut:
     MSG_SUBTYPE_1 = 1
     MSG_SUBTYPE_2 = 2
 
+    # -------------------------------------------------------------------------
     def __init__(self, feed=None, nodename=None):
-
+        """
+        Cosntrutor
+        :param feed: objeto que fornecerá os dados do nó da aeronave para o ADS-B  Out
+        :param nodename: o nome do nó que está sendo executado o ADS-B Out
+        """
         self.nodename = nodename
         self.nemid = None
 
@@ -84,8 +96,15 @@ class AdsbOut:
                             format='%(asctime)s %(levelname)s: %(message)s')
         self.logger = logging.getLogger("adsb.log")
 
+
+    # -------------------------------------------------------------------------
     def start(self):
-        print " > Initiating ADS-B Out transmission"
+        """
+        Inicia as threads para processar os três tipos de mensagens ADS-B:
+        airbone position, airbone velocity e aircraft identfication.
+        :return:
+        """
+        self.logger.info("Initiating ADS-B Out transmission")
         t1 = threading.Thread(target=self._start_airborne_position, args=())
         t2 = threading.Thread(target=self._start_airborne_velocity, args=())
         t3 = threading.Thread(target=self._start_aircraft_id, args=())
@@ -95,57 +114,103 @@ class AdsbOut:
         t2.start()  # Airborne velocity
         t3.start()  # Aircraft identification
 
+
+    # -------------------------------------------------------------------------
     def _start_aircraft_id(self, rate=5):
+        """
+        Método chamado para a codificação e envio da mensagem ADS-B de identificação
+        da aeronave.
+        :param rate: a periodicidade de envio da mensagem.
+        :return:
+        """
         # Startup time
         time.sleep(random.randint(0, 5))
 
         while True:
             t0 = time.time()
             msg = self.generate_aircraft_id()
+
+            if msg is None:
+                continue
+
             self.broadcast(msg)
             self.logger.debug("AIRCRAFT ID:\t%s" % msg)
 
             dt = time.time() - t0
             time.sleep(rate - dt)
 
+
+    # -------------------------------------------------------------------------
     def _start_airborne_position(self, rate=1.0):
+        """
+        Método chamado para a codificação e envio de mensagem ADS-B de posição da
+        aeronave.
+        :param rate: a periodicidade de envio da mensagem.
+        :return:
+        """
         # Startup time
         time.sleep(random.randint(0, 5))
 
         while True:
             t0 = time.time()
             msg = self.generate_airborne_position()
+
+            if msg is None:
+                continue
+
             self.broadcast(msg)
             self.logger.debug("AIR POSITION:\t%s" % msg)
 
             dt = time.time() - t0
             time.sleep(rate - dt)
 
+
+    # -------------------------------------------------------------------------
     def _start_airborne_velocity(self, rate=1.0):
+        """
+        Método chamado para a codificação e envio da mensagem ADS-B de velocidade da
+        aeronave.
+        :param rate: a periodicidade de envio da mensagem.
+        :return:
+        """
         # Startup time
         time.sleep(random.randint(0, 5))
 
         while True:
             t0 = time.time()
             msg = self.generate_airborne_velocity()
+
+            if msg is None:
+                continue
+
             self.broadcast(msg)
             self.logger.debug("AIR VELOCITY:\t%s" % msg)
 
             dt = time.time() - t0
             time.sleep(rate - dt)
 
+
+    # -------------------------------------------------------------------------
     def stop(self):
+        """
+        DOCUMENT ME!
+        :return:
+        """
         pass
 
+
+    # -------------------------------------------------------------------------
     def broadcast(self, message):
+        """
+        Envio da mensagem ADS-B para a rede.
+        :param message: a mensagem ADS-B
+        :return:
+        """
         if message is None:
             return False
         if self.nodename is None:
             lat, lon, alt = self.feed.get_position()
-
             msg = message + " " + str(lat) + " " + str(lon) + " " +str(alt)
-            print "Enviando para %s:%s a mensagem : %s" % ( self.net_dest, self.net_port, msg )
-
             self.net_sock.sendto(msg ,
                                  (self.net_dest, self.net_port))
             return True
@@ -153,10 +218,20 @@ class AdsbOut:
             self.net_sock.sendto(message + " " + self.nodename, (self.net_dest, self.net_port))
             return True
 
-    def generate_aircraft_id(self):
 
+    # -------------------------------------------------------------------------
+    def generate_aircraft_id(self):
+        """
+        Cria a mensagem ADS-B de identificação (callsign) da aeronave
+        :return:
+        """
         ca = self.feed.get_capabilities()
         callsign = self.feed.get_callsign()
+
+        if callsign is None:
+            return None
+        callsign = callsign.replace("_", "")
+
         air_type = self.feed.get_type()
         icao24 = self.feed.get_icao24()
 
@@ -167,13 +242,21 @@ class AdsbOut:
         # Binary
         msg = adsb_utils.encode_aircraft_id(ca, icao24, air_type, callsign)
 
+        if msg is None:
+            return msg
+
         # Hex
         hex_msg = hex(int(msg, 2)).rstrip("L").lstrip("0x")
 
         return hex_msg
 
-    def generate_airborne_position(self):
 
+    # -------------------------------------------------------------------------
+    def generate_airborne_position(self):
+        """
+        Cria a mensagem ADS-B de posição da aeronave.
+        :return:
+        """
         if not self.feed.is_track_updated():
             self.logger.debug("Track is not updated!")
             return None
@@ -264,7 +347,6 @@ class AdsbOut:
         # Alternating between even and odd messages
         if self.last_position_msg == "ODD":
             # Encoding EVEN message
-
             hex_msg_even = hex(int(msg_even, 2)).rstrip("L").lstrip("0x")
             message = hex_msg_even
             self.last_position_msg = "EVEN"
@@ -276,6 +358,8 @@ class AdsbOut:
 
         return message
 
+
+    # -------------------------------------------------------------------------
     def generate_airborne_velocity(self):
         """
         This method encodes the ADS-B Airbone Velocity Message and sends it to
@@ -292,6 +376,7 @@ class AdsbOut:
             return None
 
         (heading, vertical_rate, ground_speed) = self.feed.get_velocity()
+
         (heading_radians, vertical_rate, ground_speed) = adsb_utils.to_unit_adsb(heading, vertical_rate, ground_speed)
 
         # Intent Change Flag = 0, No Change in Intent
@@ -372,11 +457,15 @@ class AdsbOut:
                                                   self.feed.get_icao24(), es_subtype, ic_flag, reserved_a, nacv, ew_dir,
                                                   ewv, ns_dir, nsv, vrate_src, vertical_rate_sign, vertical_rate,
                                                   reserved_b, h_sign, h_diff)
+        if msg is None:
+            return msg
 
         hex_msg = hex(int(msg, 2)).rstrip("L").lstrip("0x")
 
         return hex_msg
 
+
+    # -------------------------------------------------------------------------
     def _calculate_velocity(self, radians, direction, ground_speed):
         """Calculate the direction and ground speed component
 
@@ -415,6 +504,8 @@ class AdsbOut:
 
         return direction_velocity, velocity_module
 
+
+    # -------------------------------------------------------------------------
     def _calculate_vertical_rate(self, vertical_rate):
         """Calculate the direction of the vertical rate and your module.
 
@@ -431,6 +522,8 @@ class AdsbOut:
             sign = AdsbOut.VERTICAL_RATE_DOWN
 
         return sign, int(round(abs(math.fabs(vertical_rate))))
+
+
 
 if __name__ == '__main__':
 
