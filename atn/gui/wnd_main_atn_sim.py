@@ -43,10 +43,10 @@ import subprocess
 import ConfigParser
 import ipcalc
 import webbrowser as web
-import netifaces as ni
 import wnd_main_atn_sim_ui as wmain_ui
 import dlg_trf as dtraf_ui
 import dlg_start as dstart_ui
+import dlg_trf_run_time as dtraf_run_time_ui
 
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
@@ -124,6 +124,8 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
 
         self.act_db_edit.triggered.connect(self.cbk_start_db_edit)
 
+        self.act_add_aircraft.triggered.connect(self.cbk_add_acft_run_time)
+
         self.act_quit.triggered.connect(QtGui.QApplication.quit)
 
         #self.act_scenario_to_xml.triggered.connect(self.cbk_scenario_to_xml)
@@ -131,6 +133,8 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         self.dlg_traf = dtraf_ui.CDlgTraf(f_ptracks_dir=self.ptracks_dir)
 
         self.dlg_start = dstart_ui.CDlgStart()
+
+        self.dlg_traf_run_time = dtraf_run_time_ui.CDlgTrafRunTime()
 
         # Icons
         self.iconPause = QtGui.QIcon()
@@ -581,6 +585,23 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
 
         # Retorna para o diretório do simulador ATN
         os.chdir(l_cur_dir)
+
+
+    # ---------------------------------------------------------------------------------------------
+    def cbk_add_acft_run_time(self):
+        """
+
+        :return:
+        """
+        # Abre a janela de diálogo
+        l_ret_val = self.dlg_traf_run_time.exec_()
+
+        # Verifica o código de retorno da janela de diálogo, caso desista da operação
+        # Avisa o usuário do erro de criação do tráfego em tempo de execução.
+        #if QtGui.QDialog.Accepted == l_ret_val:
+            # Cria o arquivo de tráfegos para o ptracks.
+            #self.create_ptracks_traf(self.dlg_traf.get_data(), f_traf_filename)
+            #return True
 
 
     # ---------------------------------------------------------------------------------------------
