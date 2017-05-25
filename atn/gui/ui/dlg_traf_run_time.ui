@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>dlg_traf_run_time</class>
+ <widget class="QDialog" name="dlg_traf_run_time">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>804</width>
+    <height>173</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Create aircraft at runtime:</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout_2">
+   <item>
+    <widget class="QGroupBox" name="gbx_aircraft">
+     <property name="title">
+      <string>Aircraft</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <item>
+       <widget class="QTableWidget" name="qtw_traf">
+        <property name="rowCount">
+         <number>1</number>
+        </property>
+        <property name="columnCount">
+         <number>10</number>
+        </property>
+        <attribute name="horizontalHeaderDefaultSectionSize">
+         <number>106</number>
+        </attribute>
+        <attribute name="verticalHeaderVisible">
+         <bool>false</bool>
+        </attribute>
+        <row/>
+        <column>
+         <property name="text">
+          <string>Latitude</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>Longitude</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>Type of Acft</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>SSR</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>Callsign</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>Departure</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>Arrival</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>Heading</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>Speed</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>Procedure</string>
+         </property>
+        </column>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <item>
+      <spacer name="horizontalSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btn_cancel">
+       <property name="text">
+        <string>Cancel</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btn_create">
+       <property name="text">
+        <string>Create</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+  <zorder>btn_cancel</zorder>
+  <zorder>btn_create</zorder>
+  <zorder>horizontalSpacer</zorder>
+  <zorder>gbx_aircraft</zorder>
+  <zorder>btn_cancel</zorder>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

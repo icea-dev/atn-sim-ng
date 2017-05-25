@@ -110,7 +110,7 @@ class CDlgTrafRunTime(QtGui.QDialog, dlg_ui.Ui_dlg_traf_run_time):
         # altitude
         self.qtw_trf.setCellWidget(l_row, 10, self.altitude)
         '''
-        
+
 
     # ---------------------------------------------------------------------------------------------
     def set_title(self, f_title):
