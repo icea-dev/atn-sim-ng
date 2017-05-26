@@ -593,6 +593,10 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
 
         :return:
         """
+
+        # Coloca o nome do arquivo do cenário de simulação na barra de título da janela de diálogo.
+        self.dlg_traf_run_time.set_title(self.filename)
+
         # Abre a janela de diálogo
         l_ret_val = self.dlg_traf_run_time.exec_()
 

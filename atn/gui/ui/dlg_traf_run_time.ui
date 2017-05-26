@@ -26,7 +26,7 @@
          <number>1</number>
         </property>
         <property name="columnCount">
-         <number>10</number>
+         <number>11</number>
         </property>
         <attribute name="horizontalHeaderDefaultSectionSize">
          <number>106</number>
@@ -82,6 +82,11 @@
         </column>
         <column>
          <property name="text">
+          <string>Altitude</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
           <string>Procedure</string>
          </property>
         </column>
@@ -122,11 +127,6 @@
     </layout>
    </item>
   </layout>
-  <zorder>btn_cancel</zorder>
-  <zorder>btn_create</zorder>
-  <zorder>horizontalSpacer</zorder>
-  <zorder>gbx_aircraft</zorder>
-  <zorder>btn_cancel</zorder>
  </widget>
  <resources/>
  <connections/>

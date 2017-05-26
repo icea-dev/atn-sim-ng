@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'dlg_traf_run_time.ui'
 #
-# Created: Thu May 25 14:19:33 2017
+# Created: Fri May 26 10:41:24 2017
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -35,7 +35,7 @@ class Ui_dlg_traf_run_time(object):
         self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
         self.qtw_traf = QtGui.QTableWidget(self.gbx_aircraft)
         self.qtw_traf.setRowCount(1)
-        self.qtw_traf.setColumnCount(10)
+        self.qtw_traf.setColumnCount(11)
         self.qtw_traf.setObjectName(_fromUtf8("qtw_traf"))
         item = QtGui.QTableWidgetItem()
         self.qtw_traf.setHorizontalHeaderItem(0, item)
@@ -57,6 +57,8 @@ class Ui_dlg_traf_run_time(object):
         self.qtw_traf.setHorizontalHeaderItem(8, item)
         item = QtGui.QTableWidgetItem()
         self.qtw_traf.setHorizontalHeaderItem(9, item)
+        item = QtGui.QTableWidgetItem()
+        self.qtw_traf.setHorizontalHeaderItem(10, item)
         self.qtw_traf.horizontalHeader().setDefaultSectionSize(106)
         self.qtw_traf.verticalHeader().setVisible(False)
         self.verticalLayout.addWidget(self.qtw_traf)
@@ -98,6 +100,8 @@ class Ui_dlg_traf_run_time(object):
         item = self.qtw_traf.horizontalHeaderItem(8)
         item.setText(_translate("dlg_traf_run_time", "Speed", None))
         item = self.qtw_traf.horizontalHeaderItem(9)
+        item.setText(_translate("dlg_traf_run_time", "Altitude", None))
+        item = self.qtw_traf.horizontalHeaderItem(10)
         item.setText(_translate("dlg_traf_run_time", "Procedure", None))
         self.btn_cancel.setText(_translate("dlg_traf_run_time", "Cancel", None))
         self.btn_create.setText(_translate("dlg_traf_run_time", "Create", None))

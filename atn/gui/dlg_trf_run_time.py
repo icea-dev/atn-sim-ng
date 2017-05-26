@@ -58,11 +58,7 @@ class CDlgTrafRunTime(QtGui.QDialog, dlg_ui.Ui_dlg_traf_run_time):
         self.btn_cancel.clicked.connect(self.on_cancel)
         self.btn_create.clicked.connect(self.on_create)
 
-
-        #self.designador_list = self.load_performance()
-        #self.proc_list = self.load_tables()
-
-        # cria doubleSpinBox para latitude
+        # create doubleSpinBox for latitude
         self.lat = QtGui.QDoubleSpinBox()
         self.lat.setDecimals(4)
         self.lat.setRange(-90., 90.)
@@ -72,7 +68,7 @@ class CDlgTrafRunTime(QtGui.QDialog, dlg_ui.Ui_dlg_traf_run_time):
         # latitude
         self.qtw_traf.setCellWidget(0, 0, self.lat)
 
-        # cria doubleSpinBox para longitude
+        # create doubleSpinBox for longitude
         self.lng = QtGui.QDoubleSpinBox()
         self.lng.setDecimals(4)
         self.lng.setRange(-180., 180.)
@@ -82,34 +78,74 @@ class CDlgTrafRunTime(QtGui.QDialog, dlg_ui.Ui_dlg_traf_run_time):
         # longitude
         self.qtw_traf.setCellWidget(0, 1, self.lng)
 
-        '''
-        # cria spinBox para proa
-        self.proa = QtGui.QSpinBox()
-        self.proa.setRange(0, 360)
-        self.proa.setValue(f_table[l_row]['proa'])
-        self.proa.valueChanged.connect(self.valuechange)
+        # create comboBox for type of aircraft  (designador)
+        self.type_aircraft = QtGui.QComboBox()
+        #self.cb.addItems(self.designador_list)
+        #self.cb.setCurrentIndex(self.cb.findText(f_table[l_row]['designador']))
+        #self.cb.currentIndexChanged.connect(self.selectionchange)
 
-        # proa
-        self.qtw_trf.setCellWidget(l_row, 8, self.proa)
+        # type of auircraft (designador)
+        self.qtw_traf.setCellWidget(0, 2, self.type_aircraft)
 
-        # cria spinBox para velocidade
-        self.velocidade = QtGui.QSpinBox()
-        self.velocidade.setRange(0, 600)
-        self.velocidade.setValue(f_table[l_row]['velocidade'])
-        self.velocidade.valueChanged.connect(self.valuechange)
+        # ssr
+        self.qtw_traf.setItem(0, 3, QtGui.QTableWidgetItem("7001"))
 
-        # velocidade
-        self.qtw_trf.setCellWidget(l_row, 9, self.velocidade)
+        # callsign (indicativo)
+        self.qtw_traf.setItem(0, 4, QtGui.QTableWidgetItem("XXX7001"))
 
-        # cria spinBox para altitude
+        # departure (origem)
+        self.qtw_traf.setItem(0, 5, QtGui.QTableWidgetItem("ZZZZ"))
+
+        # arrival (destino)
+        self.qtw_traf.setItem(0, 6, QtGui.QTableWidgetItem("ZZZZ"))
+
+        # create spinBox for Heading
+        self.heading = QtGui.QSpinBox()
+        self.heading.setRange(0, 360)
+        self.heading.setValue(180)
+        #self.heading.valueChanged.connect(self.valuechange)
+
+        # heading
+        self.qtw_traf.setCellWidget(0, 7, self.heading)
+
+        # create spinBox for speed
+        self.speed = QtGui.QSpinBox()
+        self.speed.setRange(0, 600)
+        self.speed.setValue(300)
+        #self.speed.valueChanged.connect(self.valuechange)
+
+        # speed
+        self.qtw_traf.setCellWidget(0, 8, self.speed)
+
+        # create spinBox for altitude
         self.altitude = QtGui.QSpinBox()
         self.altitude.setRange(0, 40000)
-        self.altitude.setValue(f_table[l_row]['altitude'])
-        self.altitude.valueChanged.connect(self.valuechange)
+        self.altitude.setValue(0)
+        #self.altitude.valueChanged.connect(self.valuechange)
 
         # altitude
-        self.qtw_trf.setCellWidget(l_row, 10, self.altitude)
-        '''
+        self.qtw_traf.setCellWidget(0, 9, self.altitude)
+
+        # create comboBox for procedure
+        self.procedure = QtGui.QComboBox()
+        #self.procedure.addItems(self.proc_list)
+        #self.procedure.setCurrentIndex(self.prc.findText(f_table[l_row]['procedimento']))
+        #self.procedure.currentIndexChanged.connect(self.selectionchange)
+
+        # procedure
+        self.qtw_traf.setCellWidget(0, 10, self.procedure)
+
+        # self.designador_list = self.load_performance()
+        # self.proc_list = self.load_tables()
+
+        # redefines the size of the QTableWidget
+        self.qtw_traf.resizeRowsToContents()
+        self.qtw_traf.resizeColumnsToContents()
+
+        # Defines thew new size of the dialog window
+        width = self.qtw_traf.horizontalHeader().length() + \
+                ( self.qtw_traf.horizontalHeader().sizeHint().width() *  3 / 4 )
+        self.setFixedWidth ( width + 10 )
 
 
     # ---------------------------------------------------------------------------------------------
@@ -120,7 +156,6 @@ class CDlgTrafRunTime(QtGui.QDialog, dlg_ui.Ui_dlg_traf_run_time):
         :param f_title: o nome do cenário de simulação.
         :return:
         """
-        self.scenario_filename = f_title
         self.setWindowTitle("Create aircraft at run time: " + f_title)
 
 
