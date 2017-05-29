@@ -36,27 +36,38 @@ import sys
 # PyQt library
 from PyQt4 import QtGui
 
-# atn-sim
-import wnd_main_atn_sim as wmain
+# atn_sim_mngr
+import atn_sim_mngr as atn
+
+# < module data >----------------------------------------------------------------------------------
+
+# logger
+M_LOG_FILE = "atn-sim-gui.log"
+M_LOG_LEVEL = logging.DEBUG
 
 # -------------------------------------------------------------------------------------------------
 def main():
     """
     initalize and kick off the main loop
     """
+    logger = logging.getLogger('main_app')
+
     # create application
     l_app = QtGui.QApplication(sys.argv)
     assert l_app
 
-    # create main window
-    l_wmain = wmain.CWndMainATNSim()
-    assert l_wmain
+    # create ATN manager
+    logger.info("Creating the ATN simulator manager")
+    l_atn_mngr = atn.CATNSimMngr()
+    assert l_atn_mngr
 
     # show interface
-    l_wmain.show()
+    logger.info("Show the ATN simulator GUI")
+    l_atn_mngr.show_gui()
 
     # run interface
     sys.exit(l_app.exec_())
+    logger.info("Exit app")
 
 # -------------------------------------------------------------------------------------------------
 # this is the bootstrap process
@@ -64,7 +75,8 @@ def main():
 if "__main__" == __name__:
 
     # logger
-    logging.basicConfig()
+    logging.basicConfig(filename=M_LOG_FILE, level=M_LOG_LEVEL,filemode='w',
+                        format='%(asctime)s %(levelname)s: %(message)s')
 
     # run application
     main()

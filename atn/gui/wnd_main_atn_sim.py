@@ -54,7 +54,12 @@ except AttributeError:
     def _fromUtf8(s):
         return s
 
+
+module_logger = logging.getLogger('main_app.wnd_main_atn_sim')
+
+
 # < class CWndMainATNSim >-------------------------------------------------------------------------
+
 
 class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
 
@@ -63,15 +68,18 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
 
 
     # ---------------------------------------------------------------------------------------------
-    def __init__(self, f_parent=None):
+    def __init__(self, f_parent=None, f_mediator=None):
         # init super class
         super(CWndMainATNSim, self).__init__(f_parent)
+
+        self.logger = logging.getLogger("main_app.wnd_main_atn_sim.CWndMainATNSim")
+        self.logger.info("Creating instance of CWndMainATNSim")
 
         # create main menu ui
         self.setupUi(self)
 
-        log = logging.getLogger("CWndMainATNSim::__init__")
-        log.setLevel(logging.WARNING)
+        # Mediator
+        self.mediator = f_mediator
 
         # Create the socket
         self.ptracks_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -105,8 +113,6 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
 
         self.net_tracks_cnfg = self.D_NET_CNFG + "." + str(self.canal)
         logging.info("Multicast address of ptracks cnfg %s" % self.net_tracks_cnfg)
-
-        self.timer = QtCore.QTimer()
 
         # Desabilita as ações para a sessão em tempo de execução
         self.enabled_actions(False)
@@ -143,6 +149,86 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         self.iconPlay.addPixmap(QtGui.QPixmap(_fromUtf8(":/gui/start-session-2.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
 
         self.is_session_pause = False
+
+
+    # ---------------------------------------------------------------------------------------------
+    def show_message_status_bar(self, message):
+        """
+
+        :param message:
+        :return:
+        """
+        self.statusbar.showMessage(message)
+
+
+    # ---------------------------------------------------------------------------------------------
+    def clear_status_bar(self):
+        """
+
+        :return:
+        """
+        self.statusbar.clearMessage()
+
+
+    # ---------------------------------------------------------------------------------------------
+    def reset_menu_options(self):
+        """
+
+        :return:
+        """
+
+        if self.act_start_session.isEnabled() is False:
+            self.act_start_session.setEnabled(True)
+
+        if self.act_edit_scenario.isEnabled() is False:
+            self.act_edit_scenario.setEnabled(True)
+
+        # Desabilita as ações para uma sessão em tempo de execução
+        self.enabled_actions(False)
+
+        # Reinicializa a flag de congelar/descongelar o gerador de pistas
+        self.is_session_pause = False
+
+        # Restabelece os ícones e o texto da ação
+        self.act_start_session.setIcon(self.iconPlay)
+        self.act_start_session.setText("Start ATN simulation")
+
+
+    # ---------------------------------------------------------------------------------------------
+    def get_text_button_start_session(self):
+        """
+
+        :return:
+        """
+        return self.act_start_session.text()
+
+
+    # ---------------------------------------------------------------------------------------------
+    def change_text_button_start_session(self, f_play=False):
+        """
+
+        :return:
+        """
+
+        if f_play is True:
+            self.act_start_session.setIcon(self.iconPlay)
+            self.act_start_session.setText("Start ATN simulation")
+        else:
+            self.act_start_session.setIcon(self.iconPause)
+            self.act_start_session.setText("Pause ATN simulation")
+
+
+    # ---------------------------------------------------------------------------------------------
+    def get_scenario_filename(self, f_scenario_dir):
+        """
+
+        :return: the scenario filename.
+        """
+
+        # Seleciona o arquivo cenário de simulação em XML
+        l_scenario_filename = QtGui.QFileDialog.getOpenFileName(self, 'Open simulation scenario - XML',
+                                                                f_scenario_dir, 'XML files (*.xml)')
+        return l_scenario_filename
 
 
     # ---------------------------------------------------------------------------------------------
@@ -293,28 +379,20 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
     # ---------------------------------------------------------------------------------------------
     def cbk_start_edit_mode(self):
         """
-        Inicia a core-gui no modo de edição.
+        Callback to run core-gui in edit mode.
 
         :return:
         """
-        # Se exitir algum processo iniciado e não finalizado, termina seu processamento.
-        if self.p:
-            l_ret_code = self.p.poll()
-            if l_ret_code is None:
-                self.p.terminate()
+        # Is there a mediator ?
+        if self.mediator:
+            self.mediator.run_core_gui_edit_mode()
 
-        # Inicia o core-gui no modo de edição
-        self.p = subprocess.Popen(['core-gui'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            # Displays the message in the status bar of the GUI
+            self.statusbar.showMessage("Starting core-gui in edit mode!")
 
-        # Apresenta a mensagem na barra de status da GUI
-        self.statusbar.showMessage("Starting core-gui in edit mode!")
-
-        # Timer para verificar se o processo foi finalizado pelo core-gui.
-        self.check_process()
-
-        # Desabilitar a ação de iniciar a simulação
-        self.act_start_session.setEnabled(False)
-        self.act_edit_scenario.setEnabled(False)
+            # desable the action of strating the simulation scenario
+            self.act_start_session.setEnabled(False)
+            self.act_edit_scenario.setEnabled(False)
 
 
     # ---------------------------------------------------------------------------------------------
@@ -327,10 +405,21 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         :return:
         """
 
+        # Is there a mediator ?
+        if self.mediator:
+            self.mediator.run_core_gui_exec_mode()
+
+
+
+
+
+
         if self.act_start_session.text() == "Pause ATN simulation":
             self.act_start_session.setIcon(self.iconPlay)
             self.act_start_session.setText("Start ATN simulation")
-            self.is_session_pause = True
+
+            self.mediator.set_state_simulation(f_state=True)
+
             l_status_msg = "The scenario: " + self.filename + " has been paused!"
             self.statusbar.showMessage(l_status_msg)
 
