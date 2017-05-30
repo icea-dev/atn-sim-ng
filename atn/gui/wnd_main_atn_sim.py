@@ -369,17 +369,16 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         """
 
         # Coloca o nome do arquivo do cenário de simulação na barra de título da janela de diálogo.
-        self.dlg_traf_run_time.set_title(self.filename)
+        self.dlg_traf_run_time.set_title(self.mediator.get_scenario_filename())
 
         # Abre a janela de diálogo
         l_ret_val = self.dlg_traf_run_time.exec_()
 
         # Verifica o código de retorno da janela de diálogo, caso desista da operação
         # Avisa o usuário do erro de criação do tráfego em tempo de execução.
-        #if QtGui.QDialog.Accepted == l_ret_val:
+        if QtGui.QDialog.Accepted == l_ret_val:
             # Cria o arquivo de tráfegos para o ptracks.
-            #self.create_ptracks_traf(self.dlg_traf.get_data(), f_traf_filename)
-            #return True
+            self.mediator.add_aircraft_exec_mode(self.dlg_traf.get_data())
 
 
     # ---------------------------------------------------------------------------------------------

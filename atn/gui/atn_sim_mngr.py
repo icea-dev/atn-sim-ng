@@ -300,9 +300,11 @@ class CATNSimMngr:
 
 
     # ---------------------------------------------------------------------------------------------
-    def add_aircraft_exec_mode(self):
+    def add_aircraft_exec_mode(self, f_aircraft_data):
         """
         Creates an aircraft in the runtime simulation scenario.
+
+        :param: f_aircraft_data:
         :return:
         """
         pass
@@ -453,6 +455,15 @@ class CATNSimMngr:
         :return:
         """
         return self.track_mngr.get_root_dir()
+
+
+    # ---------------------------------------------------------------------------------------------
+    def get_scenario_filename(self):
+        """
+
+        :return:
+        """
+        return self.scenario_filename
 
 
 # < the end >--------------------------------------------------------------------------------------
