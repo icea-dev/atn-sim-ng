@@ -31,11 +31,13 @@ __date__ = "2017/05"
 
 # python library
 from PyQt4 import QtCore
+from string import Template
 
 import ConfigParser
 import logging
 import os
 import socket
+import subprocess
 
 module_logger = logging.getLogger('main_app.track_generator_mngr')
 
@@ -77,6 +79,12 @@ class CTrackGeneratorMngr(QtCore.QObject):
         self.visil = None
         self.pilot = None
         self.db_edit = None
+
+        # The scenario filename
+        self.scenario = None
+
+        # The traffic filename
+        self.traf_ptracks = None
 
         # Channel Track generator
         self.channel = 4
@@ -156,8 +164,145 @@ class CTrackGeneratorMngr(QtCore.QObject):
 
 
     # ---------------------------------------------------------------------------------------------
+    def get_traf_filename(self):
+        """
+        Return traffic file from Track Generator
+        :return:
+        """
+        return self.traf_ptracks
+
+
+    # ---------------------------------------------------------------------------------------------
+    def get_root_dir(self):
+        """
+
+        :return:
+        """
+        return self.dir
+
+
+    # ---------------------------------------------------------------------------------------------
+    def check_files(self, f_scenario_filename):
+        """
+        Check that exercise and traffic files exist in the ptracks data structure.
+
+        :param f_scenario_filename: The filename of the simulation scenario without its extension
+        :return: True, if the file traffics exists otherwise False.
+        """
+        self.scenario = f_scenario_filename
+        self.logger.debug("The scenario filename [%s]" % self.scenario)
+
+        # the name of the ptracks exercise file
+        l_exe_ptracks = self.data_dir + "/exes/" + self.scenario  + ".exe.xml"
+        self.logger.debug("The ptracks exercise file [%s]" % l_exe_ptracks)
+
+        if not os.path.isfile(l_exe_ptracks):
+            # Creates the exercise file
+            self.create_ptracks_exe(l_exe_ptracks)
+
+        # The name of the ptracks traffics file
+        self.traf_ptracks = self.data_dir + "/traf/" + self.scenario + ".trf.xml"
+        self.logger.debug("The ptracks traffic file [%s]" % self.traf_ptracks)
+
+        if not os.path.isfile(self.traf_ptracks):
+            return False
+
+        return True
+
+
+    # ---------------------------------------------------------------------------------------------
+    def create_file(self, f_data_list):
+        """
+        Create a traffic file for the ptracks.
+
+        :param f_data_list: List of dictionaries with the information needed to create the traffic file.
+        :return:
+        """
+
+        # open template file (trafegos)
+        l_file_in = open("templates/trf.xml.in")
+
+        # read it
+        l_src = Template(l_file_in.read())
+
+        # document data
+        l_data = {"trafegos": '\n'.join(f_data_list)}
+
+        # do the substitution
+        l_result = l_src.substitute(l_data)
+
+        with open(self.traf_ptracks, 'w') as l_file:
+            l_file.write(l_result)
+
+
+    # ---------------------------------------------------------------------------------------------
+    def create_ptracks_exe(self, f_scenario_filename):
+        """
+        Create the ptracks exe file for the chosen scenario.
+
+        :param f_scenario_filename: the name of the simulation scneario.
+        :return:
+        """
+        # open template file (exercicio)
+        l_file_in = open("templates/exe.xml.in")
+
+        # read it
+        l_src = Template(l_file_in.read())
+
+        # document data
+        l_title = "ATN Simulator"
+        l_hora = "06:00"
+        l_data = {"title": l_title, "exe": self.filename, "hora": l_hora}
+
+        # do the substitution
+        result = l_src.substitute(l_data)
+
+        # grava o arquivo de exercícios
+        with open(f_scenario_filename, 'w') as f:
+            f.write(result)
+
+
+    # ---------------------------------------------------------------------------------------------
+    def is_database_manager_running(self):
+        """
+
+        :return:
+        """
+        return self.db_edit
+
+
+    # ---------------------------------------------------------------------------------------------
+    def get_database_manager_process(self):
+        """
+
+        :return:
+        """
+        return self.db_edit.poll()
+
+
+    # ---------------------------------------------------------------------------------------------
+    def get_ptracks_data(self, data):
+        """
+        Obtém a informação do arquivo do ptracks que contém as definições globais que o
+        gerador de pistas (ptracks) utiliza.
+        :param data: o tipo da informação a ser recuperada
+        :return: string
+        """
+        # Monta o comando a ser executado
+        cmd = "cat " + self.dir + "/control/common/glb_defs.py" + " | grep " + data
+        output = subprocess.check_output(cmd, shell=True)
+        values = output.split('=')
+
+        if len(values[1]) > 2:
+            values = values[1].split(' ')
+
+        return values[1]
+
+
+    # ---------------------------------------------------------------------------------------------
     def send_pause_message(self):
         """
+        Sends the pause message to the multicast address used to control the ptracks system.
 
         :return:
         """
@@ -172,6 +317,7 @@ class CTrackGeneratorMngr(QtCore.QObject):
     # ---------------------------------------------------------------------------------------------
     def send_play_message(self):
         """
+        Sends the play message to the multicast address used to control the ptracks system.
 
         :return:
         """
@@ -186,10 +332,12 @@ class CTrackGeneratorMngr(QtCore.QObject):
     # ---------------------------------------------------------------------------------------------
     def send_multicast_data(self,data,port,addr):
         """
+        Sends data to the multicast address (addr) in specified port to the ptrack system.
 
-        :param data:
-        :param port:
-        :param addr:
+        :param data: a data to be sent.
+        :param port: a port to be used.
+        :param addr: a address to be used.
+
         :return:
         """
 
@@ -197,6 +345,110 @@ class CTrackGeneratorMngr(QtCore.QObject):
 
         # Send the data
         self.sock.sendto(data, (addr, port))
+
+
+    # ---------------------------------------------------------------------------------------------
+    def run(self):
+        """
+        Runs ptracks ...
+
+        :return:
+        """
+        l_cur_dir = os.getcwd()
+        os.chdir(self.dir)
+
+        self.adapter = subprocess.Popen(['python', 'adapter.py'], stdout=subprocess.PIPE,
+                                        stderr=subprocess.STDOUT)
+
+        self.ptracks = subprocess.Popen(['python', 'newton.py', '-e', self.scenario, '-c', str(self.channel)],
+                                        stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        os.chdir(l_cur_dir)
+
+
+    # ---------------------------------------------------------------------------------------------
+    def stop_processes(self):
+        """
+        Stop the processes of the Track Generator
+        :return: None.
+        """
+
+        # Stop adapter
+        if self.adapter:
+            kill = "kill -9 $(pgrep -P " + str(self.adapter.pid) + ")"
+            os.system(kill)
+            self.adapter.terminate()
+
+        # Stop ptracks
+        if self.ptracks:
+            kill = "kill -9 $(pgrep -P " + str(self.ptracks.pid) + ")"
+            os.system(kill)
+            self.ptracks.terminate()
+
+        # Stop ptracks view
+        if self.visil:
+            kill = "kill -9 $(pgrep -P " + str(self.visil.pid) + ")"
+            os.system(kill)
+            self.visil.terminate()
+
+        # Stop ptracks pilot
+        if self.pilot:
+            kill = "kill -9 $(pgrep -P " + str(self.pilot.pid) + ")"
+            os.system(kill)
+            self.pilot.terminate()
+
+
+    # ---------------------------------------------------------------------------------------------
+    def run_pilot(self):
+        """
+
+        :return:
+        """
+        # Muda para o diretório onde o sistema do ptracks se encontra
+        l_cur_dir = os.getcwd()
+        os.chdir(self.dir)
+
+        # Executa o piloto
+        self.pilot = subprocess.Popen(['python', 'piloto.py'], stdout=subprocess.PIPE,
+                                        stderr=subprocess.STDOUT)
+
+        # Retorna para o diretório do simulador ATN
+        os.chdir(l_cur_dir)
+
+
+    # ---------------------------------------------------------------------------------------------
+    def run_visil(self):
+        """
+
+        :return:
+        """
+        # Muda para o diretório onde o sistema do ptracks se encontra
+        l_cur_dir = os.getcwd()
+        os.chdir(self.dir)
+
+        # Executa o piloto
+        self.visil = subprocess.Popen(['python', 'visil.py'], stdout=subprocess.PIPE,
+                                        stderr=subprocess.STDOUT)
+
+        # Retorna para o diretório do simulador ATN
+        os.chdir(l_cur_dir)
+
+
+    # ---------------------------------------------------------------------------------------------
+    def run_database_manager(self):
+        """
+
+        :return:
+        """
+        # Muda para o diretório onde o sistema do ptracks se encontra
+        l_cur_dir = os.getcwd()
+        os.chdir(self.dir)
+
+        # Inicia o core-gui no modo de edição
+        self.db_edit = subprocess.Popen(['python', 'dbEdit.py'], stdout=subprocess.PIPE,
+                                        stderr=subprocess.STDOUT)
+
+        # Retorna para o diretório do simulador ATN
+        os.chdir(l_cur_dir)
 
 
 # < the end >--------------------------------------------------------------------------------------

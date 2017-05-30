@@ -30,11 +30,17 @@ __date__ = "2017/05"
 # < import >---------------------------------------------------------------------------------------
 
 # python library
-import logging
+from PyQt4 import QtCore
+from PyQt4 import QtXml
 
-import wnd_main_atn_sim as wmain
+import ipcalc
+import logging
+import os
+
 import core_mngr as coremngr
 import track_generator_mngr as trackmngr
+import webbrowser as web
+import wnd_main_atn_sim as wmain
 
 module_logger = logging.getLogger('main_app.atn_sim_mngr')
 
@@ -65,6 +71,9 @@ class CATNSimMngr:
 
         # Define the state of the simulation
         self.is_simulation_pause = False
+
+        # The filename of the simulation scenario without its extension
+        self.scenario_filename = None
 
 
     # ---------------------------------------------------------------------------------------------
@@ -105,7 +114,7 @@ class CATNSimMngr:
 
             self.set_state_simulation(f_state=True)
 
-            l_status_msg = "The scenario: " + self.filename + " has been paused!"
+            l_status_msg = "The scenario: " + self.scenario_filename + " has been paused!"
             self.wmain.show_message_status_bar(l_status_msg)
 
             # Send the pause message to the Track Generator (ptracks)
@@ -117,7 +126,7 @@ class CATNSimMngr:
         if self.state_simulation():
             self.set_state_simulation(f_state=False)
 
-            l_status_msg = "Running the scenario: " + self.filename
+            l_status_msg = "Running the scenario: " + self.scenario_filename
             self.wmain.show_message_status_bar(l_status_msg)
 
             # Send the play message to the Track Generator (ptracks)
@@ -136,63 +145,38 @@ class CATNSimMngr:
         # the CORE control network
         self.core_mngr.parse_xml_file(l_scenario_filename_path)
 
-        # Agora chamar o track_mngr eecute ptracks
-        # Chamar do core o execute core gui in run mode
+        # Get the name of the simulation file without its extension
+        self.scenario_filename = os.path.splitext(os.path.basename(str(l_scenario_filename_path)))[0]
 
-        # Obtém o nome do arquivo do cenário de simulação sem a extensão.
-        self.filename = os.path.splitext(os.path.basename(str(l_file_path)))[0]
+        # Verifiy that the files needed to run the Track Generator exist
+        if not self.track_mngr.check_files(self.scenario_filename):
+            if self.wmain.get_aircrafts_data(self.scenario_filename,
+                                             self.extract_anvs(l_scenario_filename_path),
+                                             self.track_mngr.get_traf_filename()):
+                # Creates the file for Track Generator
+               self.track_mngr.create_file(self.wmain.get_dialog_data())
 
-        # Monta o diretório de arquivos do ptracks
-        l_exe_filename = self.ptracks_data_dir + "/exes/" + self.filename  + ".exe.xml"
-
-        # Cria o arquivo de exercicio para o cenário escolhido caso ele não exista.
-        if not os.path.isfile(l_exe_filename):
-            self.create_ptracks_exe(l_exe_filename)
-
-        # Monta o nome do arquivo de tráfego do ptracks para o cenário de simulação escolhido
-        l_traf_filename = self.ptracks_data_dir + "/traf/" + self.filename + ".trf.xml"
-
-        # Não existe um arquivo de tráfego para o cenário de simulação escolhido, cria ...
-        if not os.path.isfile(l_traf_filename):
-            l_ret_val = self.create_new_ptracks_traf( l_file_path, l_traf_filename )
-
-            # Arquivo de tráfego para o ptracks não foi criado, abandona a execução do
-            # cenário de simulação, avisa do erro !
-            if not l_ret_val:
-                self.act_start_session.setIcon(self.iconPlay)
-                self.act_start_session.setText("Start ATN simulation")
+            else:
+                # File was not created,it restores the initial conditions and leaves the execution
+                # of the simulation scenario.
+                self.wmain.change_text_button_start_session(f_play=True)
                 return
 
-        # Monta o nome da sessão que será executada no core-gui
-        l_split = l_file_path.split('/')
-        self.session_name = l_split [ len(l_split) - 1 ]
+        # Runs core-gui in run mode
+        self.core_mngr.run_gui_exec_mode(l_scenario_filename_path)
 
-        # Executa o core-gui
-        self.p = subprocess.Popen(['core-gui', '--start', l_file_path ],
-                                  stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        # Runs the Track Generator
+        self.track_mngr.run()
 
-        # Executar o ptracks .....
-        l_cur_dir = os.getcwd()
-        os.chdir(self.ptracks_dir)
-        self.adapter = subprocess.Popen(['python', 'adapter.py'], stdout=subprocess.PIPE,
-                                        stderr=subprocess.STDOUT)
+        # Displays the message in the status bar
+        l_status_msg = "Running the scenario: " + self.scenario_filename
+        self.wmain.show_message_status_bar(l_status_msg)
 
-        self.ptracks = subprocess.Popen(['python', 'newton.py', '-e', self.filename, '-c', str(self.canal)],
-                                        stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        os.chdir(l_cur_dir)
+        # Disable the menu option for create
+        self.wmain.enable_button_edit_mode(False)
 
-        # Apresenta as mensagens na barra de status
-        l_status_msg = "Running the scenario: " + self.filename
-        self.statusbar.showMessage(l_status_msg)
-
-        # Timer para verificar se o processo foi finalizado pelo core-gui.
-        self.check_process()
-
-        # Desabilita as ações de criar cenario e iniciar a simulação ATN
-        self.act_edit_scenario.setEnabled(False)
-
-        # Habilita as ações para uma simulação ATN ativa
-        self.enabled_actions(True)
+        # Enables the menu options for an active ATN simulation
+        self.wmain.enabled_actions(True)
 
 
     # ---------------------------------------------------------------------------------------------
@@ -212,7 +196,29 @@ class CATNSimMngr:
 
         :return:
         """
-        pass
+        # Obtém o modo de execução do core-gui
+        l_core_gui_mode = self.core_mngr.get_mode()
+
+        # Para o core-gui
+        self.core_mngr.stop_session()
+
+        # Habilita as ações de criar cenario e iniciar a simulação ATN
+        self.wmain.enable_button_edit_mode(True)
+
+        # Desabilita as ações para uma simulação ATN ativa
+        self.wmain.enabled_actions(False)
+
+        self.set_state_simulation(False)
+
+        if self.core_mngr.RUN_MODE == l_core_gui_mode:
+            # Finalizar os processos iniciados
+            self.track_mngr.stop_processes()
+
+        # Limpa a barra de status da GUI
+        self.wmain.clear_status_bar()
+
+        # Restabelece os ícones e o texto da ação
+        self.wmain.change_text_button_start_session(f_play=True)
 
 
     # ---------------------------------------------------------------------------------------------
@@ -222,35 +228,75 @@ class CATNSimMngr:
 
         :return:
         """
-        pass
+        # Lista de ip's
+
+        l_browser_ok = False
+
+        # Gets a list of the numbers of nodes running the Dump1090 service
+        l_node_number = self.core_mngr.get_nodes_dump1090()
+
+        if len(l_node_number) > 0:
+            l_control_net = self.core_mngr.get_control_net()
+            # Calcula os endereços disponíveis para cada no na rede de controle do CORE
+            net = ipcalc.Network(str(l_control_net))
+
+            lst_ip = []
+            for ip in net:
+                lst_ip.append(str(ip))
+
+            i = 0
+            browser = web.get('firefox')
+            while i < len(l_node_number):
+                # Obtém o endereço IP do nó do Dump1090
+                ip_dump1090 = lst_ip[l_node_number[i]]
+                url = "http://" + str(ip_dump1090) + ":8080"
+                # Abre uma aba no browser com a url do serviço do Dump1090
+                browser.open_new_tab(url)
+                i = i + 1
+
+            l_browser_ok = True
+
+        if not l_browser_ok:
+            self.wmain.show_message("Start browser Dump1090",
+                                    "There is no Dump1090 service running on CORE!")
 
 
     # ---------------------------------------------------------------------------------------------
-    def run_display_track_generator(self):
+    def run_track_generator_view(self):
         """
         Runs an application(visil) to display the data generated by the Track Generator (ptracks).
 
         :return:
         """
-        pass
+        self.track_mngr.run_visil()
 
 
     # ---------------------------------------------------------------------------------------------
-    def run_pilot_track_generator(self):
+    def run_track_generator_pilot(self):
         """
         Runs an application to pilot the aircraft of the Track Generator (ptracks)
         :return:
         """
-        pass
+        self.track_mngr.run_pilot()
 
 
     # ---------------------------------------------------------------------------------------------
-    def run_database_manager_track_generator(self):
+    def run_track_generator_database_manager(self):
         """
         Runs an application to manage the database (dbedit) of the Track Generator (ptracks)
         :return:
         """
-        pass
+        # Se exitir algum processo iniciado e não finalizado, termina seu processamento.
+        if self.track_mngr.is_database_manager_running():
+            l_ret_code = self.track_mngr.get_database_manager_process()
+            if l_ret_code is None:
+                self.wmain.show_message("Manage Exercises", "The exercise manager is already running!")
+                return
+
+        self.track_mngr.run_database_manager()
+
+        # Apresenta a mensagem na barra de status da GUI
+        self.wmain.show_message_status_bar("Starting editing the ptracks database!")
 
 
     # ---------------------------------------------------------------------------------------------
@@ -274,10 +320,11 @@ class CATNSimMngr:
         self.logger.info("Reset menu options")
         self.wmain.reset_menu_options()
 
-        #if f_edit_mode is False:
-            # Finaliza os processos iniciados.
-            #self.kill_processes()
-            #self.track_mngr.kil_processes()
+        self.set_state_simulation(False)
+
+        if f_edit_mode is False:
+            # Stop processes.
+            self.track_mngr.stop_processes()
 
 
     # ---------------------------------------------------------------------------------------------
@@ -297,6 +344,115 @@ class CATNSimMngr:
         :return:
         """
         return self.is_simulation_pause
+
+
+    # ---------------------------------------------------------------------------------------------
+    def extract_anvs(self, f_xml_filename):
+        """
+        Extrai as aeronaves que foram criadas pelo core-gui.
+
+        :param f_xml_filename: nome do arquivo XML.
+        :return:
+        """
+        # cria o QFile para o arquivo XML
+        l_data_file = QtCore.QFile(f_xml_filename)
+        assert l_data_file is not None
+
+        # abre o arquivo XML
+        l_data_file.open(QtCore.QIODevice.ReadOnly)
+
+        # cria o documento XML
+        l_xdoc_aer = QtXml.QDomDocument("scenario")
+        assert l_xdoc_aer is not None
+
+        l_xdoc_aer.setContent(l_data_file)
+
+        # fecha o arquivo
+        l_data_file.close()
+
+        # obtém o elemento raíz do documento
+        l_elem_root = l_xdoc_aer.documentElement()
+        assert l_elem_root is not None
+
+        l_index = 0
+
+        # cria uma lista com os elementos
+        l_node_list = l_elem_root.elementsByTagName("host")
+
+        l_table_list = []
+
+        # para todos os nós na lista...
+        for li_ndx in xrange(l_node_list.length()):
+
+            l_element = l_node_list.at(li_ndx).toElement()
+            assert l_element is not None
+
+            if "host" != l_element.tagName():
+                continue
+
+            # read identification if available
+            if l_element.hasAttribute("id"):
+                ls_host_id = l_element.attribute("id")
+
+            # obtém o primeiro nó da sub-árvore
+            l_node = l_element.firstChild()
+            assert l_node is not None
+
+            lv_host_ok = False
+
+            # percorre a sub-árvore
+            while not l_node.isNull():
+                # tenta converter o nó em um elemento
+                l_element = l_node.toElement()
+                assert l_element is not None
+
+                # o nó é um elemento ?
+                if not l_element.isNull():
+                    if "type" == l_element.tagName():
+                        if "aircraft" == l_element.text():
+                            # faz o parse do elemento
+                            lv_host_ok = True
+
+                        else:
+                            break
+
+                    if "point" == l_element.tagName():
+                        # faz o parse do elemento
+                        lf_host_lat = float(l_element.attribute("lat"))
+                        lf_host_lng = float(l_element.attribute("lon"))
+
+                    if "alias" == l_element.tagName():
+                        if l_element.hasAttribute("domain"):
+                            if "COREID" == l_element.attribute("domain"):
+                                li_ntrf = int(l_element.text())
+
+                # próximo nó
+                l_node = l_node.nextSibling()
+                assert l_node is not None
+
+            # achou aircraft ?
+            if lv_host_ok:
+                l_table_item = {"node": str(ls_host_id), "latitude": lf_host_lat, "longitude": lf_host_lng,
+                                "designador": "B737", "ssr": str(7001 + l_index),
+                                "indicativo": "{}X{:03d}".format(str(ls_host_id[:3]).upper(), l_index + 1),
+                                "origem": "SBGR", "destino": "SBBR", "proa": 60, "velocidade": 500,
+                                "altitude": 2000, "procedimento": "TRJ200", "id": str(li_ntrf)}
+
+                l_table_list.append(l_table_item)
+
+                # incrementa contador de linhas
+                l_index += 1
+
+        return l_table_list
+
+
+    # ---------------------------------------------------------------------------------------------
+    def get_track_generator_dir(self):
+        """
+
+        :return:
+        """
+        return self.track_mngr.get_root_dir()
 
 
 # < the end >--------------------------------------------------------------------------------------
