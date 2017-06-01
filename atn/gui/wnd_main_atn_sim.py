@@ -32,12 +32,8 @@ __date__ = "2017/03"
 # python library
 from PyQt4 import QtGui
 from PyQt4 import QtCore
-from core.api import coreapi
 
-import os
 import logging
-import socket
-import subprocess
 import wnd_main_atn_sim_ui as wmain_ui
 import dlg_trf as dtraf_ui
 import dlg_start as dstart_ui
@@ -58,11 +54,18 @@ module_logger = logging.getLogger('main_app.wnd_main_atn_sim')
 
 class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
     """
-    DOCUMENT ME!
+    Main window of the application that controls the ATN simulation.
     """
 
     # ---------------------------------------------------------------------------------------------
     def __init__(self, f_parent=None, f_mediator=None):
+        """
+        Constructor
+
+        :param f_parent:  parent object of Main window.
+        :param f_mediator: application mediator object.
+        """
+
         # init super class
         super(CWndMainATNSim, self).__init__(f_parent)
 
@@ -117,6 +120,7 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
 
         :return: None.
         """
+
         self.statusbar.showMessage(message)
 
 
@@ -127,6 +131,7 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
 
         :return: None.
         """
+
         self.statusbar.clearMessage()
 
 
@@ -154,9 +159,11 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
     def enable_button_edit_mode(self, f_status):
         """
         Enables or disables the menu option that starts the core-gui in edit mode.
+
         :param f_status: True enable, False disable
         :return: None.
         """
+
         self.act_edit_scenario.setEnabled(f_status)
 
 
@@ -167,6 +174,7 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
 
         :return: string, the text.
         """
+
         return self.act_start_session.text()
 
 
@@ -175,6 +183,7 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         """
         Change icon and menu note text freeze(pause) and unfreeze(play) exercise.
 
+        :param: f_play: sets the action of the menu option.
         :return: None.
         """
 
@@ -192,7 +201,6 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         Gets the simulation scenario file in XML.
 
         :param: f_scenario_dir: directory where you find the simulation scenario files.
-
         :return: the scenario filename.
         """
 
@@ -210,7 +218,6 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         :param f_title: the title of the dialog window.
         :param f_data_table: the aircraft's default data.
         :param: f_filename: the filename to be created
-
         :return: True , if the user decided to create the traffic file otherwise False.
         """
 
@@ -249,14 +256,13 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
     # ---------------------------------------------------------------------------------------------
     def enabled_actions(self, status):
         """
-        Habilita ous desabilita as ações do menu para o core-gui em tempo de execução da simulação do
-        cenário.
+        Enables or disables the menu actions for the core-gui in simulation execution mode of the
+        choesen scenario.
 
-        :param status: True habilita a ação e False desbilita.
-        :return:
+        :param status: True, enable and False disable.
+        :return: None.
         """
 
-        # Desabilita as ações para uma simulação ATN ativa
         self.act_stop_session.setEnabled(status)
         self.act_start_dump1090.setEnabled(status)
         self.act_start_visil.setEnabled(status)
@@ -267,11 +273,13 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
     # ---------------------------------------------------------------------------------------------
     def show_message(self, f_title, f_text):
         """
+        Displays a message dialog window.
 
-        :param f_title:
-        :param f_text:
-        :return:
+        :param f_title: the title of dialog window.
+        :param f_text: the message.
+        :return: None.
         """
+
         l_msg = QtGui.QMessageBox()
         l_msg.setIcon(QtGui.QMessageBox.Information)
         l_msg.setText(f_text)
@@ -285,8 +293,9 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         """
         Callback to run core-gui in edit mode.
 
-        :return:
+        :return: None.
         """
+
         # Is there a mediator ?
         if self.mediator:
             self.mediator.run_core_gui_edit_mode()
@@ -317,8 +326,9 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         """
         Stop running session
 
-        :return:
+        :return: None.
         """
+
         # Is there a mediator ?
         if self.mediator:
             self.mediator.stop_atn_simulation()
@@ -327,9 +337,11 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
     # ---------------------------------------------------------------------------------------------
     def cbk_start_dump1090(self):
         """
-        Inicia o firefox para apresentar os dados ADS-B enviados ao aplicativo Dump1090
-        :return:
+        Starts firefox to display the ADS-B data sento to the Dump1090 application.
+
+        :return: None.
         """
+
         # Is there a mediator ?
         if self.mediator:
             self.mediator.run_browser_dump1090()
@@ -364,20 +376,21 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
     # ---------------------------------------------------------------------------------------------
     def cbk_add_acft_run_time(self):
         """
+        Adds an aircraft in the simulation scenario in run mode.
 
-        :return:
+        :return: None.
         """
 
-        # Coloca o nome do arquivo do cenário de simulação na barra de título da janela de diálogo.
+        # Places the file name of the simulation scenario in the title bar of the dialog window
         self.dlg_traf_run_time.set_title(self.mediator.get_scenario_filename())
 
-        # Abre a janela de diálogo
+        # Open dialog window
         l_ret_val = self.dlg_traf_run_time.exec_()
 
-        # Verifica o código de retorno da janela de diálogo, caso desista da operação
-        # Avisa o usuário do erro de criação do tráfego em tempo de execução.
+        # Checks the return code of the dialog box, if you give up the operation it warns the user
+        # of the error in creating the traffic at run time.
         if QtGui.QDialog.Accepted == l_ret_val:
-            # Cria o arquivo de tráfegos para o ptracks.
+            # Create traffic file to Track Generator.
             self.mediator.add_aircraft_exec_mode(self.dlg_traf.get_data())
 
 
@@ -385,8 +398,11 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
     def cbk_start_db_edit(self):
         """
         Starts the Track Generator database manager
+
         :return: None.
         """
+
+        # Is there a mediator ?
         if self.mediator:
             self.mediator.run_track_generator_database_manager()
 
