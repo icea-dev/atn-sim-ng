@@ -102,7 +102,7 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
 
         self.dlg_start = dstart_ui.CDlgStart()
 
-        self.dlg_traf_run_time = dtraf_run_time_ui.CDlgTrafRunTime()
+        self.dlg_traf_run_time = dtraf_run_time_ui.CDlgTrafRunTime(f_ptracks_dir=self.mediator.get_track_generator_dir())
 
         # Icons
         self.iconPause = QtGui.QIcon()
@@ -391,7 +391,7 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         # of the error in creating the traffic at run time.
         if QtGui.QDialog.Accepted == l_ret_val:
             # Create traffic file to Track Generator.
-            self.mediator.add_aircraft_exec_mode(self.dlg_traf.get_data())
+            self.mediator.add_aircraft_exec_mode(self.dlg_traf_run_time.get_data())
 
 
     # ---------------------------------------------------------------------------------------------
