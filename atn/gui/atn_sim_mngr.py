@@ -146,8 +146,8 @@ class CATNSimMngr:
         if not l_scenario_filename_path:
             self.wmain.change_text_button_start_session(f_play=True)
 
-        # Parse the XML file to find the nodes that are Dump1090 servers and the address of
-        # the CORE control network
+        # Parse the XML file to find the nodes that are Dump1090 servers, the address of
+        # the CORE control network and CORE reference point
         self.core_mngr.parse_xml_file(l_scenario_filename_path)
 
         # Get the name of the simulation file without its extension
@@ -306,7 +306,8 @@ class CATNSimMngr:
         :param: f_aircraft_data:
         :return: None.
         """
-        pass
+
+        self.logger.debug("Aircraft data %s" % f_aircraft_data)
 
 
     # ---------------------------------------------------------------------------------------------

@@ -29,6 +29,7 @@ __date__ = "2017/05"
 
 # < import >---------------------------------------------------------------------------------------
 
+from atn.location import location
 # python library
 from core.api import coreapi
 from PyQt4 import QtCore
@@ -85,8 +86,14 @@ class CCoreMngr(QtCore.QObject):
         # Node number of Dump1090
         self.node_number_Dump1090 = []
 
+        # All CORE nodes
+        self.node_hosts = []
+
         # CORE control network addresse
         self.control_net = None
+
+        # CORE reference point
+        self.ref_pt = None
 
         # run mode of core-gui
         self.run_mode = self.NONE_MODE
@@ -94,6 +101,10 @@ class CCoreMngr(QtCore.QObject):
         # Read configuration file
         self.scenario_dir = None
         self.load_config_file()
+
+        #
+        self.core_location = location.CLocation()
+        assert self.core_location
 
 
     # ---------------------------------------------------------------------------------------------
@@ -205,7 +216,9 @@ class CCoreMngr(QtCore.QObject):
 
         # Clears the CORE information attributes.
         self.node_number_Dump1090 = []
+        self.node_hosts = []
         self.control_net = None
+        self.ref_pt = None
 
         # resets the execution mode of the core-gui
         self.run_mode = self.NONE_MODE
@@ -252,11 +265,12 @@ class CCoreMngr(QtCore.QObject):
         :return: None.
         """
 
-        # Find nodes running the Dump1090 service
-        self.node_number_Dump1090 = self.extract_host_id_dump1090(f_xml_file)
+        # Find nodes running the Dump1090 service and node numbers of CORE
+        self.node_number_Dump1090, self.node_hosts = self.extract_host_id_dump1090(f_xml_file)
+        self.logger.debug ("All CORE nodes %s" % self.node_hosts )
 
-        # Find the address of the CORE control network
-        self.control_net = self.extract_control_net(f_xml_file)
+        # Find the address of the CORE control network and reference point
+        self.control_net, self.ref_pt = self.extract_control_net(f_xml_file)
 
 
     # ---------------------------------------------------------------------------------------------
@@ -293,6 +307,8 @@ class CCoreMngr(QtCore.QObject):
 
         ll_node_nbrs = []
 
+        ll_node_hosts = []
+
         # For all nodes in the list...
         for li_ndx in xrange(l_node_list.length()):
 
@@ -317,11 +333,12 @@ class CCoreMngr(QtCore.QObject):
 
                 # Is the node an element ?
                 if not l_element.isNull():
-
                     if "alias" == l_element.tagName():
                         if l_element.hasAttribute("domain"):
                             if "COREID" == l_element.attribute("domain"):
                                 li_ntrf = int(l_element.text())
+                                self.logger.debug("COREID [%s]" % l_element.text())
+                                ll_node_hosts.append(li_ntrf)
 
                     if "CORE:services" == l_element.tagName():
                         l_node_svc = l_element.firstChild()
@@ -347,17 +364,23 @@ class CCoreMngr(QtCore.QObject):
             if lv_host_ok:
                 ll_node_nbrs.append(li_ntrf)
 
-        return ll_node_nbrs
+        return ll_node_nbrs, ll_node_hosts
 
 
     # ---------------------------------------------------------------------------------------------
     def extract_control_net(self, f_xml_filename):
         """
-        Extracts the address of the CORE control network.
+        Extracts the address of the CORE control network and reference point.
 
         :param f_xml_filename: the XML file of the CORE scenario.
-        :return: string, CORE control network address.
+        :return: string, CORE control network address and reference point
         """
+
+        # Default values for the CORE reference point
+        ls_alt = "2.0"
+        ls_lat = "-13.869227"
+        ls_lon = "-49.918091"
+        ls_scale = "50000.0"
 
         # Creates QFile for XML file.
         l_data_file = QtCore.QFile(f_xml_filename)
@@ -406,6 +429,24 @@ class CCoreMngr(QtCore.QObject):
                 # Is the node an element ?
                 if not l_element.isNull():
 
+                    # Retrieves information about the CORE reference point
+                    if "origin" == l_element.tagName():
+                        if l_element.hasAttribute("alt"):
+                            ls_alt = l_element.attribute("alt")
+                            self.logger.debug("Altitude [%s]" % ls_alt)
+
+                        if l_element.hasAttribute("lat"):
+                            ls_lat = l_element.attribute("lat")
+                            self.logger.debug("Latitude [%s]" % ls_lat)
+
+                        if l_element.hasAttribute("lon"):
+                            ls_lon = l_element.attribute("lon")
+                            self.logger.debug("Longitude [%s]" % ls_lon)
+
+                        if l_element.hasAttribute("scale100"):
+                            ls_scale=l_element.attribute("scale100")
+                            self.logger.debug("Scale [%s]" % ls_scale)
+
                     if "options" == l_element.tagName():
                         l_node_opt = l_element.firstChild()
 
@@ -429,7 +470,10 @@ class CCoreMngr(QtCore.QObject):
 
             # Did you find the aircraft ?
             if lv_net_session_ok:
-                return ls_controle_net
+                ls_ref_pt = "0|0|{}|{}|{}|{}".format(ls_lat, ls_lon, ls_alt, ls_scale)
+                self.logger.debug("Controle Network [%s] - Reference point [%s]" % (ls_controle_net, ls_ref_pt))
+
+                return ls_controle_net, ls_ref_pt
 
         return None
 

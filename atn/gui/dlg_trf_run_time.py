@@ -45,12 +45,19 @@ class CDlgTrafRunTime(QtGui.QDialog, dlg_ui.Ui_dlg_traf_run_time):
     DOCUMENT ME!
     """
     # ---------------------------------------------------------------------------------------------
-    def __init__(self, f_parent=None):
+    def __init__(self, f_parent=None, f_ptracks_dir=os.path.join(os.environ["HOME"], 'ptracks')):
         # init super class
         QtGui.QDialog.__init__(self, f_parent)
 
         # create window
         self.setupUi(self)
+
+        self.ptracks_dir = f_ptracks_dir
+
+        #
+        self.designador_list = self.load_performance()
+        self.proc_list = self.load_tables()
+
 
         self.qtw_traf.horizontalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
 
@@ -80,7 +87,7 @@ class CDlgTrafRunTime(QtGui.QDialog, dlg_ui.Ui_dlg_traf_run_time):
 
         # create comboBox for type of aircraft  (designador)
         self.type_aircraft = QtGui.QComboBox()
-        #self.cb.addItems(self.designador_list)
+        self.type_aircraft.addItems(self.designador_list)
         #self.cb.setCurrentIndex(self.cb.findText(f_table[l_row]['designador']))
         #self.cb.currentIndexChanged.connect(self.selectionchange)
 
@@ -128,15 +135,12 @@ class CDlgTrafRunTime(QtGui.QDialog, dlg_ui.Ui_dlg_traf_run_time):
 
         # create comboBox for procedure
         self.procedure = QtGui.QComboBox()
-        #self.procedure.addItems(self.proc_list)
+        self.procedure.addItems(self.proc_list)
         #self.procedure.setCurrentIndex(self.prc.findText(f_table[l_row]['procedimento']))
         #self.procedure.currentIndexChanged.connect(self.selectionchange)
 
         # procedure
         self.qtw_traf.setCellWidget(0, 10, self.procedure)
-
-        # self.designador_list = self.load_performance()
-        # self.proc_list = self.load_tables()
 
         # redefines the size of the QTableWidget
         self.qtw_traf.resizeRowsToContents()
@@ -146,6 +150,134 @@ class CDlgTrafRunTime(QtGui.QDialog, dlg_ui.Ui_dlg_traf_run_time):
         width = self.qtw_traf.horizontalHeader().length() + \
                 ( self.qtw_traf.horizontalHeader().sizeHint().width() *  3 / 4 )
         self.setFixedWidth ( width + 10 )
+
+
+    # ---------------------------------------------------------------------------------------------
+    def load_xml_file(self, f_xml_filename, f_element, f_attribute):
+        """
+        Le um arquivo XML (f_xml_filename) e retorna a lista dos valores dos atributos (f_attribute)
+        de cada no na árvore XML (f_element)
+
+        :param f_xml_filename: o arquivo XML a ser lido
+        :param f_element: o nome do elemento no nó da árvore XML
+        :param f_attribute: o atributo do elemento
+        :return: uma lista com os valores do atributo do elemento.
+        """
+
+        # cria o QFile para o arquivo XML
+        l_data_file = QtCore.QFile(f_xml_filename)
+        assert l_data_file is not None
+
+        # abre o arquivo XML
+        l_data_file.open(QtCore.QIODevice.ReadOnly)
+
+        # cria o documento XML
+        l_xdoc_aer = QtXml.QDomDocument("tabelas")
+        assert l_xdoc_aer is not None
+
+        l_xdoc_aer.setContent(l_data_file)
+
+        # fecha o arquivo
+        l_data_file.close()
+
+        # obtém o elemento raíz do documento
+        l_elem_root = l_xdoc_aer.documentElement()
+        assert l_elem_root is not None
+
+        # cria uma lista com os elementos
+        l_node_list = l_elem_root.elementsByTagName(f_element)
+        l_result_list = []
+
+        for li_ndx in xrange(l_node_list.length()):
+            l_element = l_node_list.at(li_ndx).toElement()
+            assert l_element is not None
+
+            # read identification if available
+            if l_element.hasAttribute(f_attribute):
+                l_value = l_element.attribute(f_attribute)
+                if f_element == 'performance':
+                    l_result_list.append(l_value)
+                else:
+                    l_proc = f_attribute [ 1: ].upper() + l_value
+                    l_result_list.append(l_proc)
+
+        return l_result_list
+
+
+    # ---------------------------------------------------------------------------------------------
+    def load_performance(self):
+        """
+        Le o arquivo tabPrf.xml para carregar os designadores das aeronaves cadastradas.
+
+        :return: uma lista com os designadores das performances de aeronaves cadastradas no
+        sistema ptracks.
+        """
+
+        # Monta o nome do arquivo de performance de aeronaves do ptracks
+        l_xml_filename = os.path.join(self.ptracks_dir, 'data/tabs/tabPrf.xml')
+
+        return self.load_xml_file(l_xml_filename, 'performance', 'nPrf')
+
+
+    # ---------------------------------------------------------------------------------------------
+    def filter_XML_files(self, f_filenames):
+        """
+        Faz a leitura de uma lista de arquivos e seleciona somente os arquivos XML.
+        do diretório
+
+        :param f_filenames: uma lista de arquivos
+        :return: lista com os nomes dos arquivos XML
+        """
+
+        l_file_extensions = ['XML']
+        l_result = []
+
+        l_dir = os.path.join(self.ptracks_dir, 'data/proc/')
+
+        # loop through all the file and folders
+        for l_filename in f_filenames:
+            # Check whether the current object is a file or not
+            if os.path.isfile(os.path.join(l_dir, l_filename)):
+                l_filename_text, l_filename_ext= os.path.splitext(l_filename)
+                l_filename_ext= l_filename_ext[1:].upper()
+                # Check whether the current object is a XML file
+                if l_filename_ext in l_file_extensions:
+                    l_result.append(l_filename)
+
+        l_result.sort()
+
+        return l_result
+
+
+    # ---------------------------------------------------------------------------------------------
+    def load_tables(self):
+        """
+
+
+        :return:
+        """
+
+        l_element_nodes = {'Ape': 'apxPerdida', 'Apx': 'aproximacao', 'Esp': 'espera', 'ILS': 'ils', 'Sub': 'subida',
+                         'Trj': 'trajetoria'}
+
+        # List all the files and folders in the current directory
+        l_dir = os.path.join(self.ptracks_dir, 'data/proc/')
+        l_xml_files = self.filter_XML_files(os.listdir(l_dir))
+
+        l_result = []
+
+        for l_xml_file in l_xml_files:
+            l_element = l_element_nodes [ l_xml_file [ 3:6 ] ]
+            l_attribute = 'n' + l_xml_file [ 3:6 ]
+            l_xml_filename = os.path.join(l_dir, l_xml_file)
+            l_list = self.load_xml_file(l_xml_filename, l_element, l_attribute)
+
+            if len(l_list) > 0:
+                l_result.extend ( l_list )
+
+        l_result.sort()
+
+        return l_result
 
 
     # ---------------------------------------------------------------------------------------------
@@ -179,6 +311,60 @@ class CDlgTrafRunTime(QtGui.QDialog, dlg_ui.Ui_dlg_traf_run_time):
         :return:
         """
         self.done(QtGui.QDialog.Accepted)
+
+
+    # ---------------------------------------------------------------------------------------------
+    def get_data(self):
+        """
+        Cria uma lista com os dados das aeronaves
+
+        :return:
+        """
+
+        # open template file (aeronaves)
+        #l_file_in = open("templates/anv.xml.in")
+
+        # read it
+        #l_src = Template(l_file_in.read())
+
+        #l_result = []
+
+        l_row = 0
+
+        # latitude
+        l_latitude = self.qtw_traf.cellWidget(l_row, 0).value()
+        # longitude
+        l_longitude = self.qtw_traf.cellWidget(l_row, 1).value()
+        # designador
+        l_designador = self.qtw_traf.cellWidget(l_row, 2).currentText().toUtf8()
+        # ssr
+        l_ssr = self.qtw_traf.item(l_row, 3).text().toUtf8()
+        # indicativo
+        l_indicativo = self.qtw_traf.item(l_row, 4).text().toUtf8()
+        # origem
+        l_origem = self.qtw_traf.item(l_row, 5).text().toUtf8()
+        # destino
+        l_destino = self.qtw_traf.item(l_row, 6).text().toUtf8()
+        # proa
+        l_proa = self.qtw_traf.cellWidget(l_row, 7).value()
+        # velocidade
+        l_velocidade = self.qtw_traf.cellWidget(l_row, 8).value()
+        # altitude
+        l_altitude = self.qtw_traf.cellWidget(l_row, 9).value()
+        # procedimento
+        l_procedimento = self.qtw_traf.cellWidget(l_row, 10).currentText().toUtf8()
+
+        l_data = {"ntrf": 0, "latitude": l_latitude, "longitude": l_longitude,
+                "designador": l_designador, "ssr": l_ssr, "indicativo": l_indicativo,
+                "origem": l_origem, "destino": l_destino, "proa": l_proa,
+                "velocidade": l_velocidade, "altitude": l_altitude,
+                "procedimento": l_procedimento}
+
+        # do the substitution
+        #l_result.append(l_src.substitute(l_data))
+        #l_result.append(l_data)
+
+        return l_data
 
 
 # < the end>---------------------------------------------------------------------------------------
