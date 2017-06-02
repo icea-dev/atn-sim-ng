@@ -356,39 +356,40 @@ class CATNSimMngr:
     # ---------------------------------------------------------------------------------------------
     def extract_anvs(self, f_xml_filename):
         """
-        Extrai as aeronaves que foram criadas pelo core-gui.
+        Extract the aircraft that were created by the core-gui.
 
-        :param f_xml_filename: nome do arquivo XML.
-        :return:
+        :param f_xml_filename: XML file name.
+        :return: None.
         """
-        # cria o QFile para o arquivo XML
+
+        # Creates QFile for XML file.
         l_data_file = QtCore.QFile(f_xml_filename)
         assert l_data_file is not None
 
-        # abre o arquivo XML
+        # Opens the XML file.
         l_data_file.open(QtCore.QIODevice.ReadOnly)
 
-        # cria o documento XML
+        # Creates the XML document.
         l_xdoc_aer = QtXml.QDomDocument("scenario")
         assert l_xdoc_aer is not None
 
         l_xdoc_aer.setContent(l_data_file)
 
-        # fecha o arquivo
+        # Closes the file.
         l_data_file.close()
 
-        # obtém o elemento raíz do documento
+        # Gets the document's root element.
         l_elem_root = l_xdoc_aer.documentElement()
         assert l_elem_root is not None
 
         l_index = 0
 
-        # cria uma lista com os elementos
+        # Creates a list of elements.
         l_node_list = l_elem_root.elementsByTagName("host")
 
         l_table_list = []
 
-        # para todos os nós na lista...
+        # For all nodes in the list...
         for li_ndx in xrange(l_node_list.length()):
 
             l_element = l_node_list.at(li_ndx).toElement()
@@ -397,34 +398,34 @@ class CATNSimMngr:
             if "host" != l_element.tagName():
                 continue
 
-            # read identification if available
+            # Read identification if available
             if l_element.hasAttribute("id"):
                 ls_host_id = l_element.attribute("id")
 
-            # obtém o primeiro nó da sub-árvore
+            # Get the first node of the subtree
             l_node = l_element.firstChild()
             assert l_node is not None
 
             lv_host_ok = False
 
-            # percorre a sub-árvore
+            # Traverses the subtree
             while not l_node.isNull():
-                # tenta converter o nó em um elemento
+                # Attempts to convert the node to an element.
                 l_element = l_node.toElement()
                 assert l_element is not None
 
-                # o nó é um elemento ?
+                # Is the node an element ?
                 if not l_element.isNull():
                     if "type" == l_element.tagName():
                         if "aircraft" == l_element.text():
-                            # faz o parse do elemento
+                            # Parse the element.
                             lv_host_ok = True
 
                         else:
                             break
 
                     if "point" == l_element.tagName():
-                        # faz o parse do elemento
+                        # Parse the element.
                         lf_host_lat = float(l_element.attribute("lat"))
                         lf_host_lng = float(l_element.attribute("lon"))
 
@@ -433,11 +434,11 @@ class CATNSimMngr:
                             if "COREID" == l_element.attribute("domain"):
                                 li_ntrf = int(l_element.text())
 
-                # próximo nó
+                # Next node
                 l_node = l_node.nextSibling()
                 assert l_node is not None
 
-            # achou aircraft ?
+            # Did you find the aircraft ?
             if lv_host_ok:
                 l_table_item = {"node": str(ls_host_id), "latitude": lf_host_lat, "longitude": lf_host_lng,
                                 "designador": "B737", "ssr": str(7001 + l_index),
@@ -447,7 +448,7 @@ class CATNSimMngr:
 
                 l_table_list.append(l_table_item)
 
-                # incrementa contador de linhas
+                # Increment the line counter
                 l_index += 1
 
         return l_table_list
@@ -456,18 +457,22 @@ class CATNSimMngr:
     # ---------------------------------------------------------------------------------------------
     def get_track_generator_dir(self):
         """
+        Returns the rooot directory of the sytem
 
-        :return:
+        :return: string, the root directory.
         """
+
         return self.track_mngr.get_root_dir()
 
 
     # ---------------------------------------------------------------------------------------------
     def get_scenario_filename(self):
         """
+        Returns the file name of the simulation scenario.
 
-        :return:
+        :return: string, the file name.
         """
+
         return self.scenario_filename
 
 

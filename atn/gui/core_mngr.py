@@ -50,11 +50,12 @@ class CCoreMngr(QtCore.QObject):
     Class responsible for controlling the core-gui module. Starts it in both run and edit mode.
     """
 
+    # core-gui execution modes
     NONE_MODE = 0
     EDIT_MODE = 1
     RUN_MODE = 2
 
-    # Interface da rede de controle do CORE
+    # CORE control network interface
     ctrl_net_iface = "ctrl0net"
 
 
@@ -63,6 +64,7 @@ class CCoreMngr(QtCore.QObject):
         """
         Constructor
         """
+
         super(CCoreMngr, self).__init__(f_parent)
 
         self.logger = logging.getLogger('main_app.core_mngr.CCoreMngr')
@@ -83,7 +85,7 @@ class CCoreMngr(QtCore.QObject):
         # Node number of Dump1090
         self.node_number_Dump1090 = []
 
-        # Endereço da rede de controle do CORE
+        # CORE control network addresse
         self.control_net = None
 
         # run mode of core-gui
@@ -99,7 +101,7 @@ class CCoreMngr(QtCore.QObject):
         """
         Runs core-gui in edit mode.
 
-        :return:
+        :return: None.
         """
 
         # If there is a process started and not finalized, it finishes its processing.
@@ -124,8 +126,9 @@ class CCoreMngr(QtCore.QObject):
         """
         Runs core-gui in run mode.
 
-        :return:
+        :return: None.
         """
+
         # Gets the name of the session that will be executed
         l_split = f_scenario_filename_path.split('/')
         self.session_name = l_split [ len(l_split) - 1 ]
@@ -143,21 +146,23 @@ class CCoreMngr(QtCore.QObject):
     # ---------------------------------------------------------------------------------------------
     def stop_session(self):
         """
+        Stopping the simulation session.
 
-        :return:
+        :return: None.
         """
-        # Monta a mensagem para solicitar as sessões que estão sendo executadas no CORE
+
+        # Creates the message to request the sessions that are running in CORE.
         l_num = '0'
         l_flags = coreapi.CORE_API_STR_FLAG
         l_tlv_data = coreapi.CoreSessionTlv.pack(coreapi.CORE_TLV_SESS_NUMBER, l_num)
         l_msg = coreapi.CoreSessionMessage.pack(l_flags, l_tlv_data)
 
-        # Socket para comunicação com o CORE, conecta-se ao CORE e envia a mensagem
+        # Socket for communication with CORE, connects to CORE and sends the message.
         l_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         l_sock.connect(('localhost', coreapi.CORE_API_PORT))
         l_sock.send(l_msg)
 
-        # Espera a resposta do CORE
+        # Waiting for CORE's reply
         l_hdr = l_sock.recv(coreapi.CoreMessage.hdrsiz)
         l_msg_type, l_msg_flags, l_msg_len = coreapi.CoreMessage.unpackhdr(l_hdr)
         l_data = ""
@@ -165,26 +170,26 @@ class CCoreMngr(QtCore.QObject):
         if l_msg_len:
             l_data = l_sock.recv(l_msg_len)
 
-        # Desempacota a mensagem do CORE
+        # Unpack CORE's message
         l_msg = coreapi.CoreMessage(l_msg_flags, l_hdr, l_data)
         l_sessions = l_msg.gettlv(coreapi.CORE_TLV_SESS_NUMBER)
         l_names = l_msg.gettlv(coreapi.CORE_TLV_SESS_NAME)
 
-        # Cria uma lista de strings com os identificadores das sessões que estão sendo executadas.
+        # Creates a string list with the identifiers of the sessions that are running.
         l_lst_session = l_sessions.split('|')
 
-        # Existem nomes para as sessões ?
+        # Are there names for the sessions?
         if l_names != None:
-            # Cria uma lista com os nomes das sessões que estão sendo executadas.
+            # Creates a string list with the session names that are running.
             l_lst_names = l_names.split('|')
             l_index = 0
             while True:
-                # Tenta encontrar o nome da sessão que está sendo executada
+                # Try to find the name of the session you are running.
                 if l_lst_names [ l_index ] == self.session_name:
                     break
                 l_index += 1
 
-            # Monta a mensagem para finalizar a sessão no CORE
+            # Cria a mensagem to close the CORE session.
             l_num = l_lst_session [ l_index ]
             l_flags = coreapi.CORE_API_DEL_FLAG
             l_tlv_data = coreapi.CoreSessionTlv.pack(coreapi.CORE_TLV_SESS_NUMBER, l_num)
@@ -193,15 +198,16 @@ class CCoreMngr(QtCore.QObject):
 
         l_sock.close()
 
-        # Finaliza a core-gui
+        # Finish the core-gui
         if self.core_gui:
             self.killTimer(self.timer_id)
             self.core_gui.terminate()
 
-        # Não existe sessão do CORE sendo executada.
+        # Clears the CORE information attributes.
         self.node_number_Dump1090 = []
         self.control_net = None
 
+        # resets the execution mode of the core-gui
         self.run_mode = self.NONE_MODE
 
 
@@ -211,8 +217,9 @@ class CCoreMngr(QtCore.QObject):
         Reads a configuration file to load the directory of the simulation scenario created in CORE.
 
         :param config: configuration filename
-        :return:
+        :return: None.
         """
+
         if os.path.exists(config):
             conf = ConfigParser.ConfigParser()
             conf.read(config)
@@ -229,8 +236,9 @@ class CCoreMngr(QtCore.QObject):
         """
         Returns the directory of the simulation scenario files.
 
-        :return: string
+        :return: string, the directory.
         """
+
         return self.scenario_dir
 
 
@@ -241,7 +249,7 @@ class CCoreMngr(QtCore.QObject):
         service and the address of the CORE control network.
 
         :param f_xml_file: XML file
-        :return:
+        :return: None.
         """
 
         # Find nodes running the Dump1090 service
@@ -253,37 +261,39 @@ class CCoreMngr(QtCore.QObject):
 
     # ---------------------------------------------------------------------------------------------
     def extract_host_id_dump1090(self, f_xml_filename):
-        """ Extrai o número do nó do CORE que está sendo executado o Dump1090
-
-        :param f_xml_filename: arquivo XML do cenário do CORE.
-        :return: uma lista com os nós do CORE com o serviço Dump1090
         """
-        # cria o QFile para o arquivo XML
+        Extracts the node number from CORE that is running Dump1090.
+
+        :param f_xml_filename: the XML file of the CORE scenario.
+        :return: A list of CORE nodes that are running Dump1090.
+        """
+
+        # Creates QFile for the XML file.
         l_data_file = QtCore.QFile(f_xml_filename)
         assert l_data_file is not None
 
-        # abre o arquivo XML
+        # Opens the XML file.
         l_data_file.open(QtCore.QIODevice.ReadOnly)
 
-        # cria o documento XML
+        # Cretaes the XML document.
         l_xdoc_aer = QtXml.QDomDocument("scenario")
         assert l_xdoc_aer is not None
 
         l_xdoc_aer.setContent(l_data_file)
 
-        # fecha o arquivo
+        # Closes the file.
         l_data_file.close()
 
-        # obtém o elemento raíz do documento
+        # Gets the document's root element.
         l_elem_root = l_xdoc_aer.documentElement()
         assert l_elem_root is not None
 
-        # cria uma lista com os elementos
+        # Creates a list of elements.
         l_node_list = l_elem_root.elementsByTagName("host")
 
         ll_node_nbrs = []
 
-        # para todos os nós na lista...
+        # For all nodes in the list...
         for li_ndx in xrange(l_node_list.length()):
 
             l_element = l_node_list.at(li_ndx).toElement()
@@ -292,20 +302,20 @@ class CCoreMngr(QtCore.QObject):
             if "host" != l_element.tagName():
                 continue
 
-            # obtém o primeiro nó da sub-árvore
+            # Get the first node of the subtree
             l_node = l_element.firstChild()
             assert l_node is not None
 
             lv_host_ok = False
             li_ntrf = None
 
-            # percorre a sub-árvore
+            # Traverses the subtree
             while not l_node.isNull():
-                # tenta converter o nó em um elemento
+                # Attempts to convert the node to an element.
                 l_element = l_node.toElement()
                 assert l_element is not None
 
-                # o nó é um elemento ?
+                # Is the node an element ?
                 if not l_element.isNull():
 
                     if "alias" == l_element.tagName():
@@ -329,11 +339,11 @@ class CCoreMngr(QtCore.QObject):
                             l_node_svc = l_node_svc.nextSibling()
                             assert l_node_svc is not None
 
-                # próximo nó
+                # next node
                 l_node = l_node.nextSibling()
                 assert l_node is not None
 
-            # achou aircraft ?
+            # Did you find the aircraft ?
             if lv_host_ok:
                 ll_node_nbrs.append(li_ntrf)
 
@@ -343,34 +353,36 @@ class CCoreMngr(QtCore.QObject):
     # ---------------------------------------------------------------------------------------------
     def extract_control_net(self, f_xml_filename):
         """
-        Extrai o endereço da rede de controle do CORE
-        :param f_xml_filename: o arquivo xml do cenário do CORE
-        :return: endereço da rede de controle do CORE
+        Extracts the address of the CORE control network.
+
+        :param f_xml_filename: the XML file of the CORE scenario.
+        :return: string, CORE control network address.
         """
-        # cria o QFile para o arquivo XML
+
+        # Creates QFile for XML file.
         l_data_file = QtCore.QFile(f_xml_filename)
         assert l_data_file is not None
 
-        # abre o arquivo XML
+        # Opens the XML file.
         l_data_file.open(QtCore.QIODevice.ReadOnly)
 
-        # cria o documento XML
+        # Creates the XML document.
         l_xdoc_aer = QtXml.QDomDocument("scenario")
         assert l_xdoc_aer is not None
 
         l_xdoc_aer.setContent(l_data_file)
 
-        # fecha o arquivo
+        # Closes the file.
         l_data_file.close()
 
-        # obtém o elemento raíz do documento
+        # Gets the document's root element.
         l_elem_root = l_xdoc_aer.documentElement()
         assert l_elem_root is not None
 
-        # cria uma lista com os elementos
+        # Creates a list of elements.
         l_node_list = l_elem_root.elementsByTagName("CORE:sessionconfig")
 
-        # para todos os nós na lista...
+        # For all nodes in the list...
         for li_ndx in xrange(l_node_list.length()):
 
             l_element = l_node_list.at(li_ndx).toElement()
@@ -379,19 +391,19 @@ class CCoreMngr(QtCore.QObject):
             if "CORE:sessionconfig" != l_element.tagName():
                 continue
 
-            # obtém o primeiro nó da sub-árvore
+            # Get the first node of the subtree
             l_node = l_element.firstChild()
             assert l_node is not None
 
             lv_net_session_ok = False
 
-            # percorre a sub-árvore
+            # Traverses the subtree
             while not l_node.isNull():
-                # tenta converter o nó em um elemento
+                # Attempts to convert the node to an element.
                 l_element = l_node.toElement()
                 assert l_element is not None
 
-                # o nó é um elemento ?
+                # Is the node an element ?
                 if not l_element.isNull():
 
                     if "options" == l_element.tagName():
@@ -411,11 +423,11 @@ class CCoreMngr(QtCore.QObject):
                             l_node_opt = l_node_opt.nextSibling()
                             assert l_node_opt is not None
 
-                # próximo nó
+                # Next node.
                 l_node = l_node.nextSibling()
                 assert l_node is not None
 
-            # achou aircraft ?
+            # Did you find the aircraft ?
             if lv_net_session_ok:
                 return ls_controle_net
 
@@ -425,27 +437,33 @@ class CCoreMngr(QtCore.QObject):
     # ---------------------------------------------------------------------------------------------
     def get_mode(self):
         """
+        Returns the execution mode of the core-gui.
 
-        :return:
+        :return: int: 0 none mode, 1 edit mode and 2 run mode.
         """
+
         return self.run_mode
 
 
     # ---------------------------------------------------------------------------------------------
     def get_control_net(self):
         """
+        Returns the CORE control network address.
 
-        :return:
+        :return: string, an IPv4 address
         """
+
         return self.control_net
 
 
     # ---------------------------------------------------------------------------------------------
     def get_nodes_dump1090(self):
         """
+        Return a list of CORE nodes that are running Dump1090.
 
-        :return:
+        :return: list
         """
+
         return self.node_number_Dump1090
 
 
@@ -455,8 +473,9 @@ class CCoreMngr(QtCore.QObject):
         The event handler to receive timer events for the object.
 
         :param event: the timer event.
-        :return:
+        :return: None.
         """
+
         l_ret_code = self.core_gui.poll()
 
         if l_ret_code is not None:
