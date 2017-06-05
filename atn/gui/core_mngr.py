@@ -29,12 +29,13 @@ __date__ = "2017/05"
 
 # < import >---------------------------------------------------------------------------------------
 
-from atn.location import location
 # python library
 from core.api import coreapi
 from PyQt4 import QtCore
 from PyQt4 import QtXml
+from core_message_builder import CCoreMessageBuilder
 
+import atn.location as location
 import ConfigParser
 import logging
 import os
@@ -102,9 +103,13 @@ class CCoreMngr(QtCore.QObject):
         self.scenario_dir = None
         self.load_config_file()
 
-        #
+        # Create CORE location
         self.core_location = location.CLocation()
         assert self.core_location
+
+        # Create CORE message builder
+        self.core_builder = CCoreMessageBuilder()
+        assert self.core_builder
 
 
     # ---------------------------------------------------------------------------------------------
@@ -145,7 +150,7 @@ class CCoreMngr(QtCore.QObject):
         self.session_name = l_split [ len(l_split) - 1 ]
         self.logger.debug("Session name [%s]" % self.session_name)
 
-        self.logger.info("Call core-gui in rum mode.")
+        self.logger.info("Call core-gui in run mode.")
         # starts core-gui in run mode
         self.core_gui = subprocess.Popen(['core-gui', '--start', f_scenario_filename_path ],
                                   stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -225,6 +230,39 @@ class CCoreMngr(QtCore.QObject):
 
 
     # ---------------------------------------------------------------------------------------------
+    def add_node_run_time(self, f_aircraft_data):
+        """
+        Adds a node, an aircraft, to CORE at run time. uses coresendmsg to add the node, create the
+        link with the ADS-B cloud, and run the emane.
+
+        :param f_aircraft_data: the aircraft data.
+        :return: None.
+        """
+
+        # Gets the postion of the aircraft
+        l_lat = float(f_aircraft_data["latitude"])
+        l_lon = float(f_aircraft_data["longitude"])
+        l_alt = float(f_aircraft_data["altitude"])
+
+        # Gets the postion of the aircraft at CORE
+        l_XPos, l_YPos, l_ZPos = self.core_location.getxyz(l_lat, l_lon, l_alt)
+
+        # Gets the number of the node that is not being used.
+        self.node_hosts.sort()
+        l_index = 0
+        l_node = 0
+        while l_index < len(self.node_hosts):
+            if (l_index > 0):
+                if self.node_hosts[l_index] != self.node_hosts[l_index - 1] + 1:
+                    l_node = self.node_hosts[l_index - 1] + 1
+                    break
+
+            l_index = l_index + 1
+
+        self.core_builder.add_node(l_node, l_XPos, l_YPos, self.wlan_number, self.address_ip4, self.address_ip6)
+
+
+    # ---------------------------------------------------------------------------------------------
     def load_config_file(self, config="atn-sim-gui.cfg"):
         """
         Reads a configuration file to load the directory of the simulation scenario created in CORE.
@@ -271,6 +309,12 @@ class CCoreMngr(QtCore.QObject):
 
         # Find the address of the CORE control network and reference point
         self.control_net, self.ref_pt = self.extract_control_net(f_xml_file)
+
+        # Configure reference point
+        self.core_location.configure_values(self.ref_pt)
+
+        # Find wireless number
+        self.wlan_number, self.address_ip4, self.address_ip6 = self.extract_wireless(f_xml_file)
 
 
     # ---------------------------------------------------------------------------------------------
@@ -476,6 +520,145 @@ class CCoreMngr(QtCore.QObject):
                 return ls_controle_net, ls_ref_pt
 
         return None
+
+
+    # ---------------------------------------------------------------------------------------------
+    def extract_wireless(self, f_xml_filename):
+        """
+        Extracts the wireless node number from CORE that simulates the ADS-B data transmission
+
+        :param f_xml_filename: the XML file of the CORE scenario.
+        :return: the wireless node number
+        """
+
+        # Creates QFile for the XML file.
+        l_data_file = QtCore.QFile(f_xml_filename)
+        assert l_data_file is not None
+
+        # Opens the XML file.
+        l_data_file.open(QtCore.QIODevice.ReadOnly)
+
+        # Cretaes the XML document.
+        l_xdoc_aer = QtXml.QDomDocument("scenario")
+        assert l_xdoc_aer is not None
+
+        l_xdoc_aer.setContent(l_data_file)
+
+        # Closes the file.
+        l_data_file.close()
+
+        # Gets the document's root element.
+        l_elem_root = l_xdoc_aer.documentElement()
+        assert l_elem_root is not None
+
+        # Creates a list of elements.
+        l_node_list = l_elem_root.elementsByTagName("network")
+
+        # For all nodes in the list...
+        for li_ndx in xrange(l_node_list.length()):
+
+            l_element = l_node_list.at(li_ndx).toElement()
+            assert l_element is not None
+
+            if "network" != l_element.tagName():
+                continue
+
+            # Get the first node of the subtree
+            l_node = l_element.firstChild()
+            assert l_node is not None
+
+            lv_host_ok = False
+            li_wlan = None
+
+            # Traverses the subtree
+            while not l_node.isNull():
+                # Attempts to convert the node to an element.
+                l_element = l_node.toElement()
+                assert l_element is not None
+
+                # Is the node an element ?
+                if not l_element.isNull():
+                    if "type" == l_element.tagName() and "wireless" == l_element.text():
+                        lv_host_ok = True
+
+                    if lv_host_ok is True and "alias" == l_element.tagName():
+                        if l_element.hasAttribute("domain"):
+                            if "COREID" == l_element.attribute("domain"):
+                                li_wlan = int(l_element.text())
+                                self.logger.debug("COREID [%s]" % l_element.text())
+
+                    if lv_host_ok is True and "channel" == l_element.tagName():
+                        if l_element.hasAttribute("id"):
+                            ls_wlan_name = l_element.attribute("id")
+                            self.logger.debug("wlan name [%s]" % ls_wlan_name)
+
+                # next node
+                l_node = l_node.nextSibling()
+                assert l_node is not None
+
+            # Did you find the wireless ?
+            if lv_host_ok:
+                break
+
+        # Creates a list of elements.
+        l_node_list = l_elem_root.elementsByTagName("host")
+
+        # For all nodes in the list...
+        for li_ndx in xrange(l_node_list.length()):
+
+            l_element = l_node_list.at(li_ndx).toElement()
+            assert l_element is not None
+
+            if "host" != l_element.tagName():
+                continue
+
+            # Get the first node of the subtree
+            l_node = l_element.firstChild()
+            assert l_node is not None
+
+            lv_host_ok = False
+            ls_address_ipv4 = None
+            ls_address_ipv6 = None
+
+            # Traverses the subtree
+            while not l_node.isNull():
+                # Attempts to convert the node to an element.
+                l_element = l_node.toElement()
+                assert l_element is not None
+
+                if "interface" == l_element.tagName():
+                    l_node_iface = l_element.firstChild()
+
+                    while not l_node_iface.isNull():
+                        l_elm_opt = l_node_iface.toElement()
+                        assert l_elm_opt is not None
+
+                        if not l_elm_opt.isNull():
+                            if "member" == l_elm_opt.tagName():
+                                if l_elm_opt.hasAttribute("type"):
+                                    if "channel" == l_elm_opt.attribute("type") and ls_wlan_name == l_elm_opt.text():
+                                        lv_host_ok = True
+
+                            if lv_host_ok is True and "address" == l_elm_opt.tagName():
+                                if l_elm_opt.hasAttribute("type"):
+                                    if "IPv4" == l_elm_opt.attribute("type"):
+                                        ls_address_ipv4 = l_elm_opt.text()
+                                    elif "IPv6" == l_elm_opt.attribute("type"):
+                                        ls_address_ipv6 = l_elm_opt.text()
+
+                        l_node_iface = l_node_iface.nextSibling()
+                        assert l_node_iface is not None
+
+                # next node
+                l_node = l_node.nextSibling()
+                assert l_node is not None
+
+            # Did you find the wireless ?
+            if lv_host_ok:
+                self.logger.debug("IPv4 [%s] IPv6 [%s]" % (ls_address_ipv4, ls_address_ipv6))
+                break
+
+        return li_wlan, ls_address_ipv4, ls_address_ipv6
 
 
     # ---------------------------------------------------------------------------------------------

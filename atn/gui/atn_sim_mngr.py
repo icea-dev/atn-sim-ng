@@ -309,6 +309,10 @@ class CATNSimMngr:
 
         self.logger.debug("Aircraft data %s" % f_aircraft_data)
 
+        self.core_mngr.add_node_run_time(f_aircraft_data)
+
+        #self.track_mngr.add_aircraft_run_time(f_aircraft_data)
+
 
     # ---------------------------------------------------------------------------------------------
     def terminate_processes(self, f_edit_mode=False):

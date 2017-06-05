@@ -162,7 +162,7 @@ class CTrackGeneratorMngr(QtCore.QObject):
         self.D_MSG_FRZ = self.get_ptracks_data('D_MSG_FRZ')
         self.D_MSG_UFZ = self.get_ptracks_data('D_MSG_UFZ')
 
-        self.D_MSG_VRS.strip('\n')
+        #self.D_MSG_VRS.strip('\n')
 
         self.logger.debug("MSG_VRS [%s]" % self.D_MSG_VRS)
         self.logger.debug("MSG_FRZ [%s]" % self.D_MSG_FRZ)
