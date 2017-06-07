@@ -205,8 +205,12 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         """
 
         # Selects the simulation scenario file in XML
+        l_scenario_filename = None
         l_scenario_filename = QtGui.QFileDialog.getOpenFileName(self, 'Open simulation scenario - XML',
                                                                 f_scenario_dir, 'XML files (*.xml)')
+
+        self.logger.debug("Scenario filename %s" % l_scenario_filename)
+
         return l_scenario_filename
 
 

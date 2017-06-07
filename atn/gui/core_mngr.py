@@ -175,6 +175,7 @@ class CCoreMngr(QtCore.QObject):
 
         # Socket for communication with CORE, connects to CORE and sends the message.
         l_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.logger.debug("CORE API PORT %s" % str(coreapi.CORE_API_PORT))
         l_sock.connect(('localhost', coreapi.CORE_API_PORT))
         l_sock.send(l_msg)
 
@@ -201,15 +202,20 @@ class CCoreMngr(QtCore.QObject):
             l_index = 0
             while True:
                 # Try to find the name of the session you are running.
+                self.logger.debug("Names : %s - Session Name : %s" % (l_lst_names[l_index], self.session_name))
                 if l_lst_names [ l_index ] == self.session_name:
                     break
                 l_index += 1
 
             # Cria a mensagem to close the CORE session.
             l_num = l_lst_session [ l_index ]
+            self.logger.debug("Session number: %s" % str(l_num))
             l_flags = coreapi.CORE_API_DEL_FLAG
+            self.logger.debug("Session flags: %s" % str(l_flags))
             l_tlv_data = coreapi.CoreSessionTlv.pack(coreapi.CORE_TLV_SESS_NUMBER, l_num)
+            self.logger.debug("Session tlv: %s" % str(l_tlv_data))
             l_msg = coreapi.CoreSessionMessage.pack(l_flags, l_tlv_data)
+            self.logger.debug(l_msg)
             l_sock.send(l_msg)
 
         l_sock.close()

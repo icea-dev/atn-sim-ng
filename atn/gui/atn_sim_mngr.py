@@ -142,9 +142,12 @@ class CATNSimMngr:
         # Get the simulation scenario filename
         l_scenario_filename_path = self.wmain.get_scenario_filename(self.core_mngr.get_scenario_dir())
 
+        self.logger.debug("Scenario filename path %s" % l_scenario_filename_path)
+
         # No file selected, finishes processing
         if not l_scenario_filename_path:
             self.wmain.change_text_button_start_session(f_play=True)
+            return
 
         # Parse the XML file to find the nodes that are Dump1090 servers, the address of
         # the CORE control network and CORE reference point
