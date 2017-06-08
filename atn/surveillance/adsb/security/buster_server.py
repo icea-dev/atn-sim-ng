@@ -51,12 +51,11 @@ import atn.geo_utils as geoutils
 
 import atn.surveillance.adsb.decoder as dcdr
 import atn.surveillance.adsb.forwarders.dump1090_fwrd as f1090
+import atn.surveillance.adsb.security.bcolors as bcolors
+import atn.surveillance.adsb.security.sensors as sensors
 
 import atn.surveillance.asterix.adsb_decoder as axdc
 import atn.surveillance.asterix.asterix_encoder as axec
-
-import atn.surveillance.buster.bcolors as bcolors
-import atn.surveillance.buster.sensors as sensors
 
 # < module defs >----------------------------------------------------------------------------------
 
