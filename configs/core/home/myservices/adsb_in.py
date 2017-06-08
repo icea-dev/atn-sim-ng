@@ -45,7 +45,7 @@ class AdsbIn(CoreService):
             cfg += "sleep 15\n"
             cfg += "echo \"x/y/z: {} {} {}\"\n".format(node.position.x, node.position.y, node.position.z)
             cfg += "echo \"Lat/Lng/Alt: {}\"\n".format(node.session.location.getgeo(node.position.x, node.position.y, node.position.z))
-            cfg += "python -m atn.surveillance.adsb.adsb_in {} {} {} {}\n".format(int(node.objid), l_lat, l_lng, l_alt)
+            cfg += "python -m atn.surveillance.adsb.adsb_in {} {} {} {} >> adsb_in.log 2>&1\n".format(int(node.objid), l_lat, l_lng, l_alt)
 
         elif filename == "adsb_in.cfg":
             cfg = "[glb]\n"
@@ -56,7 +56,7 @@ class AdsbIn(CoreService):
             cfg += "port = 30001\n\n"
             cfg += "[buster]\n"
             cfg += "type = client\n"
-            cfg += "addr = 172.17.255.254\n"
+            cfg += "addr = 10.0.0.19\n"
             cfg += "port = 12270\n\n"
 
         return cfg

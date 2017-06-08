@@ -68,7 +68,7 @@ class BusterForwarder(fads.AdsbForwarder):
 
         # options ?
         if f_options is not None:
-            self.__t_ip_dst = (f_options["server"], int(f_options["port"])
+            self.__t_ip_dst = (f_options["server"], int(f_options["port"]))
 
         # senão,...
         else:
@@ -116,7 +116,7 @@ class BusterForwarder(fads.AdsbForwarder):
             # send ok ?
             if self.__sock.sendto(ls_msg, self.__t_ip_dst) > 0:
                 # logger
-                M_LOG.info("BusterForwarder send: {}".format(ls_msg)
+                M_LOG.info("BusterForwarder send: {}".format(ls_msg))
 
     # =============================================================================================
     # data
