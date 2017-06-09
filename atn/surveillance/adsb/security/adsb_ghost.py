@@ -58,14 +58,14 @@ class AdsbGhost(AdsbFeed):
     icao24_spoofed = []
 
     # -------------------------------------------------------------------------
-    def __init__(self, f_lat, f_lng, f_alt):
+    def __init__(self, f_id, f_lat, f_lng, f_alt):
         """
         Construtor
         :param f_lat: a latitude do no do CORE
         :param f_lng: a longitude do no do CORE
         :param f_alt: a altitude do no do CORE
         """
-        self.adsbin = AdsbIn(ff_lat=f_lat, ff_lng=f_lng, ff_alt=f_alt, fv_store_msgs=True)
+        self.adsbin = AdsbIn(fi_id= f_id, ff_lat=f_lat, ff_lng=f_lng, ff_alt=f_alt, fv_store_msgs=True)
         self.adsbout = AdsbOut(nodename=None,feed=self)
 
         # Posição do no dentro do CORE
@@ -213,7 +213,7 @@ def disclaimer():
 # -----------------------------------------------------------------------------
 def main():
     # create ADS-B Ghost
-    tx = AdsbGhost(float(sys.argv[1]), float(sys.argv[2]), float(sys.argv[3]))
+    tx = AdsbGhost(int(sys.argv[1]), float(sys.argv[2]), float(sys.argv[3]), float(sys.argv[4]))
 
     if "--rewrite-icao24" in sys.argv:
         print " > Rewritting ICAO24"
