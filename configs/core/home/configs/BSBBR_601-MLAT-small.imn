@@ -14,18 +14,11 @@ node n4 {
 	!
     }
     canvas c1
-    iconcoords {437.0 309.0}
-    labelcoords {437.0 341.0}
+    iconcoords {438.0 311.0}
+    labelcoords {438.0 343.0}
     interface-peer {eth0 n31}
-    services {zebra OSPFv3MDR IPForward GPSd Dump1090 AdsbIn}
+    services {zebra OSPFv3MDR vtysh IPForward Dump1090 AdsbIn}
     interface-peer {eth1 n18}
-    custom-config {
-	custom-config-id service:AdsbIn
-	custom-command AdsbIn
-	config {
-	files=('adsb_in.cfg', 'adsb_in.sh', )
-	}
-    }
 }
 
 node n31 {
@@ -107,10 +100,10 @@ node n3 {
 	!
     }
     canvas c1
-    iconcoords {366.0 441.0}
-    labelcoords {366.0 473.0}
+    iconcoords {366.0 443.0}
+    labelcoords {366.0 475.0}
     interface-peer {eth0 n31}
-    services {zebra OSPFv3MDR IPForward DefaultMulticastRoute GPSd AdsbOut}
+    services {zebra OSPFv3MDR vtysh IPForward DefaultMulticastRoute GPSd AdsbOut PTracks}
 }
 
 node n10 {
@@ -125,10 +118,10 @@ node n10 {
 	!
     }
     canvas c1
-    iconcoords {272.0 247.0}
-    labelcoords {272.0 279.0}
+    iconcoords {272.0 249.0}
+    labelcoords {272.0 281.0}
     interface-peer {eth0 n31}
-    services {zebra OSPFv3MDR IPForward DefaultMulticastRoute GPSd AdsbOut}
+    services {zebra OSPFv3MDR vtysh IPForward DefaultMulticastRoute GPSd AdsbOut PTracks}
 }
 
 node n14 {
@@ -143,10 +136,10 @@ node n14 {
 	!
     }
     canvas c1
-    iconcoords {513.0 515.0}
-    labelcoords {513.0 547.0}
+    iconcoords {515.0 501.0}
+    labelcoords {515.0 533.0}
     interface-peer {eth0 n31}
-    services {zebra OSPFv3MDR IPForward DefaultMulticastRoute GPSd AdsbOut}
+    services {zebra OSPFv3MDR vtysh IPForward DefaultMulticastRoute GPSd AdsbOut PTracks}
 }
 
 node n20 {
@@ -161,10 +154,10 @@ node n20 {
 	!
     }
     canvas c1
-    iconcoords {693.0 438.0}
-    labelcoords {693.0 470.0}
+    iconcoords {695.0 440.0}
+    labelcoords {695.0 472.0}
     interface-peer {eth0 n31}
-    services {zebra OSPFv3MDR IPForward DefaultMulticastRoute GPSd AdsbOut}
+    services {zebra OSPFv3MDR vtysh IPForward DefaultMulticastRoute GPSd AdsbOut PTracks}
 }
 
 node n1 {
@@ -179,8 +172,8 @@ node n1 {
 	!
     }
     canvas c1
-    iconcoords {487.0 213.0}
-    labelcoords {487.0 245.0}
+    iconcoords {489.0 215.0}
+    labelcoords {489.0 247.0}
     interface-peer {eth0 n31}
     custom-config {
 	custom-config-id service:Flooder
@@ -218,7 +211,7 @@ node n1 {
 	
 	}
     }
-    services {DefaultRoute AdsbIn}
+    services {DefaultRoute AdsbReplay}
 }
 
 node n2 {
@@ -228,8 +221,8 @@ node n2 {
 	hostname n2
 	!
 	interface eth1
-	 ip address 10.0.3.1/24
-	 ipv6 address 2001:3::1/64
+	 ip address 10.0.1.4/24
+	 ipv6 address 2001:1::4/64
 	!
 	interface eth0
 	 ip address 10.0.0.1/24
@@ -237,18 +230,11 @@ node n2 {
 	!
     }
     canvas c1
-    iconcoords {111.0 46.0}
-    labelcoords {111.0 78.0}
+    iconcoords {111.0 48.0}
+    labelcoords {111.0 80.0}
     interface-peer {eth0 n31}
-    interface-peer {eth1 n5}
-    custom-config {
-	custom-config-id service:AdsbIn
-	custom-command AdsbIn
-	config {
-	files=('adsb_in.cfg', 'adsb_in.sh', )
-	}
-    }
-    services {zebra OSPFv3MDR IPForward GPSd AdsbIn}
+    services {zebra OSPFv3MDR vtysh IPForward AdsbIn}
+    interface-peer {eth1 n18}
 }
 
 node n5 {
@@ -256,10 +242,6 @@ node n5 {
     model ground-station
     network-config {
 	hostname n5
-	!
-	interface eth2
-	 ip address 10.0.3.2/24
-	 ipv6 address 2001:3::2/64
 	!
 	interface eth1
 	 ip address 10.0.1.1/24
@@ -271,19 +253,11 @@ node n5 {
 	!
     }
     canvas c1
-    iconcoords {111.0 843.0}
-    labelcoords {111.0 875.0}
+    iconcoords {111.0 829.0}
+    labelcoords {111.0 861.0}
     interface-peer {eth0 n31}
     interface-peer {eth1 n18}
-    interface-peer {eth2 n2}
-    services {zebra OSPFv3MDR IPForward GPSd AdsbIn}
-    custom-config {
-	custom-config-id service:AdsbIn
-	custom-command AdsbIn
-	config {
-	files=('adsb_in.cfg', 'adsb_in.sh', )
-	}
-    }
+    services {zebra OSPFv3MDR vtysh IPForward AdsbIn}
 }
 
 node n13 {
@@ -291,10 +265,6 @@ node n13 {
     model ground-station
     network-config {
 	hostname n13
-	!
-	interface eth2
-	 ip address 10.0.4.2/24
-	 ipv6 address 2001:4::2/64
 	!
 	interface eth1
 	 ip address 10.0.1.2/24
@@ -306,19 +276,11 @@ node n13 {
 	!
     }
     canvas c1
-    iconcoords {804.0 842.0}
-    labelcoords {804.0 874.0}
+    iconcoords {797.0 774.0}
+    labelcoords {797.0 806.0}
     interface-peer {eth0 n31}
     interface-peer {eth1 n18}
-    interface-peer {eth2 n16}
-    services {zebra OSPFv3MDR IPForward GPSd AdsbIn}
-    custom-config {
-	custom-config-id service:AdsbIn
-	custom-command AdsbIn
-	config {
-	files=('adsb_in.cfg', 'adsb_in.sh', )
-	}
-    }
+    services {zebra OSPFv3MDR vtysh IPForward AdsbIn}
 }
 
 node n16 {
@@ -328,8 +290,8 @@ node n16 {
 	hostname n16
 	!
 	interface eth1
-	 ip address 10.0.4.1/24
-	 ipv6 address 2001:4::1/64
+	 ip address 10.0.1.5/24
+	 ipv6 address 2001:1::5/64
 	!
 	interface eth0
 	 ip address 10.0.0.13/24
@@ -337,18 +299,11 @@ node n16 {
 	!
     }
     canvas c1
-    iconcoords {804.0 127.0}
-    labelcoords {804.0 159.0}
+    iconcoords {806.0 129.0}
+    labelcoords {806.0 161.0}
     interface-peer {eth0 n31}
-    interface-peer {eth1 n13}
-    services {zebra OSPFv3MDR IPForward GPSd AdsbIn}
-    custom-config {
-	custom-config-id service:AdsbIn
-	custom-command AdsbIn
-	config {
-	files=('adsb_in.cfg', 'adsb_in.sh', )
-	}
-    }
+    services {zebra OSPFv3MDR vtysh IPForward AdsbIn}
+    interface-peer {eth1 n18}
 }
 
 node n18 {
@@ -364,6 +319,8 @@ node n18 {
     interface-peer {e1 n13}
     interface-peer {e2 n19}
     interface-peer {e3 n4}
+    interface-peer {e4 n2}
+    interface-peer {e5 n16}
 }
 
 node n19 {
@@ -391,18 +348,22 @@ node n19 {
 	custom-config-id service:BusterServer
 	custom-command BusterServer
 	config {
-	files=('buster_server.cfg', 'buster_server.sh', 'sensors.txt', )
+	files=('buster_server.cfg', 'buster_server.sh', )
 	}
     }
     custom-config {
-	custom-config-id service:BusterServer:sensors.txt
-	custom-command sensors.txt
+	custom-config-id service:BusterServer:buster_server.cfg
+	custom-command buster_server.cfg
 	config {
-	 2, -14.0831650347, -49.4030984872, 0.
-	 3, -15.2586421098, -47.8988661098, 0.
-	 5, -17.6120604234, -49.3750919052, 0.
-	13, -17.6105780563, -46.2006404987, 0.
-	16, -14.451676914,  -46.1818781943, 0.
+	[glb]
+	
+	; Destination(s) of reliable messages
+	destinations = Dump1090
+	
+	[Dump1090]
+	type = dump1090
+	server =10.0.2.11
+	port = 30001
 	
 	}
     }
@@ -411,6 +372,39 @@ node n19 {
 	custom-command AIMod
 	config {
 	files=('aimod.sh', 'aimod.cfg', )
+	}
+    }
+    custom-config {
+	custom-config-id service:AIMod:aimod.cfg
+	custom-command aimod.cfg
+	config {
+	[General]
+	id = MLAT-SRV
+	
+	; DB where unprocessed messsages are stored
+	dbname = mlat
+	dbuser = mlat
+	dbpass = mlat
+	dbhost = 172.17.255.254
+	
+	; Destination(s) of reliable messages
+	destinations = Dump1090
+	
+	[Dump1090]
+	type = dump1090
+	server = 10.0.2.11
+	port = 30001
+	
+	}
+    }
+    custom-config {
+	custom-config-id service:AIMod:aimod.sh
+	custom-command aimod.sh
+	config {
+	#!/bin/sh
+	# auto-generated by AIMod (aimod.py)
+	# python -m adsb.aimod.aimod
+	
 	}
     }
 }
@@ -427,8 +421,8 @@ node n21 {
 	!
     }
     canvas c1
-    iconcoords {711.0 859.0}
-    labelcoords {711.0 891.0}
+    iconcoords {805.0 859.0}
+    labelcoords {805.0 891.0}
     interface-peer {eth0 n19}
     services {DefaultRoute SSH Dump1090}
 }
@@ -498,13 +492,13 @@ link l24 {
     bandwidth 0
 }
 
-link l25 {
-    nodes {n2 n5}
+link l6 {
+    nodes {n2 n18}
     bandwidth 0
 }
 
-link l26 {
-    nodes {n16 n13}
+link l7 {
+    nodes {n16 n18}
     bandwidth 0
 }
 
