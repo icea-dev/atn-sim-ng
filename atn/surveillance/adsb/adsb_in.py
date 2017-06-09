@@ -347,12 +347,12 @@ class AdsbIn(object):
         retrieve messages
         """
         # queue empty ?
-        if self.self.__q_rec_msgs.empty():
+        if self.__q_rec_msgs.empty():
             # return 
             return None
 
         # return
-        return self.self.__q_rec_msgs.get()
+        return self.__q_rec_msgs.get()
 
 # -------------------------------------------------------------------------------------------------
 def main():
