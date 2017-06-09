@@ -14,10 +14,10 @@ node n4 {
 	!
     }
     canvas c1
-    iconcoords {438.0 311.0}
-    labelcoords {438.0 343.0}
+    iconcoords {437.0 309.0}
+    labelcoords {437.0 341.0}
     interface-peer {eth0 n31}
-    services {zebra OSPFv3MDR vtysh IPForward GPSd Dump1090 AdsbIn}
+    services {zebra OSPFv3MDR IPForward GPSd Dump1090 AdsbIn}
     interface-peer {eth1 n18}
     custom-config {
 	custom-config-id service:AdsbIn
@@ -107,10 +107,10 @@ node n3 {
 	!
     }
     canvas c1
-    iconcoords {366.0 443.0}
-    labelcoords {366.0 475.0}
+    iconcoords {366.0 441.0}
+    labelcoords {366.0 473.0}
     interface-peer {eth0 n31}
-    services {zebra OSPFv3MDR vtysh IPForward DefaultMulticastRoute GPSd AdsbOut PTracks}
+    services {zebra OSPFv3MDR IPForward DefaultMulticastRoute GPSd AdsbOut}
 }
 
 node n10 {
@@ -125,10 +125,10 @@ node n10 {
 	!
     }
     canvas c1
-    iconcoords {272.0 249.0}
-    labelcoords {272.0 281.0}
+    iconcoords {272.0 247.0}
+    labelcoords {272.0 279.0}
     interface-peer {eth0 n31}
-    services {zebra OSPFv3MDR vtysh IPForward DefaultMulticastRoute GPSd AdsbOut PTracks}
+    services {zebra OSPFv3MDR IPForward DefaultMulticastRoute GPSd AdsbOut}
 }
 
 node n14 {
@@ -143,10 +143,10 @@ node n14 {
 	!
     }
     canvas c1
-    iconcoords {515.0 501.0}
-    labelcoords {515.0 533.0}
+    iconcoords {513.0 515.0}
+    labelcoords {513.0 547.0}
     interface-peer {eth0 n31}
-    services {zebra OSPFv3MDR vtysh IPForward DefaultMulticastRoute GPSd AdsbOut PTracks}
+    services {zebra OSPFv3MDR IPForward DefaultMulticastRoute GPSd AdsbOut}
 }
 
 node n20 {
@@ -161,10 +161,10 @@ node n20 {
 	!
     }
     canvas c1
-    iconcoords {695.0 440.0}
-    labelcoords {695.0 472.0}
+    iconcoords {693.0 438.0}
+    labelcoords {693.0 470.0}
     interface-peer {eth0 n31}
-    services {zebra OSPFv3MDR vtysh IPForward DefaultMulticastRoute GPSd AdsbOut PTracks}
+    services {zebra OSPFv3MDR IPForward DefaultMulticastRoute GPSd AdsbOut}
 }
 
 node n1 {
@@ -179,8 +179,8 @@ node n1 {
 	!
     }
     canvas c1
-    iconcoords {489.0 215.0}
-    labelcoords {489.0 247.0}
+    iconcoords {487.0 213.0}
+    labelcoords {487.0 245.0}
     interface-peer {eth0 n31}
     custom-config {
 	custom-config-id service:Flooder
@@ -218,7 +218,7 @@ node n1 {
 	
 	}
     }
-    services {DefaultRoute AdsbIn Spoofer Flooder}
+    services {DefaultRoute AdsbIn}
 }
 
 node n2 {
@@ -237,8 +237,8 @@ node n2 {
 	!
     }
     canvas c1
-    iconcoords {111.0 48.0}
-    labelcoords {111.0 80.0}
+    iconcoords {111.0 46.0}
+    labelcoords {111.0 78.0}
     interface-peer {eth0 n31}
     interface-peer {eth1 n5}
     custom-config {
@@ -248,7 +248,7 @@ node n2 {
 	files=('adsb_in.cfg', 'adsb_in.sh', )
 	}
     }
-    services {zebra OSPFv3MDR vtysh IPForward GPSd AdsbIn}
+    services {zebra OSPFv3MDR IPForward GPSd AdsbIn}
 }
 
 node n5 {
@@ -271,12 +271,12 @@ node n5 {
 	!
     }
     canvas c1
-    iconcoords {111.0 829.0}
-    labelcoords {111.0 861.0}
+    iconcoords {111.0 843.0}
+    labelcoords {111.0 875.0}
     interface-peer {eth0 n31}
     interface-peer {eth1 n18}
     interface-peer {eth2 n2}
-    services {zebra OSPFv3MDR vtysh IPForward GPSd AdsbIn}
+    services {zebra OSPFv3MDR IPForward GPSd AdsbIn}
     custom-config {
 	custom-config-id service:AdsbIn
 	custom-command AdsbIn
@@ -306,12 +306,12 @@ node n13 {
 	!
     }
     canvas c1
-    iconcoords {806.0 828.0}
-    labelcoords {806.0 860.0}
+    iconcoords {804.0 842.0}
+    labelcoords {804.0 874.0}
     interface-peer {eth0 n31}
     interface-peer {eth1 n18}
     interface-peer {eth2 n16}
-    services {zebra OSPFv3MDR vtysh IPForward GPSd AdsbIn}
+    services {zebra OSPFv3MDR IPForward GPSd AdsbIn}
     custom-config {
 	custom-config-id service:AdsbIn
 	custom-command AdsbIn
@@ -337,11 +337,11 @@ node n16 {
 	!
     }
     canvas c1
-    iconcoords {806.0 129.0}
-    labelcoords {806.0 161.0}
+    iconcoords {804.0 127.0}
+    labelcoords {804.0 159.0}
     interface-peer {eth0 n31}
     interface-peer {eth1 n13}
-    services {zebra OSPFv3MDR vtysh IPForward GPSd AdsbIn}
+    services {zebra OSPFv3MDR IPForward GPSd AdsbIn}
     custom-config {
 	custom-config-id service:AdsbIn
 	custom-command AdsbIn

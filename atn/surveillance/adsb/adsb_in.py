@@ -77,6 +77,9 @@ M_LIGHT_SPEED = 299792458.
 # tempo para estatística (s)
 M_TIM_STAT = 30
 
+# tamanho máximo da lista de mensagens
+M_MAX_REC_MSG = 5000
+
 # < class AdsbIn >---------------------------------------------------------------------------------
 
 class AdsbIn(object):
@@ -84,7 +87,7 @@ class AdsbIn(object):
     DOCUMENT ME!
     """
     # ---------------------------------------------------------------------------------------------
-    def __init__(self, fi_id, ff_lat, ff_lng, ff_alt, fs_config="adsb_in.cfg"):
+    def __init__(self, fi_id, ff_lat, ff_lng, ff_alt, fs_config="adsb_in.cfg", fv_store_msgs=False):
         """
         constructor
         
@@ -102,6 +105,10 @@ class AdsbIn(object):
       
         # id
         self.__i_id = fi_id
+
+        # lista de mensagens
+        self.__q_rec_msgs = Queue.Queue(M_MAX_REC_MSG)
+        self.__v_store_rec_msgs = fv_store_msgs
         
         # asterix forwarder/server
         self.__v_asterix_server = False
@@ -289,6 +296,11 @@ class AdsbIn(object):
             # logger
             M_LOG.info("received message {} from {} at {}".format(ls_msg_adsb, l_addr, time.time()))
 
+            # store message ?
+            if self.__v_store_rec_msgs and (not self.__q_rec_msgs.full()):
+                # put on queue
+                self.__q_rec_msgs.put(ls_msg_adsb)
+
             # for all configured forwarders...
             for l_fwdr in self.__lst_forwarders:
                 # forward received ADS-B message
@@ -328,6 +340,19 @@ class AdsbIn(object):
         if self.__v_asterix_server:
             # create asterix server threads
             self.__init_asterix_server()
+
+    # ---------------------------------------------------------------------------------------------
+    def retrieve_msg(self):
+        """
+        retrieve messages
+        """
+        # queue empty ?
+        if self.self.__q_rec_msgs.empty():
+            # return 
+            return None
+
+        # return
+        return self.self.__q_rec_msgs.get()
 
 # -------------------------------------------------------------------------------------------------
 def main():
