@@ -75,7 +75,7 @@ M_ASTERIX_HOST = "localhost"
 M_LIGHT_SPEED = 299792458.
 
 # tempo para estatística (s)
-M_TIM_STAT = 30
+M_TIM_STAT = 60
 
 # tamanho máximo da lista de mensagens
 M_MAX_REC_MSG = 5000
@@ -130,7 +130,6 @@ class AdsbIn(object):
 
         # split message
         llst_msg = fs_message.split()
-        M_LOG.debug("llst_msg: {}".format(llst_msg))
 
         # ads-b message
         ls_msg_adsb = llst_msg[0]
@@ -146,7 +145,7 @@ class AdsbIn(object):
 
         # euclidean distance
         lf_dist = math.sqrt(lf_x * lf_x + lf_y * lf_y + lf_z * lf_z)
-        M_LOG.debug("lf_dist: {}".format(lf_dist))
+        # M_LOG.debug("lf_dist: {}".format(lf_dist))
 
         # return ads-b message, estimated time (distance / speed of light)
         return ls_msg_adsb, lf_dist / M_LIGHT_SPEED
@@ -231,6 +230,15 @@ class AdsbIn(object):
                     # put on forwarders list
                     self.__lst_forwarders.append(l_fwdr)
 
+                # destiny is buster server ?
+                elif "buster" == ldct_dest["type"].lower():
+                    # create buster server forwarder
+                    l_fwdr = fbstr.BusterForwarder(fi_id=self.__i_id, f_options=ldct_dest)
+                    assert l_fwdr
+                    
+                    # put on forwarders list
+                    self.__lst_forwarders.append(l_fwdr)
+
                 # destiny is dump1090 ? 
                 elif "dump1090" == ldct_dest["type"].lower():
                     # create dump 1090 forwarder
@@ -243,15 +251,6 @@ class AdsbIn(object):
                     # put on forwarders list
                     self.__lst_forwarders.append(l_fwdr)
                 
-                # destiny is buster server ?
-                elif "buster" == ldct_dest["type"].lower():
-                    # create buster server forwarder
-                    l_fwdr = fbstr.BusterForwarder(fi_id=self.__i_id, f_options=ldct_dest)
-                    assert l_fwdr
-                    
-                    # put on forwarders list
-                    self.__lst_forwarders.append(l_fwdr)
-
     # ---------------------------------------------------------------------------------------------
     def __receive(self):
         """
@@ -285,16 +284,12 @@ class AdsbIn(object):
             if ls_message:
                 # estimate TOA (time-of-arrival)
                 ls_msg_adsb, lf_toa_est = self.__estimate_toa(ls_message)
-                M_LOG.debug("ls_msg_adsb: {}".format(ls_msg_adsb))
-                M_LOG.debug("lf_toa_est: {}".format(lf_toa_est))
+                # M_LOG.debug("lf_toa_est: {}".format(lf_toa_est))
 
             # senão,...
             else:
                 # next message 
                 continue
-
-            # logger
-            M_LOG.info("received message {} from {} at {}".format(ls_msg_adsb, l_addr, time.time()))
 
             # store message ?
             if self.__v_store_rec_msgs and (not self.__q_rec_msgs.full()):
@@ -304,7 +299,6 @@ class AdsbIn(object):
             # for all configured forwarders...
             for l_fwdr in self.__lst_forwarders:
                 # forward received ADS-B message
-                M_LOG.info("forward message {}".format(ls_msg_adsb))
                 l_fwdr.forward(ls_msg_adsb, lf_toa_est)
 
             # elapsed time (seg)
@@ -347,12 +341,12 @@ class AdsbIn(object):
         retrieve messages
         """
         # queue empty ?
-        if self.self.__q_rec_msgs.empty():
+        if self.__q_rec_msgs.empty():
             # return 
             return None
 
         # return
-        return self.self.__q_rec_msgs.get()
+        return self.__q_rec_msgs.get()
 
 # -------------------------------------------------------------------------------------------------
 def main():
