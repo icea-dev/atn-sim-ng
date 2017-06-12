@@ -207,11 +207,14 @@ class CorePtracksFeed(AdsbFeed):
         """
         self.data_lock.acquire()
         logging.debug("Old timestamp %s - timestamp %s" % (str(self.old_timestamp), str(self.timestamp)))
-        ret_code = ( self.old_timestamp <= self.timestamp )
+        if self.old_timestamp <= self.timestamp:
+            ret_code = True
+            self.old_timestamp = self.timestamp
+        else:
+            ret_code = False
         self.data_lock.release()
 
         return ret_code
-
 
     # -------------------------------------------------------------------------------------------------
     def start(self):
@@ -277,7 +280,7 @@ class CorePtracksFeed(AdsbFeed):
         self.aircraft_type = message[10]
 
         # Timestamp
-        self.old_timestamp = self.timestamp
+        #self.old_timestamp = self.timestamp
         self.timestamp = float(message[11])
 
         # ICAO 24 bit code

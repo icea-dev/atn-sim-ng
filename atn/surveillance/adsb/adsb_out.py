@@ -91,6 +91,9 @@ class AdsbOut:
 
         self.net_dest = str(subnet.broadcast())
 
+        # Locking
+        self.tx_lock = threading.Lock()
+
         # Logging
         logging.basicConfig(filename=self.log_file, level=self.log_level, filemode='w',
                             format='%(asctime)s %(levelname)s: %(message)s')
@@ -133,7 +136,10 @@ class AdsbOut:
             if msg is None:
                 continue
 
+            self.tx_lock.acquire()
             self.broadcast(msg)
+            self.tx_lock.release()
+
             self.logger.debug("AIRCRAFT ID:\t%s" % msg)
 
             dt = time.time() - t0
@@ -151,6 +157,7 @@ class AdsbOut:
         # Startup time
         time.sleep(random.randint(0, 5))
 
+        self.logger.debug("Starting airbone position message!")
         while True:
             t0 = time.time()
             msg = self.generate_airborne_position()
@@ -158,12 +165,16 @@ class AdsbOut:
             if msg is None:
                 continue
 
+            self.tx_lock.acquire()
             self.broadcast(msg)
+            self.tx_lock.release()
+
             self.logger.debug("AIR POSITION:\t%s" % msg)
 
             dt = time.time() - t0
             time.sleep(rate - dt)
 
+        self.logger.info("Finished thread generate airbone position")
 
     # -------------------------------------------------------------------------
     def _start_airborne_velocity(self, rate=1.0):
@@ -183,7 +194,10 @@ class AdsbOut:
             if msg is None:
                 continue
 
+            self.tx_lock.acquire()
             self.broadcast(msg)
+            self.tx_lock.release()
+
             self.logger.debug("AIR VELOCITY:\t%s" % msg)
 
             dt = time.time() - t0
@@ -257,6 +271,7 @@ class AdsbOut:
         Cria a mensagem ADS-B de posição da aeronave.
         :return:
         """
+
         if not self.feed.is_track_updated():
             self.logger.debug("Track is not updated!")
             return None
@@ -316,6 +331,7 @@ class AdsbOut:
             lon = 0
             alt_m = 0
             me = 0  # ME=0 : signalling error
+            self.logger.debug("ME=0 : signalling error!")
 
         alt = alt_m * 3.28084  # meters to feet
 
@@ -340,17 +356,25 @@ class AdsbOut:
 
         (evenenclat, evenenclon) = adsb_utils.cpr_encode(even_lat, even_lon, False, False)
         (oddenclat, oddenclon) = adsb_utils.cpr_encode(odd_lat, odd_lon, True, False)
-
         msg_even = adsb_utils.encode_airborne_position(ca, icao24, evenenclat, evenenclon, sv, nicsb, enc_alt, t_flag, 0, me)
         msg_odd = adsb_utils.encode_airborne_position(ca, icao24, oddenclat, oddenclon, sv, nicsb, enc_alt, t_flag, 1, me)
 
         # Alternating between even and odd messages
         if self.last_position_msg == "ODD":
             # Encoding EVEN message
+            if msg_even is None:
+                self.logger.info("even message encoding!!! return None")
+                return None
+
             hex_msg_even = hex(int(msg_even, 2)).rstrip("L").lstrip("0x")
             message = hex_msg_even
             self.last_position_msg = "EVEN"
         else:
+
+            if msg_odd is None:
+                self.logger.info("odd message encoding!!! return none")
+                return None
+
             # Encoding ODD message
             hex_msg_odd = hex(int(msg_odd, 2)).rstrip("L").lstrip("0x")
             message = hex_msg_odd
