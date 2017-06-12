@@ -50,7 +50,7 @@ class BusterForwarder(fads.AdsbForwarder):
     buster server forwarder
     """
     # ---------------------------------------------------------------------------------------------
-    def __init__(self, fi_id=0, fs_server="localhost", fi_port=12270, f_options=None, fv_verbose=False):
+    def __init__(self, fi_id=0, fs_addr="localhost", fi_port=12270, f_options=None, fv_verbose=False):
         """
         constructor
         """
@@ -68,11 +68,11 @@ class BusterForwarder(fads.AdsbForwarder):
 
         # options ?
         if f_options is not None:
-            self.__t_ip_dst = (f_options["server"], int(f_options["port"]))
+            self.__t_ip_dst = (f_options["addr"], int(f_options["port"]))
 
         # senão,...
         else:
-            self.__t_ip_dst = (fs_server, fi_port)
+            self.__t_ip_dst = (fs_addr, fi_port)
 
         # create connection
         self.__connect()
@@ -94,7 +94,7 @@ class BusterForwarder(fads.AdsbForwarder):
     # ---------------------------------------------------------------------------------------------
     def __connect(self):
         """
-        connect to destination server
+        connect to destination client
         """
         # create socket
         self.__sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)

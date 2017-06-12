@@ -77,7 +77,7 @@ M_RECV_BUFF_SIZE = 1024
 M_THRESHOLD = 1000
 
 # tempo para estatística (s)
-M_TIM_STAT = 30
+M_TIM_STAT = 60
 
 M_EVEN_MSG = 0
 M_ODD_MSG = 1
@@ -156,7 +156,7 @@ class CBusterServer(object):
 
         for i in xrange(0, li_num_meds):
             dt[i] = _toa[i] - _toa[0]
-            if i > 0 and dt[i] == 0:
+            if (i > 0) and (0 == dt[i]):
                 return None, None
 
         A = [0] * li_num_meds
@@ -374,25 +374,25 @@ class CBusterServer(object):
                     self.__lst_forwarders.append(l_fwdr)
 
                 # destination dump1090 ?
-                elif "dump1090" == ldct_dest["type"]:
+                elif "dump1090" == ldct_dest["type"].lower():
                     # create forwarder
-                    l_fwd = f1090.Dump1090Forwarder(items=ldct_dest)
-                    assert l_fwd
+                    l_fwdr = f1090.Dump1090Forwarder(items=ldct_dest)
+                    assert l_fwdr
 
                     # set timeout
-                    l_fwd.set_timeout(0.5)
+                    l_fwdr.set_timeout(0.5)
 
                     # put on forwarders list
-                    self.__lst_forwarders.append(l_fwd)
+                    self.__lst_forwarders.append(l_fwdr)
                 '''  
                 # destination database ?
                 elif "database" == ldct_dest["type"]:
                     # create forwarder
-                    l_fwd = database_fwrd.DatabseForwarder(items=ldct_dest)
-                    assert l_fwd
+                    l_fwdr = database_fwrd.DatabseForwarder(items=ldct_dest)
+                    assert l_fwdr
 
                     # put on forwarders list
-                    self.__lst_forwarders.append(l_fwd)
+                    self.__lst_forwarders.append(l_fwdr)
                 '''
         # load sensors setup file
         self.__load_sensors("sensors.txt")
@@ -541,13 +541,11 @@ class CBusterServer(object):
             
             if ls_message:
                 # split message
-                llst_msg = ls_message.split()
+                llst_msg = ls_message.split('#')
 
                 # get message fields: sensor_id [0], message [1], toa [2], created [3]
                 fdct_rcv_msg[llst_msg[3]] = [llst_msg[0], llst_msg[1], llst_msg[2]]
-
-            # logger
-            M_LOG.info("receive::received message {} from {} at {}".format(ls_message, l_addr_from, time.time()))
+                M_LOG.info("dct_rcv_msg: {}".format(fdct_rcv_msg))
 
             # elapsed time (seg)
             lf_dif = time.time() - lf_now
@@ -589,9 +587,11 @@ class CBusterServer(object):
             if self.__dct_rcv_msg:
                 # get key (created) list
                 llst_keys = sorted(self.__dct_rcv_msg.keys())
+                M_LOG.info("llst_keys: {}".format(llst_keys))
         
                 # get oldest message
                 llst_data = self.__dct_rcv_msg[llst_keys[0]]
+                M_LOG.info("llst_data: {}".format(llst_data))
 
                 # get data
                 l_message = llst_data[1]
