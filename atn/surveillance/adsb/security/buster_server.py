@@ -74,7 +74,7 @@ M_NET_PORT = 12270
 M_RECV_BUFF_SIZE = 1024
 
 # distance threshold (m)
-M_THRESHOLD = 1000
+M_THRESHOLD = 10000
 
 # tempo para estatística (s)
 M_TIM_STAT = 60
@@ -136,7 +136,7 @@ class CBusterServer(object):
         # this keeps the MLAT error low
         _t = numpy.array(flst_toa)
 
-        # sorted index array 
+        # sorted index array (reversed) 
         _i = numpy.argsort(_t)[::-1]
 
         # create local arrays
@@ -153,14 +153,14 @@ class CBusterServer(object):
             _toa[i]  = flst_toa[_i[i]]
 
         # speed of light (in meters per second)
-        vel = 299792458
+        li_vlight = 299792458
 
         # time difference of arrival
         dt = [0] * li_num_meds
 
         for i in xrange(li_num_meds):
+            # calc time difference
             dt[i] = _toa[i] - _toa[0]
-            M_LOG.info("dt[{}]: {}".format(i, dt[i]))
 
             if (i > 0) and (0 == dt[i]):
                 return None, None
@@ -172,15 +172,16 @@ class CBusterServer(object):
 
         #
         for m in xrange(2, li_num_meds):
-            A[m] = 2 * _xpos[m] / (vel * dt[m]) - 2 * _xpos[1] / (vel * dt[1])
-            B[m] = 2 * _ypos[m] / (vel * dt[m]) - 2 * _ypos[1] / (vel * dt[1])
-            C[m] = 2 * _zpos[m] / (vel * dt[m]) - 2 * _zpos[1] / (vel * dt[1])
-            D[m] = (vel * dt[m]) - \
-                   (vel * dt[1]) - (_xpos[m] ** 2 + _ypos[m] ** 2 + _zpos[m] ** 2) / \
-                   (vel * dt[m]) + (_xpos[1] ** 2 + _ypos[1] ** 2 + _zpos[1] ** 2) / \
-                   (vel * dt[1])
+            A[m] = 2 * _xpos[m] / (li_vlight * dt[m]) - 2 * _xpos[1] / (li_vlight * dt[1])
+            B[m] = 2 * _ypos[m] / (li_vlight * dt[m]) - 2 * _ypos[1] / (li_vlight * dt[1])
+            C[m] = 2 * _zpos[m] / (li_vlight * dt[m]) - 2 * _zpos[1] / (li_vlight * dt[1])
+            D[m] = (li_vlight * dt[m]) - \
+                   (li_vlight * dt[1]) - \
+                   (_xpos[m] ** 2 + _ypos[m] ** 2 + _zpos[m] ** 2) / (li_vlight * dt[m]) + \
+                   (_xpos[1] ** 2 + _ypos[1] ** 2 + _zpos[1] ** 2) / (li_vlight * dt[1])
 
         X = numpy.matrix([[A[2], B[2], C[2]], [A[3], B[3], C[3]], [A[4], B[4], C[4]]])
+        
         b = numpy.array([-D[2], -D[3], -D[4]])
         b.shape = (3, 1)
 
@@ -449,8 +450,6 @@ class CBusterServer(object):
         llst_msg = self.__count_messages(fs_adsb_msg, False)
         li_msgs = len(llst_msg)
 
-        M_LOG.info("li_msgs:{} / llst_msg:{}".format(li_msgs, llst_msg))
-
         # no data ?
         if 0 == li_msgs:
             # do not process it with insufficient data 
@@ -486,27 +485,23 @@ class CBusterServer(object):
             llst_pos_z.append(self.__dct_sensors[li_sns].alt)
 
         # verify declared position (in x, y)
-        l_x, l_y, _ = self.__get_declared_xy(fs_adsb_msg)
-        M_LOG.info("l_x:{} / l_y:{}".format(l_x, l_y))
+        l_x, l_y, l_z = self.__get_declared_xy(fs_adsb_msg)
 
         # determine reliability of message
         if (l_x is not None) and (l_y is not None):
-
             # determine source of transmission using multilateration
             lf_flt_x, lf_flt_y = self.__calc_estimated_xy(llst_pos_x, llst_pos_y, llst_pos_z, llst_toa)
-            M_LOG.info("lf_flt_x:{} / lf_flt_y:{}".format(lf_flt_x, lf_flt_y))
 
             # determine reliability of message
             if (lf_flt_x is not None) and (lf_flt_y is not None):
-
                 # 2D distance between reported and estimated positions
                 lf_dist_2d = math.sqrt((l_x - lf_flt_x) ** 2 + (l_y - lf_flt_y) ** 2)
-                M_LOG.info("lf_dist_2d:{}".format(lf_dist_2d))
 
                 # distance inside acceptable range ?
                 if lf_dist_2d <= M_THRESHOLD:
                     # accept message
-                    M_LOG.info("process_msg:'%s'\t%d\t%s[OK]%s" % (fs_adsb_msg, lf_dist_2d, bcolors.OKBLUE, bcolors.ENDC))
+                    print "process_msg:'%s'\t%d\t%s[OK]%s" % (fs_adsb_msg, lf_dist_2d, bcolors.OKBLUE, bcolors.ENDC)
+                    M_LOG.debug("process_msg:'%s'\t%d [OK]" % (fs_adsb_msg, lf_dist_2d))
 
                     # for all forwarders...
                     for l_frwd in self.__lst_forwarders:
@@ -516,7 +511,8 @@ class CBusterServer(object):
                 # senão,...
                 else:
                     # drop message
-                    M_LOG.warning("process_msg:'%s'\t%d\t%s[FAIL]%s" % (fs_adsb_msg, lf_dist_2d, bcolors.FAIL, bcolors.ENDC))
+                    print "process_msg:'%s'\t%d\t%s[FAIL]%s" % (fs_adsb_msg, lf_dist_2d, bcolors.FAIL, bcolors.ENDC)
+                    M_LOG.debug("process_msg:'%s'\t%d [FAIL]" % (fs_adsb_msg, lf_dist_2d))
 
         # delete processed messages 
         self.__count_messages(fs_adsb_msg, True)
@@ -561,8 +557,8 @@ class CBusterServer(object):
                 # split message
                 llst_msg = ls_message.split('#')
 
-                # get message fields: sensor_id [0], message [1], toa [2], created [3]
-                fdct_rcv_msg[float(llst_msg[3])] = [int(llst_msg[0]), str(llst_msg[1]), float(llst_msg[2])]
+                # get message fields: sensor_id [0], message [1], toa [2], ts [3], created [4]
+                fdct_rcv_msg[float(llst_msg[4])] = [int(llst_msg[0]), str(llst_msg[1]), float(llst_msg[2])]  # float(llst_msg[3]) + float(llst_msg[2])]
                 #M_LOG.info("dct_rcv_msg: {}".format(fdct_rcv_msg))
 
             # elapsed time (seg)
