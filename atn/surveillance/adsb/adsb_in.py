@@ -94,6 +94,7 @@ class AdsbIn(object):
         @param fi_id: sensor id
         @param ff_(lat, lng, alt): station position
         @param fs_config: arquivo de configuração
+        @param fv_store_msgs: store messages flag
         """
         # destinations to which messages will be forwarded to
         self.__lst_forwarders = []
@@ -145,7 +146,6 @@ class AdsbIn(object):
 
         # euclidean distance
         lf_dist = math.sqrt(lf_x * lf_x + lf_y * lf_y + lf_z * lf_z)
-        # M_LOG.debug("lf_dist: {}".format(lf_dist))
 
         # return ads-b message, estimated time (distance / speed of light)
         return ls_msg_adsb, lf_dist / M_LIGHT_SPEED
@@ -284,7 +284,6 @@ class AdsbIn(object):
             if ls_message:
                 # estimate TOA (time-of-arrival)
                 ls_msg_adsb, lf_toa_est = self.__estimate_toa(ls_message)
-                # M_LOG.debug("lf_toa_est: {}".format(lf_toa_est))
 
             # senão,...
             else:

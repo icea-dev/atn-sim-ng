@@ -110,8 +110,8 @@ class BusterForwarder(fads.AdsbForwarder):
         """
         # socket exists ?
         if self.__sock:
-            # build message
-            ls_msg = "{}#*{};\n#{}#{}".format(self.__i_id, str(ls_message).upper(), lf_toa, time.clock())
+            # build message  (era *{};) 
+            ls_msg = "{}#{}#{}#{}".format(self.__i_id, str(ls_message).upper(), lf_toa, time.clock())
 
             # send ok ?
             if self.__sock.sendto(ls_msg, self.__t_ip_dst) > 0:
