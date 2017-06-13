@@ -96,6 +96,8 @@ class CBusterServer(object):
         # init super class
         super(CBusterServer, self).__init__()
 
+        M_LOG.info("constructor")
+
         # used for decoding ADS-B position messages
         # the key is the icao24 address
         self.__dct_lst_pos = {}
@@ -129,6 +131,8 @@ class CBusterServer(object):
         """
         get estimated x,y
         """
+        M_LOG.info("self.__dct_sensors: {}".format(self.__dct_sensors))
+
         # number of measurements
         li_num_meds = len(flst_toa)
 
@@ -329,6 +333,8 @@ class CBusterServer(object):
         """
         carrega o arquivo de configuração
         """
+        M_LOG.info("__load_config")
+
         # configuration file exists ?
         if os.path.exists(fs_config):
             # create config parser
@@ -402,6 +408,8 @@ class CBusterServer(object):
         """
         load sensors
         """
+        M_LOG.info("__load_sensors")
+
         # ckeck input
         assert fs_filename
         
@@ -425,16 +433,22 @@ class CBusterServer(object):
                 # sensor is reference point
                 self.__t_ref_pos = (l_sensor.lat, l_sensor.lng, l_sensor.alt)
 
+        M_LOG.info("self.__dct_sensors(A): {}".format(self.__dct_sensors))
+
         # for all sensors...
         for l_id, l_sensor in self.__dct_sensors.iteritems():
             # converts lat, lon to x, y
             l_sensor.update(self.__t_ref_pos[0], self.__t_ref_pos[1], self.__t_ref_pos[2])
+
+        M_LOG.info("self.__dct_sensors(D): {}".format(self.__dct_sensors))
 
     # ---------------------------------------------------------------------------------------------
     def __process_msg(self, fs_adsb_msg, fv_del=False):
         """
         process message
         """ 
+        M_LOG.info("self.__dct_sensors: {}".format(self.__dct_sensors))
+
         # checking which sensors have received the same message
         llst_msg = self.__count_messages(fs_adsb_msg, False)
         li_msgs = len(llst_msg)
@@ -463,15 +477,15 @@ class CBusterServer(object):
         # for all messages...
         for l_msg in llst_msg:
             # sensor id
-            li_sns = l_msg[1]
+            li_sns = int(l_msg[1])
             
             # time of arrival
-            llst_toa.append(l_msg[2])
+            llst_toa.append(float(l_msg[2]))
 
             # location of sensor
-            llst_pos_x[li_sns] = self.__dct_sensors[li_sns].x
-            llst_pos_y[li_sns] = self.__dct_sensors[li_sns].y
-            llst_pos_z[li_sns] = self.__dct_sensors[li_sns].alt
+            llst_pos_x.append(self.__dct_sensors[li_sns].x)
+            llst_pos_y.append(self.__dct_sensors[li_sns].y)
+            llst_pos_z.append(self.__dct_sensors[li_sns].alt)
 
         # verify declared position (in x, y)
         l_x, l_y = self.__get_declared_xy(fs_adsb_msg)
@@ -544,7 +558,7 @@ class CBusterServer(object):
                 llst_msg = ls_message.split('#')
 
                 # get message fields: sensor_id [0], message [1], toa [2], created [3]
-                fdct_rcv_msg[llst_msg[3]] = [llst_msg[0], llst_msg[1], llst_msg[2]]
+                fdct_rcv_msg[float(llst_msg[3])] = [int(llst_msg[0]), str(llst_msg[1]), float(llst_msg[2])]
                 M_LOG.info("dct_rcv_msg: {}".format(fdct_rcv_msg))
 
             # elapsed time (seg)
