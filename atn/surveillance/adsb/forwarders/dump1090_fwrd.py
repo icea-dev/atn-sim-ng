@@ -88,7 +88,7 @@ class Dump1090Forwarder(AdsbForwarder):
         if self.s:
             self.s.close()
 
-    def forward(self, message, time_of_arrival=None, timestamp=None, tx_id=None, rx_id=None):
+    def forward(self, message, time_of_arrival=None, tx_id=None, rx_id=None):
         self.connect()
         self.send_msg(message=message)
         self.disconnect()

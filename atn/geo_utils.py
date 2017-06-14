@@ -67,14 +67,16 @@ def ecef2enu(X, Y, Z, latrad, lonrad, altrad):
 
 
 def geog2enu(latalvo, lonalvo, altalvo, latrad, lonrad, altrad):
-    """Geografica para ENU.
+    """
+    geografica para ENU
 
-    Entrada: latalvo e lonalvo (graus), altalvo (m)  - coord geograficas do alvo
-             latrad e lonrad (graus), altrad (m)     - coord geograficas do radar
-    Saida: x, y, z   (m)  -  coordenadas cartesianas do alvo em relacao ao radar
+    Entrada: latalvo e lonalvo (graus), altalvo (m): coord geograficas do alvo
+             latrad e lonrad (graus), altrad (m): coord geograficas do radar
+    Saida: x, y, z (m) coordenadas cartesianas do alvo em relacao ao radar
     """
     X, Y, Z = geog2ecef(latalvo, lonalvo, altalvo)
     x, y, z = ecef2enu(X, Y, Z, latrad, lonrad, altrad)
+
     return x, y, z
 
 if __name__ == "__main__":

@@ -47,7 +47,7 @@ import time
 from scipy import linalg
 
 # atn-sim
-import atn.geo_utils as geoutils
+import atn.geo_utils as gutl
 
 import atn.surveillance.adsb.decoder as dcdr
 import atn.surveillance.adsb.forwarders.dump1090_fwrd as f1090
@@ -120,6 +120,7 @@ class CBusterServer(object):
 
         # create message dict
         self.__dct_rcv_msg = {}
+        self.dct_rcv_pos = {}
 
         # load config file
         self.__load_config(fs_config)
@@ -281,27 +282,32 @@ class CBusterServer(object):
         get declared xy
         """
         # get aircraft (ICAO24 address)
-        li_icao24 = dcdr.get_icao_addr(ls_adsb_msg)
+        ls_icao24 = str(dcdr.get_icao_addr(ls_adsb_msg)).upper()
+        M_LOG.debug(">>>>>>>>>>>>>>>>>>>> Aeronave: {} <<<<<<<<<<<<<<<<<<<<<<<<".format(ls_icao24))
 
         # airborne position msg type (9-18) ok ?
         if 8 < dcdr.get_tc(ls_adsb_msg) < 19:
             # get airborne position
-            lf_lat, lf_lon, lf_alt = self.__decode_position(li_icao24, ls_adsb_msg)
+            lf_lat, lf_lon, lf_alt = self.__decode_position(ls_icao24, ls_adsb_msg)
+            M_LOG.debug("declared: {} / {} / {}".format(lf_lat, lf_lon, lf_alt))
+            M_LOG.debug("received: {}".format(self.dct_rcv_pos[ls_icao24]))
 
             # valid position ?
             if (lf_lat is not None) and (lf_lon is not None):
                 # convert lat/lng to x, y
-                return geoutils.geog2enu(lf_lat, lf_lon, lf_alt, 
-                                         self.__t_ref_pos[0], self.__t_ref_pos[1], self.__t_ref_pos[2])
+                return gutl.geog2enu(lf_lat, lf_lon, lf_alt, 
+                                     self.__t_ref_pos[0], self.__t_ref_pos[1], self.__t_ref_pos[2])
 
         # senão, already have a position ?
-        elif li_icao24 in self.__dct_lst_pos:
+        elif ls_icao24 in self.__dct_lst_pos:
             # use last reported position as reference
-            lf_lat, lf_lon, lf_alt = self.__dct_lst_pos[li_icao24]
+            lf_lat, lf_lon, lf_alt = self.__dct_lst_pos[ls_icao24]
+            M_LOG.debug("declared: {} / {} / {}".format(lf_lat, lf_lon, lf_alt))
+            M_LOG.debug("received: {}".format(self.dct_rcv_pos[ls_icao24]))
 
             # convert lat/lng to x, y
-            return geoutils.geog2enu(lf_lat, lf_lon, lf_alt,
-                                     self.__t_ref_pos[0], self.__t_ref_pos[1], self.__t_ref_pos[2])
+            return gutl.geog2enu(lf_lat, lf_lon, lf_alt,
+                                 self.__t_ref_pos[0], self.__t_ref_pos[1], self.__t_ref_pos[2])
 
         # return
         return None, None, None
@@ -489,8 +495,10 @@ class CBusterServer(object):
 
         # determine reliability of message
         if (l_x is not None) and (l_y is not None):
+            M_LOG.debug("declared_xy: {} / {} / {}".format(l_x, l_y, l_z)) 
             # determine source of transmission using multilateration
             lf_flt_x, lf_flt_y = self.__calc_estimated_xy(llst_pos_x, llst_pos_y, llst_pos_z, llst_toa)
+            M_LOG.debug("estimated_xy: {} / {}".format(lf_flt_x, lf_flt_y)) 
 
             # determine reliability of message
             if (lf_flt_x is not None) and (lf_flt_y is not None):
@@ -557,9 +565,16 @@ class CBusterServer(object):
                 # split message
                 llst_msg = ls_message.split('#')
 
-                # get message fields: sensor_id [0], message [1], toa [2], ts [3], created [4]
-                fdct_rcv_msg[float(llst_msg[4])] = [int(llst_msg[0]), str(llst_msg[1]), float(llst_msg[2])]  # float(llst_msg[3]) + float(llst_msg[2])]
+                # get message fields: sensor_id [0], message [1], toa [2], created [3]
+                fdct_rcv_msg[float(llst_msg[3])] = [int(llst_msg[0]), str(llst_msg[1]), float(llst_msg[2])]
                 #M_LOG.info("dct_rcv_msg: {}".format(fdct_rcv_msg))
+
+                #!! split message
+                llst_msg = str(llst_msg[4]).split()
+                #!! get aircraft (ICAO24 address)
+                ls_icao24 = str(dcdr.get_icao_addr(llst_msg[0])).upper()
+                #!! received position
+                self.dct_rcv_pos[ls_icao24] = (float(llst_msg[1]), float(llst_msg[2]), float(llst_msg[3]))
 
             # elapsed time (seg)
             lf_dif = time.time() - lf_now

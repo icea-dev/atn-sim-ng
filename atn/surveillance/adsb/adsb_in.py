@@ -44,16 +44,15 @@ import threading
 import time
 
 # atn-sim
+import atn.geo_utils as gutl
+
+import atn.surveillance.adsb.decoder as dcdr  #!!
 import atn.surveillance.adsb.forwarders.asterix_fwrd as fast
 import atn.surveillance.adsb.forwarders.buster_fwrd as fbstr
 import atn.surveillance.adsb.forwarders.dump1090_fwrd as f1090
 
-import atn.surveillance.asterix.adsb_decoder as dcdr
-import atn.surveillance.asterix.asterix_encoder as ecdr
-
-#import atn.core_utils as core_utils
-#import atn.emane_utils as emane_utils
-import atn.geo_utils as geo_utils
+import atn.surveillance.asterix.adsb_decoder as axdc
+import atn.surveillance.asterix.asterix_encoder as axec
 
 # < module defs >----------------------------------------------------------------------------------
 
@@ -140,18 +139,23 @@ class AdsbIn(object):
         lf_rcv_lon = float(llst_msg[2])
         lf_rcv_alt = float(llst_msg[3])
 
-        # timestamp
-        lf_rcv_ts = float(llst_msg[4])
+        # get aircraft (ICAO24 address)
+        ls_icao24 = str(dcdr.get_icao_addr(ls_msg_adsb)).upper()
+        M_LOG.debug(">>>>>>>>>>>>>>>>>>>> Aeronave: {} <<<<<<<<<<<<<<<<<<<<<<<<".format(ls_icao24))
+
+        M_LOG.debug("lat.: {}, lng.: {}, alt.: {}".format(lf_rcv_lat, lf_rcv_lon, lf_rcv_alt))
+        M_LOG.debug("latR: {}, lngR: {}, altR: {}".format(self.__f_lat, self.__f_lng, self.__f_alt))
 
         # convert lat/lng to enu 
-        lf_x, lf_y, lf_z = geo_utils.geog2enu(lf_rcv_lat, lf_rcv_lon, lf_rcv_alt, 
-                                              self.__f_lat, self.__f_lng, self.__f_alt)
+        lf_x, lf_y, lf_z = gutl.geog2enu(lf_rcv_lat, lf_rcv_lon, lf_rcv_alt, 
+                                         self.__f_lat, self.__f_lng, self.__f_alt)
+        M_LOG.debug("lf_x: {}, lf_y: {}, lf_z: {}".format(lf_x, lf_y, lf_z))
 
         # euclidean distance
         lf_dist = math.sqrt(lf_x * lf_x + lf_y * lf_y + lf_z * lf_z)
 
         # return ads-b message, estimated time (distance / speed of light)
-        return ls_msg_adsb, lf_dist / M_LIGHT_SPEED, lf_rcv_ts
+        return ls_msg_adsb, lf_dist / M_LIGHT_SPEED
 
     # ---------------------------------------------------------------------------------------------
     def __init_asterix_server(self):
@@ -166,7 +170,7 @@ class AdsbIn(object):
         assert l_queue 
 
         # create a decoder for ADS-B messages
-        l_decoder = dcdr.AdsBDecoder(self.__i_asterix_sic)
+        l_decoder = axdc.AdsBDecoder(self.__i_asterix_sic)
         assert l_decoder
 
         l_decoder.create_socket(self.__i_asterix_rx_port)
@@ -174,7 +178,7 @@ class AdsbIn(object):
         l_decoder.start_thread()
 
         # create a encoder to ASTERIX
-        l_encoder = ecdr.AdsBAsterixEncode(self.__i_asterix_sic)
+        l_encoder = axec.AdsBAsterixEncode(self.__i_asterix_sic)
         assert l_encoder
 
         l_encoder.create_socket(self.__i_asterix_tx_port)
@@ -286,7 +290,7 @@ class AdsbIn(object):
             
             if ls_message:
                 # estimate TOA (time-of-arrival)
-                ls_msg_adsb, lf_toa_est, lf_rcv_ts = self.__estimate_toa(ls_message)
+                ls_msg_adsb, lf_toa_est = self.__estimate_toa(ls_message)
 
             # senão,...
             else:
@@ -301,7 +305,7 @@ class AdsbIn(object):
             # for all configured forwarders...
             for l_fwdr in self.__lst_forwarders:
                 # forward received ADS-B message
-                l_fwdr.forward(ls_msg_adsb, lf_toa_est, lf_rcv_ts)
+                l_fwdr.forward(ls_msg_adsb, lf_toa_est, tx_id=ls_message)
 
             # elapsed time (seg)
             lf_dif = time.time() - lf_now
