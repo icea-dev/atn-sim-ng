@@ -135,6 +135,19 @@ class CorePtracksFeed(AdsbFeed):
 
 
     # -------------------------------------------------------------------------------------------------
+    def get_timestamp(self):
+        """
+        Returns the timestamp of aircraft
+        :return: float
+        """
+        self.data_lock.acquire()
+        timestamp = self.timestamp
+        self.data_lock.release()
+
+        return timestamp
+
+
+    # -------------------------------------------------------------------------------------------------
     def get_position(self):
         """
         Returns latitude, longitude and altitude of aircraft

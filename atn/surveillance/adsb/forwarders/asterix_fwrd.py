@@ -96,7 +96,7 @@ class AsterixForwarder(AdsbForwarder):
 
         return False
 
-    def forward(self, message, time_of_arrival=None, tx_id=None, rx_id=None):
+    def forward(self, message, time_of_arrival=None, timestamp=None, tx_id=None, rx_id=None):
         """Forwarding the ADS-B message
 
         The time of applicability (time_of_arrival) indicates the exact time at which the

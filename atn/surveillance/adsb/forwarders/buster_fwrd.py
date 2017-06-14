@@ -104,14 +104,14 @@ class BusterForwarder(fads.AdsbForwarder):
         self.__sock.settimeout(self.__timeout)
 
     # ---------------------------------------------------------------------------------------------
-    def forward(self, ls_message, lf_toa):
+    def forward(self, ls_message, lf_toa, lf_ts, tx_id=None, rx_id=None):
         """
         forward message
         """
         # socket exists ?
         if self.__sock:
             # build message
-            ls_msg = "{}#*{};\n#{}#{}".format(self.__i_id, str(ls_message).upper(), lf_toa, time.time())
+            ls_msg = "{}#{}#{}#{}#{}".format(self.__i_id, str(ls_message).upper(), lf_toa, lf_ts, time.clock())
 
             # send ok ?
             if self.__sock.sendto(ls_msg, self.__t_ip_dst) > 0:

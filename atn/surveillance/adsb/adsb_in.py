@@ -94,6 +94,7 @@ class AdsbIn(object):
         @param fi_id: sensor id
         @param ff_(lat, lng, alt): station position
         @param fs_config: arquivo de configuração
+        @param fv_store_msgs: store messages flag
         """
         # destinations to which messages will be forwarded to
         self.__lst_forwarders = []
@@ -101,7 +102,7 @@ class AdsbIn(object):
         # station location
         self.__f_lat = ff_lat
         self.__f_lng = ff_lng
-        self.__f_alt = ff_alt
+        self.__f_alt = ff_alt if ff_alt > 2. else 2.
       
         # id
         self.__i_id = fi_id
@@ -139,16 +140,18 @@ class AdsbIn(object):
         lf_rcv_lon = float(llst_msg[2])
         lf_rcv_alt = float(llst_msg[3])
 
+        # timestamp
+        lf_rcv_ts = float(llst_msg[4])
+
         # convert lat/lng to enu 
         lf_x, lf_y, lf_z = geo_utils.geog2enu(lf_rcv_lat, lf_rcv_lon, lf_rcv_alt, 
                                               self.__f_lat, self.__f_lng, self.__f_alt)
 
         # euclidean distance
         lf_dist = math.sqrt(lf_x * lf_x + lf_y * lf_y + lf_z * lf_z)
-        # M_LOG.debug("lf_dist: {}".format(lf_dist))
 
         # return ads-b message, estimated time (distance / speed of light)
-        return ls_msg_adsb, lf_dist / M_LIGHT_SPEED
+        return ls_msg_adsb, lf_dist / M_LIGHT_SPEED, lf_rcv_ts
 
     # ---------------------------------------------------------------------------------------------
     def __init_asterix_server(self):
@@ -283,8 +286,7 @@ class AdsbIn(object):
             
             if ls_message:
                 # estimate TOA (time-of-arrival)
-                ls_msg_adsb, lf_toa_est = self.__estimate_toa(ls_message)
-                # M_LOG.debug("lf_toa_est: {}".format(lf_toa_est))
+                ls_msg_adsb, lf_toa_est, lf_rcv_ts = self.__estimate_toa(ls_message)
 
             # senão,...
             else:
@@ -299,7 +301,7 @@ class AdsbIn(object):
             # for all configured forwarders...
             for l_fwdr in self.__lst_forwarders:
                 # forward received ADS-B message
-                l_fwdr.forward(ls_msg_adsb, lf_toa_est)
+                l_fwdr.forward(ls_msg_adsb, lf_toa_est, lf_rcv_ts)
 
             # elapsed time (seg)
             lf_dif = time.time() - lf_now

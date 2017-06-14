@@ -74,7 +74,7 @@ M_NET_PORT = 12270
 M_RECV_BUFF_SIZE = 1024
 
 # distance threshold (m)
-M_THRESHOLD = 1000
+M_THRESHOLD = 10000
 
 # tempo para estatística (s)
 M_TIM_STAT = 60
@@ -133,29 +133,35 @@ class CBusterServer(object):
         li_num_meds = len(flst_toa)
 
         # sorting by time of arrival, where the last sensor to receive is always the reference
-        # this keeps the MLAT error low.
+        # this keeps the MLAT error low
         _t = numpy.array(flst_toa)
+
+        # sorted index array (reversed) 
         _i = numpy.argsort(_t)[::-1]
 
+        # create local arrays
         _xpos = [0] * li_num_meds
         _ypos = [0] * li_num_meds
         _zpos = [0] * li_num_meds
         _toa  = [0] * li_num_meds
 
-        for i in xrange(0, li_num_meds):
+        # move sorted by toa
+        for i in xrange(li_num_meds):
             _xpos[i] = flst_pos_x[_i[i]]
             _ypos[i] = flst_pos_y[_i[i]]
             _zpos[i] = flst_pos_z[_i[i]]
             _toa[i]  = flst_toa[_i[i]]
 
         # speed of light (in meters per second)
-        vel = 299792458
+        li_vlight = 299792458
 
         # time difference of arrival
         dt = [0] * li_num_meds
 
-        for i in xrange(0, li_num_meds):
+        for i in xrange(li_num_meds):
+            # calc time difference
             dt[i] = _toa[i] - _toa[0]
+
             if (i > 0) and (0 == dt[i]):
                 return None, None
 
@@ -166,15 +172,16 @@ class CBusterServer(object):
 
         #
         for m in xrange(2, li_num_meds):
-            A[m] = 2 * _xpos[m] / (vel * dt[m]) - 2 * _xpos[1] / (vel * dt[1])
-            B[m] = 2 * _ypos[m] / (vel * dt[m]) - 2 * _ypos[1] / (vel * dt[1])
-            C[m] = 2 * _zpos[m] / (vel * dt[m]) - 2 * _zpos[1] / (vel * dt[1])
-            D[m] = (vel * dt[m]) - \
-                   (vel * dt[1]) - (_xpos[m] ** 2 + _ypos[m] ** 2 + _zpos[m] ** 2) / \
-                   (vel * dt[m]) + (_xpos[1] ** 2 + _ypos[1] ** 2 + _zpos[1] ** 2) / \
-                   (vel * dt[1])
+            A[m] = 2 * _xpos[m] / (li_vlight * dt[m]) - 2 * _xpos[1] / (li_vlight * dt[1])
+            B[m] = 2 * _ypos[m] / (li_vlight * dt[m]) - 2 * _ypos[1] / (li_vlight * dt[1])
+            C[m] = 2 * _zpos[m] / (li_vlight * dt[m]) - 2 * _zpos[1] / (li_vlight * dt[1])
+            D[m] = (li_vlight * dt[m]) - \
+                   (li_vlight * dt[1]) - \
+                   (_xpos[m] ** 2 + _ypos[m] ** 2 + _zpos[m] ** 2) / (li_vlight * dt[m]) + \
+                   (_xpos[1] ** 2 + _ypos[1] ** 2 + _zpos[1] ** 2) / (li_vlight * dt[1])
 
         X = numpy.matrix([[A[2], B[2], C[2]], [A[3], B[3], C[3]], [A[4], B[4], C[4]]])
+        
         b = numpy.array([-D[2], -D[3], -D[4]])
         b.shape = (3, 1)
 
@@ -188,7 +195,10 @@ class CBusterServer(object):
             return x_est, y_est
 
         # em caso de erro....
-        except numpy.linalg.linalg.LinAlgError:
+        except numpy.linalg.linalg.LinAlgError as l_err:
+
+            M_LOG.info("except numpy.linalg.linalg.LinAlgError: {}".format(l_err))
+
             x_est = None
             y_est = None
 
@@ -202,8 +212,11 @@ class CBusterServer(object):
         # init answer
         llst_ans = []
 
+        # local copy of dictionary
+        ldct_rcv_msg = dict(self.__dct_rcv_msg)
+
         # for all messages in dictionary...
-        for l_key, llst_data in self.__dct_rcv_msg.iteritems():
+        for l_key, llst_data in ldct_rcv_msg.iteritems():
             # found message ?
             if llst_data[1] == fs_adsb_msg:
                 # delete item ?
@@ -270,8 +283,8 @@ class CBusterServer(object):
         # get aircraft (ICAO24 address)
         li_icao24 = dcdr.get_icao_addr(ls_adsb_msg)
 
-        # airborne position msg type ok ?
-        if dcdr.get_tc(ls_adsb_msg) in xrange(9, 19):
+        # airborne position msg type (9-18) ok ?
+        if 8 < dcdr.get_tc(ls_adsb_msg) < 19:
             # get airborne position
             lf_lat, lf_lon, lf_alt = self.__decode_position(li_icao24, ls_adsb_msg)
 
@@ -281,16 +294,14 @@ class CBusterServer(object):
                 return geoutils.geog2enu(lf_lat, lf_lon, lf_alt, 
                                          self.__t_ref_pos[0], self.__t_ref_pos[1], self.__t_ref_pos[2])
 
-        # senão,...
-        else:
-            # already have a position ?
-            if li_icao24 in self.__dct_lst_pos:
-                # use last reported position as reference
-                lf_lat, lf_lon, lf_alt = self.__dct_lst_pos[li_icao24]
+        # senão, already have a position ?
+        elif li_icao24 in self.__dct_lst_pos:
+            # use last reported position as reference
+            lf_lat, lf_lon, lf_alt = self.__dct_lst_pos[li_icao24]
 
-                # convert lat/lng to x, y
-                return geoutils.geog2enu(lf_lat, lf_lon, lf_alt,
-                                         self.__t_ref_pos[0], self.__t_ref_pos[1], self.__t_ref_pos[2])
+            # convert lat/lng to x, y
+            return geoutils.geog2enu(lf_lat, lf_lon, lf_alt,
+                                     self.__t_ref_pos[0], self.__t_ref_pos[1], self.__t_ref_pos[2])
 
         # return
         return None, None, None
@@ -463,42 +474,45 @@ class CBusterServer(object):
         # for all messages...
         for l_msg in llst_msg:
             # sensor id
-            li_sns = l_msg[1]
+            li_sns = int(l_msg[1])
             
             # time of arrival
-            llst_toa.append(l_msg[2])
+            llst_toa.append(float(l_msg[2]))
 
             # location of sensor
-            llst_pos_x[li_sns] = self.__dct_sensors[li_sns].x
-            llst_pos_y[li_sns] = self.__dct_sensors[li_sns].y
-            llst_pos_z[li_sns] = self.__dct_sensors[li_sns].alt
+            llst_pos_x.append(self.__dct_sensors[li_sns].x)
+            llst_pos_y.append(self.__dct_sensors[li_sns].y)
+            llst_pos_z.append(self.__dct_sensors[li_sns].alt)
 
         # verify declared position (in x, y)
-        l_x, l_y = self.__get_declared_xy(fs_adsb_msg)
-
-        # determine source of transmission using multilateration
-        lf_flt_x, lf_flt_y = self.__calc_estimated_xy(llst_pos_x, llst_pos_y, llst_pos_z, llst_toa)
+        l_x, l_y, l_z = self.__get_declared_xy(fs_adsb_msg)
 
         # determine reliability of message
-        if (l_x is not None) and (l_y is not None) and (lf_flt_x is not None) and (lf_flt_y is not None):
+        if (l_x is not None) and (l_y is not None):
+            # determine source of transmission using multilateration
+            lf_flt_x, lf_flt_y = self.__calc_estimated_xy(llst_pos_x, llst_pos_y, llst_pos_z, llst_toa)
 
-            # 2D distance between reported and estimated positions
-            lf_dist_2d = math.sqrt((l_x - lf_flt_x) ** 2 + (l_y - lf_flt_y) ** 2)
+            # determine reliability of message
+            if (lf_flt_x is not None) and (lf_flt_y is not None):
+                # 2D distance between reported and estimated positions
+                lf_dist_2d = math.sqrt((l_x - lf_flt_x) ** 2 + (l_y - lf_flt_y) ** 2)
 
-            # distance inside acceptable range ?
-            if lf_dist_2d <= M_THRESHOLD:
-                # accept message
-                M_LOG.info("process_msg:'%s'\t%d\t%s[OK]%s" % (fs_adsb_msg, lf_dist_2d, bcolors.OKBLUE, bcolors.ENDC))
+                # distance inside acceptable range ?
+                if lf_dist_2d <= M_THRESHOLD:
+                    # accept message
+                    print "process_msg:'%s'\t%d\t%s[OK]%s" % (fs_adsb_msg, lf_dist_2d, bcolors.OKBLUE, bcolors.ENDC)
+                    M_LOG.debug("process_msg:'%s'\t%d [OK]" % (fs_adsb_msg, lf_dist_2d))
 
-                # for all forwarders...
-                for l_frwd in self.__lst_forwarders:
-                    # send received ADS-B message
-                    l_frwd.forward(fs_adsb_msg, None)
+                    # for all forwarders...
+                    for l_frwd in self.__lst_forwarders:
+                        # send received ADS-B message
+                        l_frwd.forward(fs_adsb_msg, None)
 
-            # senão,...
-            else:
-                # drop message
-                M_LOG.warning("process_msg:'%s'\t%d\t%s[FAIL]%s" % (fs_adsb_msg, lf_dist_2d, bcolors.FAIL, bcolors.ENDC))
+                # senão,...
+                else:
+                    # drop message
+                    print "process_msg:'%s'\t%d\t%s[FAIL]%s" % (fs_adsb_msg, lf_dist_2d, bcolors.FAIL, bcolors.ENDC)
+                    M_LOG.debug("process_msg:'%s'\t%d [FAIL]" % (fs_adsb_msg, lf_dist_2d))
 
         # delete processed messages 
         self.__count_messages(fs_adsb_msg, True)
@@ -543,9 +557,9 @@ class CBusterServer(object):
                 # split message
                 llst_msg = ls_message.split('#')
 
-                # get message fields: sensor_id [0], message [1], toa [2], created [3]
-                fdct_rcv_msg[llst_msg[3]] = [llst_msg[0], llst_msg[1], llst_msg[2]]
-                M_LOG.info("dct_rcv_msg: {}".format(fdct_rcv_msg))
+                # get message fields: sensor_id [0], message [1], toa [2], ts [3], created [4]
+                fdct_rcv_msg[float(llst_msg[4])] = [int(llst_msg[0]), str(llst_msg[1]), float(llst_msg[2])]  # float(llst_msg[3]) + float(llst_msg[2])]
+                #M_LOG.info("dct_rcv_msg: {}".format(fdct_rcv_msg))
 
             # elapsed time (seg)
             lf_dif = time.time() - lf_now
@@ -587,14 +601,15 @@ class CBusterServer(object):
             if self.__dct_rcv_msg:
                 # get key (created) list
                 llst_keys = sorted(self.__dct_rcv_msg.keys())
-                M_LOG.info("llst_keys: {}".format(llst_keys))
+                #M_LOG.info("llst_keys: {}".format(llst_keys))
         
                 # get oldest message
                 llst_data = self.__dct_rcv_msg[llst_keys[0]]
-                M_LOG.info("llst_data: {}".format(llst_data))
+                #M_LOG.info("llst_data: {}".format(llst_data))
 
                 # get data
                 l_message = llst_data[1]
+                #M_LOG.info("l_message: {}".format(l_message))
 
                 # try 4 times...
                 for li_try in xrange(4):
