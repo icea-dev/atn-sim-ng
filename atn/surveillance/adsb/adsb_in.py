@@ -117,12 +117,12 @@ class AdsbIn(object):
         self.__i_asterix_sic = None
         self.__s_asterix_dest = None
 
-        M_LOG.debug(">>>>>>>>>>>>>>>>>>>> Sensor: {} <<<<<<<<<<<<<<<<<<<<<<<<".format(fi_id))
-        M_LOG.debug("position lat: {}, lng: {}, alt: {}".format(self.__f_lat, self.__f_lng, self.__f_alt))
+        #M_LOG.debug(">>>>>>>>>>>>>>>>>>>> Sensor: {} <<<<<<<<<<<<<<<<<<<<<<<<".format(fi_id))
+        #M_LOG.debug("position lat: {}, lng: {}, alt: {}".format(self.__f_lat, self.__f_lng, self.__f_alt))
 
         # station location (ECEF)
         self.__f_x, self.__f_y, self.__f_z = gutl.geog2ecef(ff_lat, ff_lng, ff_alt)
-        M_LOG.debug("self.__f_x: {}, self.__f_y: {}, self.__f_z: {}".format(self.__f_x, self.__f_y, self.__f_z))
+        #M_LOG.debug("self.__f_x: {}, self.__f_y: {}, self.__f_z: {}".format(self.__f_x, self.__f_y, self.__f_z))
       
         # load configuration file
         self.__load_config(fs_config)
@@ -137,7 +137,7 @@ class AdsbIn(object):
 
         # split message
         llst_msg = fs_message.split()
-        # M_LOG.debug("llst_msg: {}".format(llst_msg))
+        #M_LOG.debug("llst_msg: {}".format(llst_msg))
 
         # ads-b message
         ls_msg_adsb = llst_msg[0]
@@ -149,12 +149,12 @@ class AdsbIn(object):
 
         # get aircraft (ICAO24 address)
         ls_icao24 = str(dcdr.get_icao_addr(ls_msg_adsb)).upper()
-        M_LOG.debug(">>>>>>>>>>>>>>>>>>>> Aeronave: {} <<<<<<<<<<<<<<<<<<<<<<<<".format(ls_icao24))
-        M_LOG.debug("position lat: {}, lng: {}, alt: {}".format(lf_rcv_lat, lf_rcv_lon, lf_rcv_alt))
+        #M_LOG.debug(">>>>>>>>>>>>>>>>>>>> Aeronave: {} <<<<<<<<<<<<<<<<<<<<<<<<".format(ls_icao24))
+        #M_LOG.debug("position lat: {}, lng: {}, alt: {}".format(lf_rcv_lat, lf_rcv_lon, lf_rcv_alt))
 
         # aircraft position (ECEF)
         lf_anv_x, lf_anv_y, lf_anv_z = gutl.geog2ecef(lf_rcv_lat, lf_rcv_lon, lf_rcv_alt)
-        M_LOG.debug("lf_anv_x: {}, lf_anv_y: {}, lf_anv_z: {}".format(lf_anv_x, lf_anv_y, lf_anv_z))
+        #M_LOG.debug("lf_anv_x: {}, lf_anv_y: {}, lf_anv_z: {}".format(lf_anv_x, lf_anv_y, lf_anv_z))
 
         # convert lat/lng to enu 
         #lf_flt_x, lf_flt_y, lf_flt_z = gutl.geog2enu(lf_rcv_lat, lf_rcv_lon, lf_rcv_alt, 
@@ -171,7 +171,7 @@ class AdsbIn(object):
 
         # 3D distance between aircraft and sensor positions
         lf_dist_3d = math.sqrt(pow(lf_anv_x - self.__f_x, 2) + pow(lf_anv_y - self.__f_y, 2) + pow(lf_anv_z - self.__f_z, 2))
-        M_LOG.debug("lf_dist_3d: {}".format(lf_dist_3d))
+        #M_LOG.debug("lf_dist_3d: {}".format(lf_dist_3d))
 
         # return ads-b message, estimated time (distance / speed of light)
         return ls_msg_adsb, lf_dist_3d / M_LIGHT_SPEED
