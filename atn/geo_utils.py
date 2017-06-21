@@ -34,7 +34,7 @@ f = 1. / 298.257223563
 a = 6378137.
 # semi-eixo menor em metros
 b = a * (1. - f)
-b = 6356752.31424518
+# b = 6356752.31424518
 # primeira excentricidade
 e = math.sqrt(((a ** 2) - (b ** 2)) / (a ** 2))
 # segunda excentricidade

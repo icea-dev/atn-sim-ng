@@ -31,6 +31,7 @@ __date__ = "2017/06"
 
 # python library
 import copy
+import logging
 import math
 
 # numpy & scipy
@@ -40,6 +41,12 @@ import numpy as np
 import atn.geo_utils as gutl
 import atn.surveillance.adsb.security.vincenty as vdst
 
+# < module defs >----------------------------------------------------------------------------------
+
+# logger
+M_LOG = logging.getLogger(__name__)
+M_LOG.setLevel(logging.DEBUG)
+
 # -------------------------------------------------------------------------------------------------
 def mlat_1(fmat_sns_ecef, flst_toa):
     """
@@ -48,11 +55,8 @@ def mlat_1(fmat_sns_ecef, flst_toa):
     # init matrix
     lmat_x = []
 
-    # number of measurements
-    li_nmeas = len(fmat_sns_ecef)
-
     # for all measurements...
-    for li_m in xrange(li_nmeas):
+    for li_m in xrange(len(fmat_sns_ecef)):
         # get position
         lf_x = fmat_sns_ecef[li_m][0]
         lf_y = fmat_sns_ecef[li_m][1]
@@ -91,11 +95,8 @@ def mlat_2(fmat_sns_ecef, flst_toa):
     lmat_a = []
     lmat_b = []
 
-    # number of measurements
-    li_nmeas = len(fmat_sns_ecef)
-
     # for all measurements...
-    for li_m in xrange(li_nmeas):
+    for li_m in xrange(len(fmat_sns_ecef)):
         lf_x = fmat_sns_ecef[li_m][0]
         lf_y = fmat_sns_ecef[li_m][1]
         lf_z = fmat_sns_ecef[li_m][2]
@@ -123,7 +124,7 @@ def mlat_2(fmat_sns_ecef, flst_toa):
     l_pos = np.matmul(l_Aplus, lmat_b)
 
     # return estimated position in ECEF
-    return l_pos[0], l_pos[1], l_pos[2]
+    return l_pos[0][0], l_pos[1][0], l_pos[2][0]
 
 # -------------------------------------------------------------------------------------------------
 # this is the bootstrap process

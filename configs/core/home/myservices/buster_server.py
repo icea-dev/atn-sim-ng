@@ -56,13 +56,6 @@ class BusterServer(CoreService):
             cfg += "server = 10.0.2.11\n"
             cfg += "port = 30001\n"
 
-        elif filename == "sensors.txt":
-            cfg += " 2, -14.0831650347, -49.4030984872, 2.\n"
-            cfg += " 4, -15.2586421098, -47.8988661098, 2.\n"
-            cfg += " 5, -17.6120604234, -49.3750919052, 2.\n"
-            cfg += "13, -17.6105780563, -46.2006404987, 2.\n"
-            cfg += "16, -14.451676914,  -46.1818781943, 2.\n"
-
         else:
             cfg += "# %s not defined\n" % filename
 

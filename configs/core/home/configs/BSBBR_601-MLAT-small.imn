@@ -467,19 +467,7 @@ node n19 {
 	custom-config-id service:BusterServer
 	custom-command BusterServer
 	config {
-	files=('buster_server.cfg', 'buster_server.sh', 'sensors.txt', )
-	}
-    }
-    custom-config {
-	custom-config-id service:BusterServer:sensors.txt
-	custom-command sensors.txt
-	config {
-	 2, -14.0831650347, -49.4030984872, 2.
-	 4, -15.2586421098, -47.8988661098, 2.
-	 5, -17.6120604234, -49.3750919052, 2.
-	13, -17.6105780563, -46.2006404987, 2.
-	16, -14.451676914,  -46.1818781943, 2.
-	
+	files=('buster_server.cfg', 'buster_server.sh', )
 	}
     }
 }

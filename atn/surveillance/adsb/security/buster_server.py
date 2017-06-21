@@ -75,7 +75,7 @@ M_NET_PORT = 12270
 M_RECV_BUFF_SIZE = 1024
 
 # distance threshold (m)
-M_THRESHOLD = 1000
+M_THRESHOLD = 6000
 
 # tempo para estatística (s)
 M_TIM_STAT = 60
@@ -84,7 +84,7 @@ M_EVEN_MSG = 0
 M_ODD_MSG = 1
 
 # speed of light (in meters per second)
-M_VLIGHT = 299792458.
+M_LIGHT_SPEED = 299792458.
 
 # < class CBusterServer >--------------------------------------------------------------------------
 
@@ -121,7 +121,6 @@ class CBusterServer(object):
 
         # create message dict
         self.__dct_rcv_msg = {}
-        self.dct_rcv_pos = {}
 
         # load config file
         self.__load_config(fs_config)
@@ -204,13 +203,13 @@ class CBusterServer(object):
         """
         # get aircraft (ICAO24 address)
         ls_icao24 = str(dcdr.get_icao_addr(ls_adsb_msg)).upper()
-        M_LOG.debug(">>>>>>>>>>>>>>>>>>>> Aeronave: {}/{} <<<<<<<<<<<<<<<<<<<<<<<<".format(ls_icao24, dcdr.get_tc(ls_adsb_msg)))
+        #M_LOG.debug(">>>>>>>>>>>>>>>>>>>> Aeronave: {}/{} <<<<<<<<<<<<<<<<<<<<<<<<".format(ls_icao24, dcdr.get_tc(ls_adsb_msg)))
 
         # airborne position msg type (9-18) ok ?
         if 8 < dcdr.get_tc(ls_adsb_msg) < 19:
             # get airborne position
             lf_lat, lf_lon, lf_alt = self.__decode_position(ls_icao24, ls_adsb_msg)
-            M_LOG.debug("declared_xy: {} / {} / {}".format(lf_lat, lf_lon, lf_alt))
+            #M_LOG.debug("declared_ll: {} / {} / {}".format(lf_lat, lf_lon, lf_alt))
 
             # valid position ?
             if (lf_lat is not None) and (lf_lon is not None) and (lf_alt is not None):
@@ -221,7 +220,7 @@ class CBusterServer(object):
         elif ls_icao24 in self.__dct_lst_pos:
             # use last reported position as reference
             lf_lat, lf_lon, lf_alt = self.__dct_lst_pos[ls_icao24]
-            M_LOG.debug("declared_xy: {} / {} / {}".format(lf_lat, lf_lon, lf_alt))
+            #M_LOG.debug("declared_ll: {} / {} / {}".format(lf_lat, lf_lon, lf_alt))
 
             # convert lat/lng/alt to x, y, z
             return gutl.geog2ecef(lf_lat, lf_lon, lf_alt)
@@ -319,35 +318,6 @@ class CBusterServer(object):
                     # put on forwarders list
                     self.__lst_forwarders.append(l_fwdr)
 
-        # load sensors setup file
-        self.__load_sensors("sensors.txt")
-
-    # ---------------------------------------------------------------------------------------------
-    def __load_sensors(self, fs_filename):
-        """
-        load sensors
-        """
-        # ckeck input
-        assert fs_filename
-        
-        # open file
-        with open(fs_filename) as l_fin:
-            # for all lines in file...
-            for ls_line in l_fin:
-                # strip eol
-                ls_line = ls_line.rstrip('\n')
-
-                # split line
-                llst_line = ls_line.split(',')
-
-                # convert stations positions to ECEF
-                lf_x, lf_y, lf_z = gutl.geog2ecef(float(llst_line[1]), float(llst_line[2]), float(llst_line[3]))
-
-                # add sensor to dictionary
-                self.__dct_sensors[int(llst_line[0])] = [lf_x, lf_y, lf_z]
-
-        M_LOG.debug("self.__dct_sensors: {}".format(self.__dct_sensors))
-
     # ---------------------------------------------------------------------------------------------
     def __process_msg(self, fs_adsb_msg, fv_del=False):
         """
@@ -356,8 +326,6 @@ class CBusterServer(object):
         # checking which sensors have received the same message
         llst_msg = self.__count_messages(fs_adsb_msg, False)
         li_msgs = len(llst_msg)
-
-        M_LOG.debug("llst_msg: {}/{}".format(llst_msg, li_msgs))
 
         # no data ?
         if 0 == li_msgs:
@@ -382,32 +350,42 @@ class CBusterServer(object):
         for l_msg in llst_msg:
             # sensor id
             li_sns = int(l_msg[1])
-            
-            # time of arrival to distance
-            llst_toa.append(float(l_msg[2]) * M_VLIGHT)
 
+            # sensor position doesn't exists ? 
+            if self.__dct_sensors.get(li_sns, None) is None:
+                return False
+                        
             # location of sensor (x, y, z ECEF)
             llst_pos.append([self.__dct_sensors[li_sns][0], self.__dct_sensors[li_sns][1], self.__dct_sensors[li_sns][2]])
 
-        # declared position (in x, y, z) ECEF
-        lf_x, lf_y, lf_z = self.__get_declared_xy(fs_adsb_msg)
+            # time of arrival to distance
+            llst_toa.append(float(l_msg[2]) * M_LIGHT_SPEED)
+
+        # declared position (x, y, z ECEF)
+        lf_anv_x, lf_anv_y, lf_anv_z = self.__get_declared_xy(fs_adsb_msg)
+        #M_LOG.debug("declared_xy: {} / {} / {}".format(lf_anv_x, lf_anv_y, lf_anv_z))
 
         # determine reliability of message
-        if (lf_x is not None) and (lf_y is not None) and (lf_z is not None):
+        if (lf_anv_x is not None) and (lf_anv_y is not None) and (lf_anv_z is not None):
             # determine source of transmission using multilateration
-            lf_flt_x, lf_flt_y, lf_flt_z = mlat.mlat_2(llst_pos, llst_toa)
-            M_LOG.debug("estimated_xy: {} / {} / {}".format(lf_flt_x, lf_flt_y, lf_flt_z)) 
+            lf_est_x, lf_est_y, lf_est_z = mlat.mlat_2(llst_pos, llst_toa)
+            #M_LOG.debug("estimated_xy: {} / {} / {}".format(lf_est_x, lf_est_y, lf_est_z)) 
 
             # determine reliability of message
-            if (lf_flt_x is not None) and (lf_flt_y is not None):
+            if (lf_est_x is not None) and (lf_est_y is not None) and (lf_est_z is not None):
                 # 2D distance between reported and estimated positions
-                lf_dist_2d = math.sqrt(pow(l_x - lf_flt_x, 2) + pow(l_y - lf_flt_y, 2))
+                #lf_dist_2d = math.sqrt(pow(lf_anv_x - lf_est_x, 2) + pow(lf_anv_y - lf_est_y, 2))
+                #M_LOG.debug("lf_dist_2d: {}".format(lf_dist_2d))
+
+                # 3D distance between reported and estimated positions
+                lf_dist_3d = math.sqrt(pow(lf_anv_x - lf_est_x, 2) + pow(lf_anv_y - lf_est_y, 2) + pow(lf_anv_z - lf_est_z, 2))
+                #M_LOG.debug("lf_dist_3d: {}".format(lf_dist_3d))
 
                 # distance inside acceptable range ?
-                if lf_dist_2d <= M_THRESHOLD:
+                if lf_dist_3d <= M_THRESHOLD:
                     # accept message
-                    print "process_msg:'%s'\t%d\t%s[OK]%s" % (fs_adsb_msg, lf_dist_2d, bcolors.OKBLUE, bcolors.ENDC)
-                    M_LOG.debug("process_msg:'%s'\t%d [OK]" % (fs_adsb_msg, lf_dist_2d))
+                    print "process_msg:'%s'\t%d\t%s[OK]%s" % (fs_adsb_msg, lf_dist_3d, bcolors.OKBLUE, bcolors.ENDC)
+                    M_LOG.info("process_msg:'%s'\t%d [OK]" % (fs_adsb_msg, lf_dist_3d))
 
                     # for all forwarders...
                     for l_frwd in self.__lst_forwarders:
@@ -417,8 +395,8 @@ class CBusterServer(object):
                 # senão,...
                 else:
                     # drop message
-                    print "process_msg:'%s'\t%d\t%s[FAIL]%s" % (fs_adsb_msg, lf_dist_2d, bcolors.FAIL, bcolors.ENDC)
-                    M_LOG.debug("process_msg:'%s'\t%d [FAIL]" % (fs_adsb_msg, lf_dist_2d))
+                    print "process_msg:'%s'\t%d\t%s[FAIL]%s" % (fs_adsb_msg, lf_dist_3d, bcolors.FAIL, bcolors.ENDC)
+                    M_LOG.info("process_msg:'%s'\t%d [FAIL]" % (fs_adsb_msg, lf_dist_3d))
 
         # delete processed messages 
         self.__count_messages(fs_adsb_msg, True)
@@ -463,9 +441,18 @@ class CBusterServer(object):
                 # split message
                 llst_msg = ls_message.split('#')
 
-                # get message fields: sensor_id [0], message [1], toa [2], created [3]
-                fdct_rcv_msg[float(llst_msg[3])] = [int(llst_msg[0]), str(llst_msg[1]), float(llst_msg[2])]
+                # sensor id
+                li_sns = int(llst_msg[0])
+                 
+                # get message fields: sensor_id [0], message [1], toa [2], created [3], lst_pos [4]
+                fdct_rcv_msg[float(llst_msg[3])] = [li_sns, str(llst_msg[1]), float(llst_msg[2])]
                 #M_LOG.debug("dct_rcv_msg: {}".format(fdct_rcv_msg))
+
+                # sensor position doesn't exists ?
+                if self.__dct_sensors.get(li_sns, None) is None:
+                    # save sensor position
+                    self.__dct_sensors[li_sns] = eval(llst_msg[4])
+                    #M_LOG.debug("sensor:{} position: {}".format(li_sns, eval(llst_msg[4])))
 
             # elapsed time (seg)
             lf_dif = time.time() - lf_now
@@ -507,11 +494,11 @@ class CBusterServer(object):
             if self.__dct_rcv_msg:
                 # get key (created) list
                 llst_keys = sorted(self.__dct_rcv_msg.keys())
-                #M_LOG.info("llst_keys: {}".format(llst_keys))
+                #M_LOG.debug("llst_keys: {}".format(llst_keys))
         
                 # get oldest message
                 llst_data = self.__dct_rcv_msg[llst_keys[0]]
-                #M_LOG.info("llst_data: {}".format(llst_data))
+                #M_LOG.debug("llst_data: {}".format(llst_data))
 
                 # get data
                 l_message = llst_data[1]
