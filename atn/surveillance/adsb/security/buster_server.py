@@ -346,6 +346,8 @@ class CBusterServer(object):
                 # add sensor to dictionary
                 self.__dct_sensors[int(llst_line[0])] = [lf_x, lf_y, lf_z]
 
+        M_LOG.debug("self.__dct_sensors: {}".format(self.__dct_sensors))
+
     # ---------------------------------------------------------------------------------------------
     def __process_msg(self, fs_adsb_msg, fv_del=False):
         """
@@ -354,6 +356,8 @@ class CBusterServer(object):
         # checking which sensors have received the same message
         llst_msg = self.__count_messages(fs_adsb_msg, False)
         li_msgs = len(llst_msg)
+
+        M_LOG.debug("llst_msg: {}/{}".format(llst_msg, li_msgs))
 
         # no data ?
         if 0 == li_msgs:
@@ -461,7 +465,7 @@ class CBusterServer(object):
 
                 # get message fields: sensor_id [0], message [1], toa [2], created [3]
                 fdct_rcv_msg[float(llst_msg[3])] = [int(llst_msg[0]), str(llst_msg[1]), float(llst_msg[2])]
-                M_LOG.debug("dct_rcv_msg: {}".format(fdct_rcv_msg))
+                #M_LOG.debug("dct_rcv_msg: {}".format(fdct_rcv_msg))
 
             # elapsed time (seg)
             lf_dif = time.time() - lf_now
@@ -511,7 +515,6 @@ class CBusterServer(object):
 
                 # get data
                 l_message = llst_data[1]
-                #M_LOG.info("l_message: {}".format(l_message))
 
                 # try 4 times...
                 for li_try in xrange(4):

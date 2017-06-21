@@ -130,6 +130,7 @@ class AdsbIn(object):
 
         # split message
         llst_msg = fs_message.split()
+        # M_LOG.debug("llst_msg: {}".format(llst_msg))
 
         # ads-b message
         ls_msg_adsb = llst_msg[0]

@@ -39,7 +39,7 @@ node n4 {
 	port = 30001
 	
 	[buster]
-	type = client
+	type = buster
 	addr = 10.0.1.10
 	port = 12270
 	
@@ -293,7 +293,7 @@ node n2 {
 	port = 30001
 	
 	[buster]
-	type = client
+	type = buster
 	addr = 10.0.1.10
 	port = 12270
 	
@@ -343,7 +343,7 @@ node n5 {
 	port = 30001
 	
 	[buster]
-	type = client
+	type = buster
 	addr = 10.0.1.10
 	port = 12270
 	
@@ -393,7 +393,7 @@ node n13 {
 	port = 30001
 	
 	[buster]
-	type = client
+	type = buster
 	addr = 10.0.1.10
 	port = 12270
 	
