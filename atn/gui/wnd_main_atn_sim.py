@@ -81,9 +81,6 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         # Desabilita as ações para a sessão em tempo de execução
         self.enabled_actions(False)
 
-        self.act_scenario_to_xml.setEnabled(False)
-        self.act_scenario_to_exe.setEnabled(False)
-
         # create signal and slots connections
         self.act_edit_scenario.triggered.connect(self.cbk_start_edit_mode)
         self.act_start_session.triggered.connect(self.cbk_start_session)
@@ -93,8 +90,6 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         self.act_start_visil.triggered.connect(self.cbk_start_visil)
 
         self.act_db_edit.triggered.connect(self.cbk_start_db_edit)
-
-        self.act_add_aircraft.triggered.connect(self.cbk_add_acft_run_time)
 
         self.act_quit.triggered.connect(QtGui.QApplication.quit)
 
@@ -271,7 +266,6 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         self.act_start_dump1090.setEnabled(status)
         self.act_start_visil.setEnabled(status)
         self.act_start_pilot.setEnabled(status)
-        self.act_add_aircraft.setEnabled(status)
 
 
     # ---------------------------------------------------------------------------------------------

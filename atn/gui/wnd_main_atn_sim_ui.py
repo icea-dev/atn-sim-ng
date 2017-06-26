@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'wnd_main_atn_sim.ui'
 #
-# Created: Fri May  5 10:36:27 2017
+# Created: Mon Jun 26 09:45:21 2017
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -56,8 +56,6 @@ class Ui_CWndMainATNSim(object):
         self.menuSimulation.setObjectName(_fromUtf8("menuSimulation"))
         self.menuConfiguration = QtGui.QMenu(self.menubar)
         self.menuConfiguration.setObjectName(_fromUtf8("menuConfiguration"))
-        self.menuRuntime = QtGui.QMenu(self.menubar)
-        self.menuRuntime.setObjectName(_fromUtf8("menuRuntime"))
         self.menuHelp = QtGui.QMenu(self.menubar)
         self.menuHelp.setObjectName(_fromUtf8("menuHelp"))
         CWndMainATNSim.setMenuBar(self.menubar)
@@ -143,14 +141,10 @@ class Ui_CWndMainATNSim(object):
         self.menuSimulation.addAction(self.act_quit)
         self.menuConfiguration.addAction(self.act_db_edit)
         self.menuConfiguration.addSeparator()
-        self.menuConfiguration.addAction(self.act_scenario_to_xml)
-        self.menuConfiguration.addAction(self.act_scenario_to_exe)
-        self.menuRuntime.addAction(self.act_add_aircraft)
         self.menuHelp.addAction(self.act_show_manual)
         self.menuHelp.addAction(self.act_about)
         self.menubar.addAction(self.menuSimulation.menuAction())
         self.menubar.addAction(self.menuConfiguration.menuAction())
-        self.menubar.addAction(self.menuRuntime.menuAction())
         self.menubar.addAction(self.menuHelp.menuAction())
         self.toolBar.addAction(self.act_edit_scenario)
         self.toolBar.addSeparator()
@@ -162,11 +156,6 @@ class Ui_CWndMainATNSim(object):
         self.toolBar.addAction(self.act_start_pilot)
         self.toolBar.addSeparator()
         self.toolBar.addAction(self.act_db_edit)
-        self.toolBar.addSeparator()
-        self.toolBar.addAction(self.act_scenario_to_xml)
-        self.toolBar.addAction(self.act_scenario_to_exe)
-        self.toolBar.addSeparator()
-        self.toolBar.addAction(self.act_add_aircraft)
 
         self.retranslateUi(CWndMainATNSim)
         QtCore.QMetaObject.connectSlotsByName(CWndMainATNSim)
@@ -185,7 +174,6 @@ class Ui_CWndMainATNSim(object):
 "<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'Sans\'; font-size:16pt; font-weight:600; color:#00007f;\">(C) 2017 ICEA </span></p></body></html>", None))
         self.menuSimulation.setTitle(_translate("CWndMainATNSim", "Simulation", None))
         self.menuConfiguration.setTitle(_translate("CWndMainATNSim", "Settings", None))
-        self.menuRuntime.setTitle(_translate("CWndMainATNSim", "Runtime", None))
         self.menuHelp.setTitle(_translate("CWndMainATNSim", "Help", None))
         self.toolBar.setWindowTitle(_translate("CWndMainATNSim", "toolBar", None))
         self.act_edit_scenario.setText(_translate("CWndMainATNSim", "Create a scenario", None))
