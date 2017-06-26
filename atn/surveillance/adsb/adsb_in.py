@@ -101,8 +101,8 @@ class AdsbIn(object):
         # station location
         self.__f_lat = ff_lat
         self.__f_lng = ff_lng
-        self.__f_alt = ff_alt if ff_alt > 2. else 2.
-      
+        self.__f_alt = ff_alt
+
         # id
         self.__i_id = fi_id
 
@@ -117,6 +117,13 @@ class AdsbIn(object):
         self.__i_asterix_sic = None
         self.__s_asterix_dest = None
 
+        #M_LOG.debug(">>>>>>>>>>>>>>>>>>>> Sensor: {} <<<<<<<<<<<<<<<<<<<<<<<<".format(fi_id))
+        #M_LOG.debug("position lat: {}, lng: {}, alt: {}".format(self.__f_lat, self.__f_lng, self.__f_alt))
+
+        # station location (ECEF)
+        self.__f_x, self.__f_y, self.__f_z = gutl.geog2ecef(ff_lat, ff_lng, ff_alt)
+        #M_LOG.debug("self.__f_x: {}, self.__f_y: {}, self.__f_z: {}".format(self.__f_x, self.__f_y, self.__f_z))
+      
         # load configuration file
         self.__load_config(fs_config)
 
@@ -130,6 +137,7 @@ class AdsbIn(object):
 
         # split message
         llst_msg = fs_message.split()
+        #M_LOG.debug("llst_msg: {}".format(llst_msg))
 
         # ads-b message
         ls_msg_adsb = llst_msg[0]
@@ -141,21 +149,32 @@ class AdsbIn(object):
 
         # get aircraft (ICAO24 address)
         ls_icao24 = str(dcdr.get_icao_addr(ls_msg_adsb)).upper()
-        M_LOG.debug(">>>>>>>>>>>>>>>>>>>> Aeronave: {} <<<<<<<<<<<<<<<<<<<<<<<<".format(ls_icao24))
+        #M_LOG.debug(">>>>>>>>>>>>>>>>>>>> Aeronave: {} <<<<<<<<<<<<<<<<<<<<<<<<".format(ls_icao24))
+        #M_LOG.debug("position lat: {}, lng: {}, alt: {}".format(lf_rcv_lat, lf_rcv_lon, lf_rcv_alt))
 
-        M_LOG.debug("lat.: {}, lng.: {}, alt.: {}".format(lf_rcv_lat, lf_rcv_lon, lf_rcv_alt))
-        M_LOG.debug("latR: {}, lngR: {}, altR: {}".format(self.__f_lat, self.__f_lng, self.__f_alt))
+        # aircraft position (ECEF)
+        lf_anv_x, lf_anv_y, lf_anv_z = gutl.geog2ecef(lf_rcv_lat, lf_rcv_lon, lf_rcv_alt)
+        #M_LOG.debug("lf_anv_x: {}, lf_anv_y: {}, lf_anv_z: {}".format(lf_anv_x, lf_anv_y, lf_anv_z))
 
         # convert lat/lng to enu 
-        lf_x, lf_y, lf_z = gutl.geog2enu(lf_rcv_lat, lf_rcv_lon, lf_rcv_alt, 
-                                         self.__f_lat, self.__f_lng, self.__f_alt)
-        M_LOG.debug("lf_x: {}, lf_y: {}, lf_z: {}".format(lf_x, lf_y, lf_z))
+        #lf_flt_x, lf_flt_y, lf_flt_z = gutl.geog2enu(lf_rcv_lat, lf_rcv_lon, lf_rcv_alt, 
+        #                                             self.__f_lat, self.__f_lng, self.__f_alt)
+        #M_LOG.debug("lf_flt_x: {}, lf_flt_y: {}, lf_flt_z: {}".format(lf_flt_x, lf_flt_y, lf_flt_z))
 
         # euclidean distance
-        lf_dist = math.sqrt(lf_x * lf_x + lf_y * lf_y + lf_z * lf_z)
+        #lf_dist = math.sqrt(lf_flt_x * lf_flt_x + lf_flt_y * lf_flt_y + lf_flt_z * lf_flt_z)
+        #M_LOG.debug("lf_dist: {}".format(lf_dist))
+
+        # 2D distance between aircraft and sensor positions
+        #lf_dist_2d = math.sqrt(pow(lf_anv_x - self.__f_x, 2) + pow(lf_anv_y - self.__f_y, 2))
+        #M_LOG.debug("lf_dist_2d: {}".format(lf_dist_2d))
+
+        # 3D distance between aircraft and sensor positions
+        lf_dist_3d = math.sqrt(pow(lf_anv_x - self.__f_x, 2) + pow(lf_anv_y - self.__f_y, 2) + pow(lf_anv_z - self.__f_z, 2))
+        #M_LOG.debug("lf_dist_3d: {}".format(lf_dist_3d))
 
         # return ads-b message, estimated time (distance / speed of light)
-        return ls_msg_adsb, lf_dist / M_LIGHT_SPEED
+        return ls_msg_adsb, lf_dist_3d / M_LIGHT_SPEED
 
     # ---------------------------------------------------------------------------------------------
     def __init_asterix_server(self):
@@ -240,7 +259,7 @@ class AdsbIn(object):
                 # destiny is buster server ?
                 elif "buster" == ldct_dest["type"].lower():
                     # create buster server forwarder
-                    l_fwdr = fbstr.BusterForwarder(fi_id=self.__i_id, f_options=ldct_dest)
+                    l_fwdr = fbstr.BusterForwarder(fi_id=self.__i_id, flst_pos=[self.__f_x, self.__f_y, self.__f_z], f_options=ldct_dest)
                     assert l_fwdr
                     
                     # put on forwarders list
@@ -305,7 +324,7 @@ class AdsbIn(object):
             # for all configured forwarders...
             for l_fwdr in self.__lst_forwarders:
                 # forward received ADS-B message
-                l_fwdr.forward(ls_msg_adsb, lf_toa_est, tx_id=ls_message)
+                l_fwdr.forward(ls_msg_adsb, lf_toa_est)
 
             # elapsed time (seg)
             lf_dif = time.time() - lf_now

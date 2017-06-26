@@ -50,7 +50,7 @@ class BusterForwarder(fads.AdsbForwarder):
     buster server forwarder
     """
     # ---------------------------------------------------------------------------------------------
-    def __init__(self, fi_id=0, fs_addr="localhost", fi_port=12270, f_options=None, fv_verbose=False):
+    def __init__(self, fi_id=0, flst_pos=None, fs_addr="localhost", fi_port=12270, f_options=None, fv_verbose=False):
         """
         constructor
         """
@@ -59,6 +59,13 @@ class BusterForwarder(fads.AdsbForwarder):
 
         # id
         self.__i_id = fi_id
+
+        # position
+        if flst_pos is None:
+            self.__lst_pos = [0., 0., 0.]
+    
+        else:
+            self.__lst_pos = list(flst_pos)
 
         # socket
         self.__sock = None
@@ -110,8 +117,8 @@ class BusterForwarder(fads.AdsbForwarder):
         """
         # socket exists ?
         if self.__sock:
-            # build message
-            ls_msg = "{}#{}#{}#{}#{}".format(self.__i_id, str(ls_message).upper(), lf_toa, time.clock(), tx_id)
+            # build message sensor_id [0], message [1], toa [2], created [3], lst_pos [4]
+            ls_msg = "{}#{}#{}#{}#{}".format(self.__i_id, str(ls_message).upper(), lf_toa, time.clock(), self.__lst_pos)
 
             # send ok ?
             if self.__sock.sendto(ls_msg, self.__t_ip_dst) > 0:

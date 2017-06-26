@@ -52,6 +52,7 @@ import atn.geo_utils as gutl
 import atn.surveillance.adsb.decoder as dcdr
 import atn.surveillance.adsb.forwarders.dump1090_fwrd as f1090
 import atn.surveillance.adsb.security.bcolors as bcolors
+import atn.surveillance.adsb.security.mlat as mlat
 import atn.surveillance.adsb.security.sensors as sensors
 
 import atn.surveillance.asterix.adsb_decoder as axdc
@@ -74,13 +75,16 @@ M_NET_PORT = 12270
 M_RECV_BUFF_SIZE = 1024
 
 # distance threshold (m)
-M_THRESHOLD = 10000
+M_THRESHOLD = 6000
 
 # tempo para estatística (s)
 M_TIM_STAT = 60
 
 M_EVEN_MSG = 0
 M_ODD_MSG = 1
+
+# speed of light (in meters per second)
+M_LIGHT_SPEED = 299792458.
 
 # < class CBusterServer >--------------------------------------------------------------------------
 
@@ -108,9 +112,6 @@ class CBusterServer(object):
         # lista de forwarders
         self.__lst_forwarders = []
 
-        # reference point for (lat, lng) to (x, y)
-        self.__t_ref_pos = None
-
         # asterix forwarder/server
         self.__v_asterix_server = False
         self.__i_asterix_rx_port = None
@@ -120,91 +121,10 @@ class CBusterServer(object):
 
         # create message dict
         self.__dct_rcv_msg = {}
-        self.dct_rcv_pos = {}
 
         # load config file
         self.__load_config(fs_config)
 
-    # ---------------------------------------------------------------------------------------------
-    def __calc_estimated_xy(self, flst_pos_x, flst_pos_y, flst_pos_z, flst_toa):
-        """
-        get estimated x,y
-        """
-        # number of measurements
-        li_num_meds = len(flst_toa)
-
-        # sorting by time of arrival, where the last sensor to receive is always the reference
-        # this keeps the MLAT error low
-        _t = numpy.array(flst_toa)
-
-        # sorted index array (reversed) 
-        _i = numpy.argsort(_t)[::-1]
-
-        # create local arrays
-        _xpos = [0] * li_num_meds
-        _ypos = [0] * li_num_meds
-        _zpos = [0] * li_num_meds
-        _toa  = [0] * li_num_meds
-
-        # move sorted by toa
-        for i in xrange(li_num_meds):
-            _xpos[i] = flst_pos_x[_i[i]]
-            _ypos[i] = flst_pos_y[_i[i]]
-            _zpos[i] = flst_pos_z[_i[i]]
-            _toa[i]  = flst_toa[_i[i]]
-
-        # speed of light (in meters per second)
-        li_vlight = 299792458
-
-        # time difference of arrival
-        dt = [0] * li_num_meds
-
-        for i in xrange(li_num_meds):
-            # calc time difference
-            dt[i] = _toa[i] - _toa[0]
-
-            if (i > 0) and (0 == dt[i]):
-                return None, None
-
-        A = [0] * li_num_meds
-        B = [0] * li_num_meds
-        C = [0] * li_num_meds
-        D = [0] * li_num_meds
-
-        #
-        for m in xrange(2, li_num_meds):
-            A[m] = 2 * _xpos[m] / (li_vlight * dt[m]) - 2 * _xpos[1] / (li_vlight * dt[1])
-            B[m] = 2 * _ypos[m] / (li_vlight * dt[m]) - 2 * _ypos[1] / (li_vlight * dt[1])
-            C[m] = 2 * _zpos[m] / (li_vlight * dt[m]) - 2 * _zpos[1] / (li_vlight * dt[1])
-            D[m] = (li_vlight * dt[m]) - \
-                   (li_vlight * dt[1]) - \
-                   (_xpos[m] ** 2 + _ypos[m] ** 2 + _zpos[m] ** 2) / (li_vlight * dt[m]) + \
-                   (_xpos[1] ** 2 + _ypos[1] ** 2 + _zpos[1] ** 2) / (li_vlight * dt[1])
-
-        X = numpy.matrix([[A[2], B[2], C[2]], [A[3], B[3], C[3]], [A[4], B[4], C[4]]])
-        
-        b = numpy.array([-D[2], -D[3], -D[4]])
-        b.shape = (3, 1)
-
-        try:
-            location = linalg.inv(X).dot(b)
-
-            x_est = location[0][0]
-            y_est = location[1][0]
-            z_est = location[2][0]
-
-            return x_est, y_est
-
-        # em caso de erro....
-        except numpy.linalg.linalg.LinAlgError as l_err:
-
-            M_LOG.info("except numpy.linalg.linalg.LinAlgError: {}".format(l_err))
-
-            x_est = None
-            y_est = None
-
-        return x_est, y_est
-        
     # ---------------------------------------------------------------------------------------------
     def __count_messages(self, fs_adsb_msg, fv_del=False):
         """
@@ -283,31 +203,27 @@ class CBusterServer(object):
         """
         # get aircraft (ICAO24 address)
         ls_icao24 = str(dcdr.get_icao_addr(ls_adsb_msg)).upper()
-        M_LOG.debug(">>>>>>>>>>>>>>>>>>>> Aeronave: {} <<<<<<<<<<<<<<<<<<<<<<<<".format(ls_icao24))
+        #M_LOG.debug(">>>>>>>>>>>>>>>>>>>> Aeronave: {}/{} <<<<<<<<<<<<<<<<<<<<<<<<".format(ls_icao24, dcdr.get_tc(ls_adsb_msg)))
 
         # airborne position msg type (9-18) ok ?
         if 8 < dcdr.get_tc(ls_adsb_msg) < 19:
             # get airborne position
             lf_lat, lf_lon, lf_alt = self.__decode_position(ls_icao24, ls_adsb_msg)
-            M_LOG.debug("declared: {} / {} / {}".format(lf_lat, lf_lon, lf_alt))
-            M_LOG.debug("received: {}".format(self.dct_rcv_pos[ls_icao24]))
+            #M_LOG.debug("declared_ll: {} / {} / {}".format(lf_lat, lf_lon, lf_alt))
 
             # valid position ?
-            if (lf_lat is not None) and (lf_lon is not None):
-                # convert lat/lng to x, y
-                return gutl.geog2enu(lf_lat, lf_lon, lf_alt, 
-                                     self.__t_ref_pos[0], self.__t_ref_pos[1], self.__t_ref_pos[2])
+            if (lf_lat is not None) and (lf_lon is not None) and (lf_alt is not None):
+                # convert lat/lng/alt to x, y, z
+                return gutl.geog2ecef(lf_lat, lf_lon, lf_alt)
 
         # senão, already have a position ?
         elif ls_icao24 in self.__dct_lst_pos:
             # use last reported position as reference
             lf_lat, lf_lon, lf_alt = self.__dct_lst_pos[ls_icao24]
-            M_LOG.debug("declared: {} / {} / {}".format(lf_lat, lf_lon, lf_alt))
-            M_LOG.debug("received: {}".format(self.dct_rcv_pos[ls_icao24]))
+            #M_LOG.debug("declared_ll: {} / {} / {}".format(lf_lat, lf_lon, lf_alt))
 
-            # convert lat/lng to x, y
-            return gutl.geog2enu(lf_lat, lf_lon, lf_alt,
-                                 self.__t_ref_pos[0], self.__t_ref_pos[1], self.__t_ref_pos[2])
+            # convert lat/lng/alt to x, y, z
+            return gutl.geog2ecef(lf_lat, lf_lon, lf_alt)
 
         # return
         return None, None, None
@@ -401,51 +317,6 @@ class CBusterServer(object):
 
                     # put on forwarders list
                     self.__lst_forwarders.append(l_fwdr)
-                '''  
-                # destination database ?
-                elif "database" == ldct_dest["type"]:
-                    # create forwarder
-                    l_fwdr = database_fwrd.DatabseForwarder(items=ldct_dest)
-                    assert l_fwdr
-
-                    # put on forwarders list
-                    self.__lst_forwarders.append(l_fwdr)
-                '''
-        # load sensors setup file
-        self.__load_sensors("sensors.txt")
-
-    # ---------------------------------------------------------------------------------------------
-    def __load_sensors(self, fs_filename):
-        """
-        load sensors
-        """
-        # ckeck input
-        assert fs_filename
-        
-        # open file
-        with open(fs_filename) as l_fin:
-            # for all lines in file...
-            for ls_line in l_fin:
-                # strip eol
-                ls_line = ls_line.rstrip('\n')
-
-                # split line
-                llst_line = ls_line.split(',')
-
-                # create sensor
-                l_sensor = sensors.BSensor(int(llst_line[0]), float(llst_line[1]), float(llst_line[2]), float(llst_line[3]))
-                assert l_sensor
-                
-                # add sensor to dictionary
-                self.__dct_sensors[int(llst_line[0])] = l_sensor
-
-                # sensor is reference point
-                self.__t_ref_pos = (l_sensor.lat, l_sensor.lng, l_sensor.alt)
-
-        # for all sensors...
-        for l_id, l_sensor in self.__dct_sensors.iteritems():
-            # converts lat, lon to x, y
-            l_sensor.update(self.__t_ref_pos[0], self.__t_ref_pos[1], self.__t_ref_pos[2])
 
     # ---------------------------------------------------------------------------------------------
     def __process_msg(self, fs_adsb_msg, fv_del=False):
@@ -473,43 +344,48 @@ class CBusterServer(object):
 
         # init arrays
         llst_toa = []
-        llst_pos_x = []
-        llst_pos_y = []
-        llst_pos_z = []
+        llst_pos = []
 
         # for all messages...
         for l_msg in llst_msg:
             # sensor id
             li_sns = int(l_msg[1])
-            
-            # time of arrival
-            llst_toa.append(float(l_msg[2]))
 
-            # location of sensor
-            llst_pos_x.append(self.__dct_sensors[li_sns].x)
-            llst_pos_y.append(self.__dct_sensors[li_sns].y)
-            llst_pos_z.append(self.__dct_sensors[li_sns].alt)
+            # sensor position doesn't exists ? 
+            if self.__dct_sensors.get(li_sns, None) is None:
+                return False
+                        
+            # location of sensor (x, y, z ECEF)
+            llst_pos.append([self.__dct_sensors[li_sns][0], self.__dct_sensors[li_sns][1], self.__dct_sensors[li_sns][2]])
 
-        # verify declared position (in x, y)
-        l_x, l_y, l_z = self.__get_declared_xy(fs_adsb_msg)
+            # time of arrival to distance
+            llst_toa.append(float(l_msg[2]) * M_LIGHT_SPEED)
+
+        # declared position (x, y, z ECEF)
+        lf_anv_x, lf_anv_y, lf_anv_z = self.__get_declared_xy(fs_adsb_msg)
+        #M_LOG.debug("declared_xy: {} / {} / {}".format(lf_anv_x, lf_anv_y, lf_anv_z))
 
         # determine reliability of message
-        if (l_x is not None) and (l_y is not None):
-            M_LOG.debug("declared_xy: {} / {} / {}".format(l_x, l_y, l_z)) 
+        if (lf_anv_x is not None) and (lf_anv_y is not None) and (lf_anv_z is not None):
             # determine source of transmission using multilateration
-            lf_flt_x, lf_flt_y = self.__calc_estimated_xy(llst_pos_x, llst_pos_y, llst_pos_z, llst_toa)
-            M_LOG.debug("estimated_xy: {} / {}".format(lf_flt_x, lf_flt_y)) 
+            lf_est_x, lf_est_y, lf_est_z = mlat.mlat_2(llst_pos, llst_toa)
+            #M_LOG.debug("estimated_xy: {} / {} / {}".format(lf_est_x, lf_est_y, lf_est_z)) 
 
             # determine reliability of message
-            if (lf_flt_x is not None) and (lf_flt_y is not None):
+            if (lf_est_x is not None) and (lf_est_y is not None) and (lf_est_z is not None):
                 # 2D distance between reported and estimated positions
-                lf_dist_2d = math.sqrt((l_x - lf_flt_x) ** 2 + (l_y - lf_flt_y) ** 2)
+                #lf_dist_2d = math.sqrt(pow(lf_anv_x - lf_est_x, 2) + pow(lf_anv_y - lf_est_y, 2))
+                #M_LOG.debug("lf_dist_2d: {}".format(lf_dist_2d))
+
+                # 3D distance between reported and estimated positions
+                lf_dist_3d = math.sqrt(pow(lf_anv_x - lf_est_x, 2) + pow(lf_anv_y - lf_est_y, 2) + pow(lf_anv_z - lf_est_z, 2))
+                #M_LOG.debug("lf_dist_3d: {}".format(lf_dist_3d))
 
                 # distance inside acceptable range ?
-                if lf_dist_2d <= M_THRESHOLD:
+                if lf_dist_3d <= M_THRESHOLD:
                     # accept message
-                    print "process_msg:'%s'\t%d\t%s[OK]%s" % (fs_adsb_msg, lf_dist_2d, bcolors.OKBLUE, bcolors.ENDC)
-                    M_LOG.debug("process_msg:'%s'\t%d [OK]" % (fs_adsb_msg, lf_dist_2d))
+                    print "process_msg:'%s'\t%d\t%s[OK]%s" % (fs_adsb_msg, lf_dist_3d, bcolors.OKBLUE, bcolors.ENDC)
+                    M_LOG.info("process_msg:'%s'\t%d [OK]" % (fs_adsb_msg, lf_dist_3d))
 
                     # for all forwarders...
                     for l_frwd in self.__lst_forwarders:
@@ -519,8 +395,8 @@ class CBusterServer(object):
                 # senão,...
                 else:
                     # drop message
-                    print "process_msg:'%s'\t%d\t%s[FAIL]%s" % (fs_adsb_msg, lf_dist_2d, bcolors.FAIL, bcolors.ENDC)
-                    M_LOG.debug("process_msg:'%s'\t%d [FAIL]" % (fs_adsb_msg, lf_dist_2d))
+                    print "process_msg:'%s'\t%d\t%s[FAIL]%s" % (fs_adsb_msg, lf_dist_3d, bcolors.FAIL, bcolors.ENDC)
+                    M_LOG.info("process_msg:'%s'\t%d [FAIL]" % (fs_adsb_msg, lf_dist_3d))
 
         # delete processed messages 
         self.__count_messages(fs_adsb_msg, True)
@@ -565,16 +441,18 @@ class CBusterServer(object):
                 # split message
                 llst_msg = ls_message.split('#')
 
-                # get message fields: sensor_id [0], message [1], toa [2], created [3]
-                fdct_rcv_msg[float(llst_msg[3])] = [int(llst_msg[0]), str(llst_msg[1]), float(llst_msg[2])]
-                #M_LOG.info("dct_rcv_msg: {}".format(fdct_rcv_msg))
+                # sensor id
+                li_sns = int(llst_msg[0])
+                 
+                # get message fields: sensor_id [0], message [1], toa [2], created [3], lst_pos [4]
+                fdct_rcv_msg[float(llst_msg[3])] = [li_sns, str(llst_msg[1]), float(llst_msg[2])]
+                #M_LOG.debug("dct_rcv_msg: {}".format(fdct_rcv_msg))
 
-                #!! split message
-                llst_msg = str(llst_msg[4]).split()
-                #!! get aircraft (ICAO24 address)
-                ls_icao24 = str(dcdr.get_icao_addr(llst_msg[0])).upper()
-                #!! received position
-                self.dct_rcv_pos[ls_icao24] = (float(llst_msg[1]), float(llst_msg[2]), float(llst_msg[3]))
+                # sensor position doesn't exists ?
+                if self.__dct_sensors.get(li_sns, None) is None:
+                    # save sensor position
+                    self.__dct_sensors[li_sns] = eval(llst_msg[4])
+                    #M_LOG.debug("sensor:{} position: {}".format(li_sns, eval(llst_msg[4])))
 
             # elapsed time (seg)
             lf_dif = time.time() - lf_now
@@ -616,15 +494,14 @@ class CBusterServer(object):
             if self.__dct_rcv_msg:
                 # get key (created) list
                 llst_keys = sorted(self.__dct_rcv_msg.keys())
-                #M_LOG.info("llst_keys: {}".format(llst_keys))
+                #M_LOG.debug("llst_keys: {}".format(llst_keys))
         
                 # get oldest message
                 llst_data = self.__dct_rcv_msg[llst_keys[0]]
-                #M_LOG.info("llst_data: {}".format(llst_data))
+                #M_LOG.debug("llst_data: {}".format(llst_data))
 
                 # get data
                 l_message = llst_data[1]
-                #M_LOG.info("l_message: {}".format(l_message))
 
                 # try 4 times...
                 for li_try in xrange(4):
