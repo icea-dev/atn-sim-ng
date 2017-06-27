@@ -178,7 +178,7 @@ class CBusterServer(object):
             lf_lat, lf_lng = dcdr.get_position(self.__dct_lst_even[fi_icao24], self.__dct_lst_odd[fi_icao24], l_t0, l_t1)
 
             # decoded ?
-            if lf_lat and lf_lng:
+            if (lf_lat is not None) and (lf_lng is not None):
                 # get altitude
                 lf_alt = dcdr.get_alt(ls_adsb_msg) * M_FT_TO_M
 
@@ -203,7 +203,6 @@ class CBusterServer(object):
         """
         # get aircraft (ICAO24 address)
         ls_icao24 = str(dcdr.get_icao_addr(ls_adsb_msg)).upper()
-        #M_LOG.debug(">>>>>>>>>>>>>>>>>>>> Aeronave: {}/{} <<<<<<<<<<<<<<<<<<<<<<<<".format(ls_icao24, dcdr.get_tc(ls_adsb_msg)))
 
         # airborne position msg type (9-18) ok ?
         if 8 < dcdr.get_tc(ls_adsb_msg) < 19:
@@ -368,15 +367,11 @@ class CBusterServer(object):
         # determine reliability of message
         if (lf_anv_x is not None) and (lf_anv_y is not None) and (lf_anv_z is not None):
             # determine source of transmission using multilateration
-            lf_est_x, lf_est_y, lf_est_z = mlat.mlat_2(llst_pos, llst_toa)
+            lf_est_x, lf_est_y, lf_est_z = mlat.mlat_1(llst_pos, llst_toa)
             #M_LOG.debug("estimated_xy: {} / {} / {}".format(lf_est_x, lf_est_y, lf_est_z)) 
 
             # determine reliability of message
             if (lf_est_x is not None) and (lf_est_y is not None) and (lf_est_z is not None):
-                # 2D distance between reported and estimated positions
-                #lf_dist_2d = math.sqrt(pow(lf_anv_x - lf_est_x, 2) + pow(lf_anv_y - lf_est_y, 2))
-                #M_LOG.debug("lf_dist_2d: {}".format(lf_dist_2d))
-
                 # 3D distance between reported and estimated positions
                 lf_dist_3d = math.sqrt(pow(lf_anv_x - lf_est_x, 2) + pow(lf_anv_y - lf_est_y, 2) + pow(lf_anv_z - lf_est_z, 2))
                 #M_LOG.debug("lf_dist_3d: {}".format(lf_dist_3d))

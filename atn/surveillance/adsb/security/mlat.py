@@ -36,6 +36,7 @@ import math
 
 # numpy & scipy
 import numpy as np
+import scipy as sp
 
 # atn-sim
 import atn.geo_utils as gutl
@@ -125,6 +126,80 @@ def mlat_2(fmat_sns_ecef, flst_toa):
 
     # return estimated position in ECEF
     return l_pos[0][0], l_pos[1][0], l_pos[2][0]
+
+# -------------------------------------------------------------------------------------------------
+def mlat_3(fmat_sns_ecef, flst_toa):
+    """
+    multilateration
+    """
+    lf_est_x = None
+    lf_est_y = None
+    lf_est_z = None
+
+    # number of measurements
+    li_nmeas = len(flst_toa)
+
+    # sorting by time of arrival, where the last sensor to receive is always the reference
+    # this keeps the MLAT error low
+    llst_ndx = np.argsort(np.array(flst_toa))[::-1]
+
+    # create local arrays
+    llst_xpos = [0] * li_nmeas
+    llst_ypos = [0] * li_nmeas
+    llst_zpos = [0] * li_nmeas
+    llst_toa  = [0] * li_nmeas
+
+    # move sorted by toa
+    for li_ndx in xrange(li_nmeas):
+        llst_xpos[li_ndx] = fmat_sns_ecef[llst_ndx[li_ndx]][0]
+        llst_ypos[li_ndx] = fmat_sns_ecef[llst_ndx[li_ndx]][1]
+        llst_zpos[li_ndx] = fmat_sns_ecef[llst_ndx[li_ndx]][2]
+        llst_toa[li_ndx]  = flst_toa[llst_ndx[li_ndx]]
+
+    # time difference of arrival
+    llst_dt = [0] * li_nmeas
+
+    for li_ndx in xrange(li_nmeas):
+        # calc time difference
+        llst_dt[li_ndx] = llst_toa[li_ndx] - llst_toa[0]
+
+        if (li_ndx > 0) and (0 == llst_dt[li_ndx]):
+            return lf_est_x, lf_est_y, lf_est_z
+
+    lmat_a = [0] * li_nmeas
+    lmat_b = [0] * li_nmeas
+    lmat_c = [0] * li_nmeas
+    lmat_d = [0] * li_nmeas
+
+    #
+    for li_m in xrange(2, li_nmeas):
+        lmat_a[li_m] = ((2 * llst_xpos[li_m]) / llst_dt[li_m]) - ((2 * llst_xpos[1]) / llst_dt[1])
+        lmat_b[li_m] = ((2 * llst_ypos[li_m]) / llst_dt[li_m]) - ((2 * llst_ypos[1]) / llst_dt[1])
+        lmat_c[li_m] = ((2 * llst_zpos[li_m]) / llst_dt[li_m]) - ((2 * llst_zpos[1]) / llst_dt[1])
+        lmat_d[li_m] = llst_dt[li_m] - llst_dt[1] - \
+                    (pow(llst_xpos[li_m], 2) + pow(llst_ypos[li_m], 2) + pow(llst_zpos[li_m], 2)) / llst_dt[li_m] + \
+                    (pow(llst_xpos[1],    2) + pow(llst_ypos[1],    2) + pow(llst_zpos[1],    2)) / llst_dt[1]
+
+    lmat_x = np.matrix([[lmat_a[2], lmat_b[2], lmat_c[2]], [lmat_a[3], lmat_b[3], lmat_c[3]], [lmat_a[4], lmat_b[4], lmat_c[4]]])
+
+    lmat_b = np.array([-lmat_d[2], -lmat_d[3], -lmat_d[4]])
+    lmat_b.shape = (3, 1)
+
+    try:
+        lmat_loc = sp.linalg.inv(lmat_x).dot(lmat_b)
+        # lmat_loc = np.linalg.solve(lmat_x, lmat_b)
+
+        lf_est_x = lmat_loc[0][0]
+        lf_est_y = lmat_loc[1][0]
+        lf_est_z = lmat_loc[2][0]
+
+    # em caso de erro....
+    except sp.linalg.linalg.LinAlgError as l_err:
+        # logger
+        M_LOG.info("except linalg.linalg.LinAlgError: {}".format(l_err))
+        
+    # return estimated position in ECEF
+    return lf_est_x, lf_est_y, lf_est_z
 
 # -------------------------------------------------------------------------------------------------
 # this is the bootstrap process
