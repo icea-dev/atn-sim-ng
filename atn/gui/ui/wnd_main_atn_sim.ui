@@ -93,14 +93,6 @@ p, li { white-space: pre-wrap; }
     </property>
     <addaction name="act_db_edit"/>
     <addaction name="separator"/>
-    <addaction name="act_scenario_to_xml"/>
-    <addaction name="act_scenario_to_exe"/>
-   </widget>
-   <widget class="QMenu" name="menuRuntime">
-    <property name="title">
-     <string>Runtime</string>
-    </property>
-    <addaction name="act_add_aircraft"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -111,7 +103,6 @@ p, li { white-space: pre-wrap; }
    </widget>
    <addaction name="menuSimulation"/>
    <addaction name="menuConfiguration"/>
-   <addaction name="menuRuntime"/>
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
@@ -135,11 +126,6 @@ p, li { white-space: pre-wrap; }
    <addaction name="act_start_pilot"/>
    <addaction name="separator"/>
    <addaction name="act_db_edit"/>
-   <addaction name="separator"/>
-   <addaction name="act_scenario_to_xml"/>
-   <addaction name="act_scenario_to_exe"/>
-   <addaction name="separator"/>
-   <addaction name="act_add_aircraft"/>
   </widget>
   <action name="act_edit_scenario">
    <property name="icon">
