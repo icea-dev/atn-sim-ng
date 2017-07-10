@@ -34,6 +34,7 @@ from PyQt4 import QtCore
 from string import Template
 
 import ConfigParser
+import glob
 import logging
 import os
 import socket
@@ -113,82 +114,6 @@ class CTrackGeneratorMngr(QtCore.QObject):
 
         # Make the socket multicast-aware, and set TTL.
         self.sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 2)
-
-
-    # ---------------------------------------------------------------------------------------------
-    def load_config_file(self, f_config="atn-sim-gui.cfg"):
-        """
-        Reads a configuration file to load the root directory of the Track generator.
-
-        :param f_config: configuration file name.
-        :return: None.
-        """
-
-        if os.path.exists(f_config):
-            conf = ConfigParser.ConfigParser()
-            conf.read(f_config)
-            self.dir = conf.get("Dir", "ptracks")
-        else:
-            self.dir = os.path.join(os.environ['HOME'], 'ptracks')
-
-        self.data_dir = os.path.join(self.dir, 'data')
-
-        self.logger.debug("Root directory of the Track Generator: [%s]" % self.dir)
-        self.logger.debug("Data directory of the Track generator: [%s]" % self.data_dir)
-
-
-    # ---------------------------------------------------------------------------------------------
-    def load_track_generator_config_file(self,f_config_file):
-        """
-        Loads the information to send configuration mesages to the Track Generator (ptracks)
-
-        :param f_config_file: configuration file name.
-        :return: None.
-        """
-
-        if os.path.exists(f_config_file):
-            conf = ConfigParser.ConfigParser()
-            conf.read(f_config_file)
-            self.D_NET_CNFG = conf.get("net", "cnfg")
-            self.D_NET_PORT = conf.get("net", "port")
-        else:
-            self.D_NET_CNFG = self.get_ptracks_data('D_NET_CNFG')
-            self.D_NET_PORT = self.get_ptracks_data('D_NET_PORT')
-
-        self.logger.debug("NET_CNFG [%s]" % self.D_NET_CNFG)
-        self.logger.debug("NET_PORT [%s]" % self.D_NET_PORT)
-
-        self.D_MSG_VRS = self.get_ptracks_data('D_MSG_VRS')
-        self.D_MSG_FRZ = self.get_ptracks_data('D_MSG_FRZ')
-        self.D_MSG_UFZ = self.get_ptracks_data('D_MSG_UFZ')
-
-        #self.D_MSG_VRS.strip('\n')
-
-        self.logger.debug("MSG_VRS [%s]" % self.D_MSG_VRS)
-        self.logger.debug("MSG_FRZ [%s]" % self.D_MSG_FRZ)
-        self.logger.debug("MSG_UFZ [%s]" % self.D_MSG_UFZ)
-
-
-    # ---------------------------------------------------------------------------------------------
-    def get_traf_filename(self):
-        """
-        Return traffic file from Track Generator.
-
-        :return: string, the traffic filename
-        """
-
-        return self.traf_ptracks
-
-
-    # ---------------------------------------------------------------------------------------------
-    def get_root_dir(self):
-        """
-        Returns the root directory of the system.
-
-        :return: string, the root directory.
-        """
-
-        return self.dir
 
 
     # ---------------------------------------------------------------------------------------------
@@ -275,17 +200,6 @@ class CTrackGeneratorMngr(QtCore.QObject):
 
 
     # ---------------------------------------------------------------------------------------------
-    def is_database_manager_running(self):
-        """
-        Checks whether the runtime dadtabase editor is running.
-
-        :return: A None value indicates that process hasn't terminated yet.
-        """
-
-        return self.db_edit.poll()
-
-
-    # ---------------------------------------------------------------------------------------------
     def get_database_manager_process(self):
         """
         Returns the object that contains the process.
@@ -294,6 +208,24 @@ class CTrackGeneratorMngr(QtCore.QObject):
         """
 
         return self.db_edit
+
+
+    # ---------------------------------------------------------------------------------------------
+    def get_file_list(self):
+        """
+
+        :return:
+        """
+
+        ls_widlcards = self.data_dir + "/exes/*.xml"
+        llst_data = glob.glob(ls_widlcards)
+
+        llst_file = []
+        for file in llst_data:
+            ls_file = file.split('/')
+            llst_file.append(ls_file[-1][:len(ls_file[-1])-8])
+
+        return llst_file
 
 
     # ---------------------------------------------------------------------------------------------
@@ -318,50 +250,90 @@ class CTrackGeneratorMngr(QtCore.QObject):
 
 
     # ---------------------------------------------------------------------------------------------
-    def send_pause_message(self):
+    def get_root_dir(self):
         """
-        Sends the pause message to the multicast address used to control the ptracks system.
+        Returns the root directory of the system.
 
-        :return: None.
+        :return: string, the root directory.
         """
 
-        self.logger.info("Sending pause message to the Track Generator")
-
-        message = str(int(self.D_MSG_VRS)) + "#" + self.D_MSG_FRZ
-        self.send_multicast_data(data=message, port=int(self.D_NET_PORT),
-                                 addr=self.net_tracks_cnfg)
+        return self.dir
 
 
     # ---------------------------------------------------------------------------------------------
-    def send_play_message(self):
+    def get_traf_filename(self):
         """
-        Sends the play message to the multicast address used to control the ptracks system.
+        Return traffic file from Track Generator.
 
-        :return: None.
+        :return: string, the traffic filename
         """
 
-        self.logger.info("Sending play message to the Track Generator")
-
-        message = str(int(self.D_MSG_VRS)) + "#" + self.D_MSG_UFZ
-        self.send_multicast_data(data=message, port=int(self.D_NET_PORT),
-                                 addr=self.net_tracks_cnfg)
+        return self.traf_ptracks
 
 
     # ---------------------------------------------------------------------------------------------
-    def send_multicast_data(self,data,port,addr):
+    def is_database_manager_running(self):
         """
-        Sends data to the multicast address (addr) in specified port to the ptrack system.
+        Checks whether the runtime dadtabase editor is running.
 
-        :param data: a data to be sent.
-        :param port: a port to be used.
-        :param addr: a address to be used.
+        :return: A None value indicates that process hasn't terminated yet.
+        """
+
+        return self.db_edit.poll()
+
+
+    # ---------------------------------------------------------------------------------------------
+    def load_config_file(self, f_config="atn-sim-gui.cfg"):
+        """
+        Reads a configuration file to load the root directory of the Track generator.
+
+        :param f_config: configuration file name.
         :return: None.
         """
 
-        self.logger.debug("sending data: [%s] to [%s:%s]" % (data, addr, port))
+        if os.path.exists(f_config):
+            conf = ConfigParser.ConfigParser()
+            conf.read(f_config)
+            self.dir = conf.get("Dir", "ptracks")
+        else:
+            self.dir = os.path.join(os.environ['HOME'], 'ptracks')
 
-        # Send the data
-        self.sock.sendto(data, (addr, port))
+        self.data_dir = os.path.join(self.dir, 'data')
+
+        self.logger.debug("Root directory of the Track Generator: [%s]" % self.dir)
+        self.logger.debug("Data directory of the Track generator: [%s]" % self.data_dir)
+
+
+    # ---------------------------------------------------------------------------------------------
+    def load_track_generator_config_file(self,f_config_file):
+        """
+        Loads the information to send configuration mesages to the Track Generator (ptracks)
+
+        :param f_config_file: configuration file name.
+        :return: None.
+        """
+
+        if os.path.exists(f_config_file):
+            conf = ConfigParser.ConfigParser()
+            conf.read(f_config_file)
+            self.D_NET_CNFG = conf.get("net", "cnfg")
+            self.D_NET_PORT = conf.get("net", "port")
+        else:
+            self.D_NET_CNFG = self.get_ptracks_data('D_NET_CNFG')
+            self.D_NET_PORT = self.get_ptracks_data('D_NET_PORT')
+
+        self.logger.debug("NET_CNFG [%s]" % self.D_NET_CNFG)
+        self.logger.debug("NET_PORT [%s]" % self.D_NET_PORT)
+
+        self.D_MSG_VRS = self.get_ptracks_data('D_MSG_VRS')
+        self.D_MSG_FRZ = self.get_ptracks_data('D_MSG_FRZ')
+        self.D_MSG_UFZ = self.get_ptracks_data('D_MSG_UFZ')
+
+        #self.D_MSG_VRS.strip('\n')
+
+        self.logger.debug("MSG_VRS [%s]" % self.D_MSG_VRS)
+        self.logger.debug("MSG_FRZ [%s]" % self.D_MSG_FRZ)
+        self.logger.debug("MSG_UFZ [%s]" % self.D_MSG_UFZ)
 
 
     # ---------------------------------------------------------------------------------------------
@@ -384,36 +356,24 @@ class CTrackGeneratorMngr(QtCore.QObject):
 
 
     # ---------------------------------------------------------------------------------------------
-    def stop_processes(self):
+    def run_database_manager(self):
         """
-        Stop the processes of the Track Generator.
+        Run the ptracks database manager.
 
         :return: None.
         """
 
-        # Stop adapter
-        if self.adapter:
-            kill = "kill -9 $(pgrep -P " + str(self.adapter.pid) + ")"
-            os.system(kill)
-            self.adapter.terminate()
+        # Changes to the directory where the ptracks system is located.
+        l_cur_dir = os.getcwd()
+        os.chdir(self.dir)
 
-        # Stop ptracks
-        if self.ptracks:
-            kill = "kill -9 $(pgrep -P " + str(self.ptracks.pid) + ")"
-            os.system(kill)
-            self.ptracks.terminate()
+        # Run database manager
+        self.db_edit = subprocess.Popen(['python', 'dbEdit.py'], stdout=subprocess.PIPE,
+                                        stderr=subprocess.STDOUT)
+        self.db_edit.communicate()[0]
 
-        # Stop ptracks view
-        if self.visil:
-            kill = "kill -9 $(pgrep -P " + str(self.visil.pid) + ")"
-            os.system(kill)
-            self.visil.terminate()
-
-        # Stop ptracks pilot
-        if self.pilot:
-            kill = "kill -9 $(pgrep -P " + str(self.pilot.pid) + ")"
-            os.system(kill)
-            self.pilot.terminate()
+        # Returns to the ATN simulator directory
+        os.chdir(l_cur_dir)
 
 
     # ---------------------------------------------------------------------------------------------
@@ -457,23 +417,83 @@ class CTrackGeneratorMngr(QtCore.QObject):
 
 
     # ---------------------------------------------------------------------------------------------
-    def run_database_manager(self):
+    def send_multicast_data(self,data,port,addr):
         """
-        Run the ptracks database manager.
+        Sends data to the multicast address (addr) in specified port to the ptrack system.
+
+        :param data: a data to be sent.
+        :param port: a port to be used.
+        :param addr: a address to be used.
+        :return: None.
+        """
+
+        self.logger.debug("sending data: [%s] to [%s:%s]" % (data, addr, port))
+
+        # Send the data
+        self.sock.sendto(data, (addr, port))
+
+
+    # ---------------------------------------------------------------------------------------------
+    def send_pause_message(self):
+        """
+        Sends the pause message to the multicast address used to control the ptracks system.
 
         :return: None.
         """
 
-        # Changes to the directory where the ptracks system is located.
-        l_cur_dir = os.getcwd()
-        os.chdir(self.dir)
+        self.logger.info("Sending pause message to the Track Generator")
 
-        # Run database manager
-        self.db_edit = subprocess.Popen(['python', 'dbEdit.py'], stdout=subprocess.PIPE,
-                                        stderr=subprocess.STDOUT)
+        message = str(int(self.D_MSG_VRS)) + "#" + self.D_MSG_FRZ
+        self.send_multicast_data(data=message, port=int(self.D_NET_PORT),
+                                 addr=self.net_tracks_cnfg)
 
-        # Returns to the ATN simulator directory
-        os.chdir(l_cur_dir)
+
+    # ---------------------------------------------------------------------------------------------
+    def send_play_message(self):
+        """
+        Sends the play message to the multicast address used to control the ptracks system.
+
+        :return: None.
+        """
+
+        self.logger.info("Sending play message to the Track Generator")
+
+        message = str(int(self.D_MSG_VRS)) + "#" + self.D_MSG_UFZ
+        self.send_multicast_data(data=message, port=int(self.D_NET_PORT),
+                                 addr=self.net_tracks_cnfg)
+
+
+    # ---------------------------------------------------------------------------------------------
+    def stop_processes(self):
+        """
+        Stop the processes of the Track Generator.
+
+        :return: None.
+        """
+
+        # Stop adapter
+        if self.adapter:
+            kill = "kill -9 $(pgrep -P " + str(self.adapter.pid) + ")"
+            os.system(kill)
+            self.adapter.terminate()
+
+        # Stop ptracks
+        if self.ptracks:
+            kill = "kill -9 $(pgrep -P " + str(self.ptracks.pid) + ")"
+            os.system(kill)
+            self.ptracks.terminate()
+
+        # Stop ptracks view
+        if self.visil:
+            kill = "kill -9 $(pgrep -P " + str(self.visil.pid) + ")"
+            os.system(kill)
+            self.visil.terminate()
+
+        # Stop ptracks pilot
+        if self.pilot:
+            kill = "kill -9 $(pgrep -P " + str(self.pilot.pid) + ")"
+            os.system(kill)
+            self.pilot.terminate()
 
 
 # < the end >--------------------------------------------------------------------------------------

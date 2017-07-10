@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'wnd_main_atn_sim.ui'
 #
-# Created: Mon Jun 26 09:45:21 2017
+# Created: Mon Jul 10 13:37:35 2017
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -129,6 +129,11 @@ class Ui_CWndMainATNSim(object):
         icon11.addPixmap(QtGui.QPixmap(_fromUtf8(":/gui/pilot-military.png")), QtGui.QIcon.Normal, QtGui.QIcon.On)
         self.act_start_pilot.setIcon(icon11)
         self.act_start_pilot.setObjectName(_fromUtf8("act_start_pilot"))
+        self.act_sync_core_ptracks = QtGui.QAction(CWndMainATNSim)
+        icon12 = QtGui.QIcon()
+        icon12.addPixmap(QtGui.QPixmap(_fromUtf8(":/gui/emblem-synchronized.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.act_sync_core_ptracks.setIcon(icon12)
+        self.act_sync_core_ptracks.setObjectName(_fromUtf8("act_sync_core_ptracks"))
         self.menuSimulation.addAction(self.act_edit_scenario)
         self.menuSimulation.addSeparator()
         self.menuSimulation.addAction(self.act_start_session)
@@ -141,6 +146,7 @@ class Ui_CWndMainATNSim(object):
         self.menuSimulation.addAction(self.act_quit)
         self.menuConfiguration.addAction(self.act_db_edit)
         self.menuConfiguration.addSeparator()
+        self.menuConfiguration.addAction(self.act_sync_core_ptracks)
         self.menuHelp.addAction(self.act_show_manual)
         self.menuHelp.addAction(self.act_about)
         self.menubar.addAction(self.menuSimulation.menuAction())
@@ -156,6 +162,8 @@ class Ui_CWndMainATNSim(object):
         self.toolBar.addAction(self.act_start_pilot)
         self.toolBar.addSeparator()
         self.toolBar.addAction(self.act_db_edit)
+        self.toolBar.addAction(self.act_sync_core_ptracks)
+        self.toolBar.addSeparator()
 
         self.retranslateUi(CWndMainATNSim)
         QtCore.QMetaObject.connectSlotsByName(CWndMainATNSim)
@@ -189,5 +197,6 @@ class Ui_CWndMainATNSim(object):
         self.act_show_manual.setText(_translate("CWndMainATNSim", "Manual", None))
         self.act_about.setText(_translate("CWndMainATNSim", "About", None))
         self.act_start_pilot.setText(_translate("CWndMainATNSim", "Start Pilot", None))
+        self.act_sync_core_ptracks.setText(_translate("CWndMainATNSim", "Sync CORE and Track Generator", None))
 
 import wnd_main_atn_sim_rc

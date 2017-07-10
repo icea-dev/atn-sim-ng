@@ -35,6 +35,7 @@ from PyQt4 import QtCore
 
 import logging
 import wnd_main_atn_sim_ui as wmain_ui
+import dlg_sync as dsync_ui
 import dlg_trf as dtraf_ui
 import dlg_start as dstart_ui
 import dlg_trf_run_time as dtraf_run_time_ui
@@ -90,6 +91,7 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         self.act_start_visil.triggered.connect(self.cbk_start_visil)
 
         self.act_db_edit.triggered.connect(self.cbk_start_db_edit)
+        self.act_sync_core_ptracks.triggered.connect(self.cbk_sync_core_ptracks)
 
         self.act_quit.triggered.connect(QtGui.QApplication.quit)
 
@@ -98,6 +100,8 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         self.dlg_start = dstart_ui.CDlgStart()
 
         self.dlg_traf_run_time = dtraf_run_time_ui.CDlgTrafRunTime(f_ptracks_dir=self.mediator.get_track_generator_dir())
+
+        self.dlg_sync = dsync_ui.CDlgSync(f_mediator=self.mediator)
 
         # Icons
         self.iconPause = QtGui.QIcon()
@@ -404,5 +408,17 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         if self.mediator:
             self.mediator.run_track_generator_database_manager()
 
+    # ---------------------------------------------------------------------------------------------
+    def cbk_sync_core_ptracks(self):
+        """
+        Starts the GUI to synchronize the CORE simulation scenario with the track generator
+        database
+
+        :return: None.
+        """
+
+        # Is there a mediator ?
+        if self.mediator:
+            self.dlg_sync.show()
 
 # < the end>---------------------------------------------------------------------------------------
