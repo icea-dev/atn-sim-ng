@@ -1,6 +1,7 @@
 <RCC>
   <qresource prefix="gui">
     <file>network-workgroup.png</file>
+    <file>emblem-synchronized.png</file>
     <file>redes.png</file>
     <file>pause-session-2.png</file>
     <file>start-session-2.png</file>
