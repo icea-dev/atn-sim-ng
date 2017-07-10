@@ -93,6 +93,7 @@ p, li { white-space: pre-wrap; }
     </property>
     <addaction name="act_db_edit"/>
     <addaction name="separator"/>
+    <addaction name="act_sync_core_ptracks"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -126,6 +127,8 @@ p, li { white-space: pre-wrap; }
    <addaction name="act_start_pilot"/>
    <addaction name="separator"/>
    <addaction name="act_db_edit"/>
+   <addaction name="act_sync_core_ptracks"/>
+   <addaction name="separator"/>
   </widget>
   <action name="act_edit_scenario">
    <property name="icon">
@@ -249,6 +252,15 @@ p, li { white-space: pre-wrap; }
    </property>
    <property name="text">
     <string>Start Pilot</string>
+   </property>
+  </action>
+  <action name="act_sync_core_ptracks">
+   <property name="icon">
+    <iconset resource="../icons/wnd_main_atn_sim.qrc">
+     <normaloff>:/gui/emblem-synchronized.png</normaloff>:/gui/emblem-synchronized.png</iconset>
+   </property>
+   <property name="text">
+    <string>Sync CORE and Track Generator</string>
    </property>
   </action>
  </widget>

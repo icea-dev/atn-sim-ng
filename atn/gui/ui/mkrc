@@ -4,5 +4,6 @@
 pyuic4 wnd_main_atn_sim.ui > ../wnd_main_atn_sim_ui.py
 pyuic4 dlg_traf.ui > ../dlg_traf_ui.py
 pyuic4 dlg_start.ui > ../dlg_start_ui.py
+pyuic4 dlg_sync.ui > ../dlg_sync_ui.py
 
 
