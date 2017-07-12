@@ -35,6 +35,7 @@ from string import Template
 
 import ConfigParser
 import glob
+import json
 import logging
 import os
 import socket
@@ -261,6 +262,43 @@ class CTrackGeneratorMngr(QtCore.QObject):
 
 
     # ---------------------------------------------------------------------------------------------
+    def get_traf_data(self, f_traf_filename):
+        """
+        Extract the aircraft that were created by the Track Generator.
+
+        :param f_traf_filename:
+        :return:
+        """
+        # Assembles the json file name with the aircraft data
+        ls_json_pn = self.dir + "/" + f_traf_filename + ".json"
+
+        # Run dbRead to writw aircraft data to a json file.
+        # Changes to the directory where the ptracks system is located.
+        l_cur_dir = os.getcwd()
+        os.chdir(self.dir)
+
+        # Run database manager
+        self.db_edit = subprocess.Popen(['python', 'dbRead.py', f_traf_filename ],
+                                        stdout=subprocess.PIPE,
+                                        stderr=subprocess.STDOUT)
+        self.db_edit.communicate()[0]
+
+        # Returns to the ATN simulator directory
+        os.chdir(l_cur_dir)
+
+        ldct_data = []
+
+        with open (ls_json_pn) as l_json_data:
+            ldct_data = json.load(l_json_data)
+
+        # Delete file
+        if os.path.isfile(ls_json_pn):
+            os.remove(ls_json_pn)
+
+        return ldct_data
+
+
+   # ---------------------------------------------------------------------------------------------
     def get_traf_filename(self):
         """
         Return traffic file from Track Generator.
@@ -370,7 +408,7 @@ class CTrackGeneratorMngr(QtCore.QObject):
         # Run database manager
         self.db_edit = subprocess.Popen(['python', 'dbEdit.py'], stdout=subprocess.PIPE,
                                         stderr=subprocess.STDOUT)
-        self.db_edit.communicate()[0]
+        #self.db_edit.communicate()[0]
 
         # Returns to the ATN simulator directory
         os.chdir(l_cur_dir)

@@ -54,160 +54,24 @@ class CDlgSync(QtGui.QDialog, dsync_ui.Ui_dlg_sync):
         self.qtwTabFiles.horizontalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
 
         # do signal/slot connections
-        self.btnCancel.clicked.connect(self.on_cancel)
-        self.btnUpdate.clicked.connect(self.on_update)
-        self.btnNew.clicked.connect(self.on_new)
+        self.btnClose.clicked.connect(self.on_close)
+        self.btnSync.clicked.connect(self.on_sync)
+        self.qtwTabFiles.itemSelectionChanged.connect(self.on_select)
 
         self.__mediator = f_mediator
 
         self.llst_core, self.llst_ptracks = self.__mediator.get_list_core_ptracks()
 
+        self.__s_core_filename = None
+        self.__s_ptracks_filename = None
+
         self.populate_table()
 
-    # ---------------------------------------------------------------------------------------------
-    def filter_XML_files(self, f_filenames):
-        """
-        Faz a leitura de uma lista de arquivos e seleciona somente os arquivos XML.
-        do diretório
-
-        :param f_filenames: uma lista de arquivos
-        :return: lista com os nomes dos arquivos XML
-        """
-
-        l_file_extensions = ['XML']
-        l_result = []
-
-        l_dir = os.path.join(self.ptracks_dir, 'data/proc/')
-
-        # loop through all the file and folders
-        for l_filename in f_filenames:
-            # Check whether the current object is a file or not
-            if os.path.isfile(os.path.join(l_dir, l_filename)):
-                l_filename_text, l_filename_ext= os.path.splitext(l_filename)
-                l_filename_ext= l_filename_ext[1:].upper()
-                # Check whether the current object is a XML file
-                if l_filename_ext in l_file_extensions:
-                    l_result.append(l_filename)
-
-        l_result.sort()
-
-        return l_result
-
 
     # ---------------------------------------------------------------------------------------------
-    def load_performance(self):
+    def on_close(self):
         """
-        Le o arquivo tabPrf.xml para carregar os designadores das aeronaves cadastradas.
-
-        :return: uma lista com os designadores das performances de aeronaves cadastradas no
-        sistema ptracks.
-        """
-
-        # Monta o nome do arquivo de performance de aeronaves do ptracks
-        l_xml_filename = os.path.join(self.ptracks_dir, 'data/tabs/tabPrf.xml')
-
-        return self.load_xml_file(l_xml_filename, 'performance', 'nPrf')
-
-
-    # ---------------------------------------------------------------------------------------------
-    def load_xml_file(self, f_xml_filename, f_element, f_attribute):
-        """
-        Le um arquivo XML (f_xml_filename) e retorna a lista dos valores dos atributos (f_attribute)
-        de cada no na árvore XML (f_element)
-
-        :param f_xml_filename: o arquivo XML a ser lido
-        :param f_element: o nome do elemento no nó da árvore XML
-        :param f_attribute: o atributo do elemento
-        :return: uma lista com os valores do atributo do elemento.
-        """
-
-        # cria o QFile para o arquivo XML
-        l_data_file = QtCore.QFile(f_xml_filename)
-        assert l_data_file is not None
-
-        # abre o arquivo XML
-        l_data_file.open(QtCore.QIODevice.ReadOnly)
-
-        # cria o documento XML
-        l_xdoc_aer = QtXml.QDomDocument("tabelas")
-        assert l_xdoc_aer is not None
-
-        l_xdoc_aer.setContent(l_data_file)
-
-        # fecha o arquivo
-        l_data_file.close()
-
-        # obtém o elemento raíz do documento
-        l_elem_root = l_xdoc_aer.documentElement()
-        assert l_elem_root is not None
-
-        # cria uma lista com os elementos
-        l_node_list = l_elem_root.elementsByTagName(f_element)
-        l_result_list = []
-
-        for li_ndx in xrange(l_node_list.length()):
-            l_element = l_node_list.at(li_ndx).toElement()
-            assert l_element is not None
-
-            # read identification if available
-            if l_element.hasAttribute(f_attribute):
-                l_value = l_element.attribute(f_attribute)
-                if f_element == 'performance':
-                    l_result_list.append(l_value)
-                else:
-                    l_proc = f_attribute [ 1: ].upper() + l_value
-                    l_result_list.append(l_proc)
-
-        return l_result_list
-
-
-    # ---------------------------------------------------------------------------------------------
-    def load_tables(self):
-        """
-
-
-        :return:
-        """
-
-        l_element_nodes = {'Ape': 'apxPerdida', 'Apx': 'aproximacao', 'Esp': 'espera', 'ILS': 'ils', 'Sub': 'subida',
-                         'Trj': 'trajetoria'}
-
-        # List all the files and folders in the current directory
-        l_dir = os.path.join(self.ptracks_dir, 'data/proc/')
-        l_xml_files = self.filter_XML_files(os.listdir(l_dir))
-
-        l_result = []
-
-        for l_xml_file in l_xml_files:
-            l_element = l_element_nodes [ l_xml_file [ 3:6 ] ]
-            l_attribute = 'n' + l_xml_file [ 3:6 ]
-            l_xml_filename = os.path.join(l_dir, l_xml_file)
-            l_list = self.load_xml_file(l_xml_filename, l_element, l_attribute)
-
-            if len(l_list) > 0:
-                l_result.extend ( l_list )
-
-        l_result.sort()
-
-        return l_result
-
-
-    # ---------------------------------------------------------------------------------------------
-    def on_cancel(self):
-        """
-        Método chamado quando o usuário decide cancelar a atividade. Fecha a janela de diálogo.
-        Estabelece o código de retorno como rejected.
-
-        :return:
-        """
-        self.done(QtGui.QDialog.Rejected)
-
-
-    # ---------------------------------------------------------------------------------------------
-    def on_new(self):
-        """
-        Método chamado quando o usuário decide criar o arquivo de tráfegos. Fecha a janela de diálogo.
-        Estabelece o código de retorno como accepted.
+        Método chamado quando o usuário decide fechar a janela de diálogo.
 
         :return:
         """
@@ -215,14 +79,46 @@ class CDlgSync(QtGui.QDialog, dsync_ui.Ui_dlg_sync):
 
 
     # ---------------------------------------------------------------------------------------------
-    def on_update(self):
+    def on_select(self):
         """
-        Método chamado quando o usuário decide criar o arquivo de tráfegos. Fecha a janela de diálogo.
-        Estabelece o código de retorno como accepted.
+        Método chamado quando um item é selecionado.
 
         :return:
         """
-        self.done(QtGui.QDialog.Accepted)
+        # obtém o número da linha selecionada
+        l_iRow = self.qtwTabFiles.currentRow()
+
+        # existe uma linha selecionada
+        if l_iRow > -1:
+            l_oCoreItem = self.qtwTabFiles.item(l_iRow, 0)
+            if l_oCoreItem is not None:
+                self.__s_core_filename = str(l_oCoreItem.text())
+
+            l_oPTracksItem = self.qtwTabFiles.item(l_iRow, 1)
+            if l_oPTracksItem is not None:
+                self.__s_ptracks_filename = str(l_oPTracksItem.text())
+
+
+    # ---------------------------------------------------------------------------------------------
+    def on_sync(self):
+        """
+        Método chamado quando o usuário decide sincronizar o CORE com a base de dados do Gerador
+        de Pistas.
+
+        :return:
+        """
+        # Is there a mediator
+        ls_msg = None
+        if self.__mediator is not None:
+            ls_msg = self.__mediator.sync_atn_simulator(self.__s_core_filename, self.__s_ptracks_filename)
+
+        if ls_msg is not None:
+            if ls_msg != "OK":
+                QtGui.QMessageBox.warning(self, self.tr("Sync Database"), ls_msg, QtGui.QMessageBox.Ok)
+            else:
+                QtGui.QMessageBox.information(self, self.tr("Sync Database"),
+                                              self.tr("Synchornized database!"),
+                                              QtGui.QMessageBox.Ok)
 
 
     # ---------------------------------------------------------------------------------------------
@@ -276,29 +172,6 @@ class CDlgSync(QtGui.QDialog, dsync_ui.Ui_dlg_sync):
         # redefine o tamanho da QTableWidget
         self.qtwTabFiles.resizeRowsToContents()
         self.qtwTabFiles.resizeColumnsToContents()
-
-
-    # ---------------------------------------------------------------------------------------------
-    def selectionchange(self,i):
-        """
-        Método chamado quando um item é selecionado.
-
-        :param i: o indice do item selecionado.
-        :return:
-        """
-        sender = self.sender()
-
-        print "Items in the list are :"
-
-        for count in xrange(sender.count()):
-           print "[%s]" % sender.itemText(count)
-
-        print "Current index", i, "selection changed ", sender.currentText()
-
-        # latitude
-        #l_latitude = self.qtw_trf.cellWidget(l_row, 1).value()
-        # longitude
-        #l_longitude = self.qtw_trf.cellWidget(l_row, 2).value()
 
 
 # < the end>---------------------------------------------------------------------------------------

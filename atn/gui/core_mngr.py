@@ -33,6 +33,7 @@ __date__ = "2017/05"
 from core.api import coreapi
 from PyQt4 import QtCore
 from PyQt4 import QtXml
+from string import Template
 from core_message_builder import CCoreMessageBuilder
 
 import atn.location as location
@@ -114,12 +115,13 @@ class CCoreMngr(QtCore.QObject):
 
 
     # ---------------------------------------------------------------------------------------------
-    def add_node_run_time(self, f_aircraft_data):
+    def add_node_run_time(self, f_aircraft_data, f_wlan_data=None, fs_ref_pt=None ):
         """
         Adds a node, an aircraft, to CORE at run time. uses coresendmsg to add the node, create the
         link with the ADS-B cloud, and run the emane.
 
         :param f_aircraft_data: the aircraft data.
+        :param: f_wlan_data: the wireless network data.
         :return: None.
         """
 
@@ -128,22 +130,66 @@ class CCoreMngr(QtCore.QObject):
         l_lon = float(f_aircraft_data["longitude"])
         l_alt = float(f_aircraft_data["altitude"])
 
+        # Configure reference point
+        if fs_ref_pt is not None:
+            self.core_location.configure_values(fs_ref_pt)
+
         # Gets the postion of the aircraft at CORE
         l_XPos, l_YPos, l_ZPos = self.core_location.getxyz(l_lat, l_lon, l_alt)
 
         # Gets the number of the node that is not being used.
-        self.node_hosts.sort()
-        l_index = 0
-        l_node = 0
-        while l_index < len(self.node_hosts):
-            if (l_index > 0):
-                if self.node_hosts[l_index] != self.node_hosts[l_index - 1] + 1:
-                    l_node = self.node_hosts[l_index - 1] + 1
-                    break
+        li_node = 0
+        if "node" in f_aircraft_data:
+            li_node = int(f_aircraft_data['node']) + 2
+        else:
+            self.node_hosts.sort()
+            l_index = 0
+            li_node = 0
+            while l_index < len(self.node_hosts):
+                if (l_index > 0):
+                    if self.node_hosts[l_index] != self.node_hosts[l_index - 1] + 1:
+                        li_node = self.node_hosts[l_index - 1] + 1
+                        break
 
-            l_index = l_index + 1
+                l_index = l_index + 1
 
-        self.core_builder.add_node(l_node, l_XPos, l_YPos, self.wlan_number, self.address_ip4, self.address_ip6)
+        if f_wlan_data is not None:
+            li_wlan_number = int(f_wlan_data['wlan_number'])
+            ls_address_ip4 = f_wlan_data['address_ip4']
+            ls_address_ip6 = f_wlan_data['address_ip6']
+        else:
+            li_wlan_number = self.wlan_number
+            ls_address_ip4 = self.address_ip4
+            ls_address_ip6 = self.address_ip6
+
+        self.core_builder.add_node(li_node, l_XPos, l_YPos, li_wlan_number, ls_address_ip4, ls_address_ip6)
+
+
+    # ---------------------------------------------------------------------------------------------
+    def create_scenario(self, f_core_filename):
+        """
+
+        :param f_core_filename:
+        :return:
+        """
+
+        # open template file (CORE)
+        l_file_in = open("templates/core.xml.in")
+
+        # read it
+        l_src = Template(l_file_in.read())
+
+        # document data
+        l_scenario = f_core_filename + ".xml"
+        l_data = {"scenario": l_scenario}
+
+        # do the substitution
+        result = l_src.substitute(l_data)
+
+        f_s_scenario_filename = self.get_scenario_dir() + "/" + f_core_filename + ".xml"
+        # grava o arquivo de exercícios
+        with open(f_s_scenario_filename, 'w') as f:
+            f.write(result)
 
 
     # ---------------------------------------------------------------------------------------------
@@ -596,7 +642,7 @@ class CCoreMngr(QtCore.QObject):
 
 
     # ---------------------------------------------------------------------------------------------
-    def run_gui_edit_mode(self):
+    def run_gui_edit_mode(self, f_scenario=None):
         """
         Runs core-gui in edit mode.
 
@@ -609,9 +655,14 @@ class CCoreMngr(QtCore.QObject):
             if l_ret_code is None:
                 self.core_gui.terminate()
 
+        llst_command = ['core-gui']
+        if f_scenario is not None:
+            f_scenario_pn = self.get_scenario_dir() + "/" + f_scenario + ".xml"
+            llst_command.append(f_scenario_pn)
+
         # starts core-gui in edit mode
         self.logger.info("Call core-gui in edit mode.")
-        self.core_gui = subprocess.Popen(['core-gui'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        self.core_gui = subprocess.Popen(llst_command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
         # timer to check if the core-gui was finalized by its GUI
         self.logger.info("Start timer to check core-gui is running.")

@@ -36,6 +36,7 @@ from PyQt4 import QtXml
 import ipcalc
 import logging
 import os
+import time
 
 import core_mngr as coremngr
 import track_generator_mngr as trackmngr
@@ -91,6 +92,82 @@ class CATNSimMngr:
         self.core_mngr.add_node_run_time(f_aircraft_data)
 
         #self.track_mngr.add_aircraft_run_time(f_aircraft_data)
+
+
+    # ---------------------------------------------------------------------------------------------
+    def create_core_scenario(self, f_ptracks_filename):
+        """
+
+        :param f_core_filename:
+        :return:
+        """
+        # Create a simulation scenario demo file for CORE
+        self.core_mngr.create_scenario(f_ptracks_filename)
+
+        # Get a list of aircraft data from the Track Generator exercise
+        llst_aircraft = self.track_mngr.get_traf_data(f_ptracks_filename)
+
+        # Run the core-gui with simulation scenario demo file
+        self.core_mngr.run_gui_edit_mode(f_ptracks_filename)
+
+        # Wait ...
+        time.sleep(5)
+
+        # Default values for the CORE reference point
+        ls_alt = "2.0"
+        ls_lat = "-13.869227"
+        ls_lon = "-49.918091"
+        ls_scale = "50000.0"
+        ls_ref_pt = "0|0|{}|{}|{}|{}".format(ls_lat, ls_lon, ls_alt, ls_scale)
+
+        # Adds aircraft to CORE
+        for ldct_aircrfat_data in llst_aircraft:
+            li_node_number = int(ldct_aircrfat_data['node']) + 2
+
+            ldct_wlan_data = {}
+            ldct_wlan_data['wlan_number'] = 1
+            ldct_wlan_data['address_ip4'] = "10.0.0.{}/24".format(li_node_number)
+            ldct_wlan_data['address_ip6'] = "2001::1/128".format(li_node_number)
+
+            self.core_mngr.add_node_run_time(f_aircraft_data=ldct_aircrfat_data,
+                                             f_wlan_data=ldct_wlan_data,
+                                             fs_ref_pt=ls_ref_pt)
+
+            time.sleep(1)
+
+        ls_msg = "OK"
+
+        return ls_msg
+
+
+    # ---------------------------------------------------------------------------------------------
+    def create_ptracks_files(self, f_core_filename):
+        """
+
+        :param f_core_filename:
+        :return:
+        """
+        ls_msg = "OK"
+
+        if self.track_mngr.check_files(f_core_filename):
+            ls_scenario_filename_path = self.core_mngr.get_scenario_dir() + f_core_filename + ".xml"
+
+            if self.wmain.get_aircrafts_data(self.scenario_filename,
+                                             self.extract_anvs(ls_scenario_filename_path),
+                                             self.track_mngr.get_traf_filename()):
+
+                # Creates the file for Track Generator
+               self.track_mngr.create_file(self.wmain.get_dialog_data())
+
+            else:
+                # File was not created,it restores the initial conditions
+                ls_msg = "Track Generator files was not created!"
+
+        else:
+            ls_msg = "Error in creating the Track Generator files!"
+
+
+        return ls_msg
 
 
     # ---------------------------------------------------------------------------------------------
@@ -204,6 +281,7 @@ class CATNSimMngr:
         llst_ptracks = self.track_mngr.get_file_list()
 
         return llst_core, llst_ptracks
+
 
     # ---------------------------------------------------------------------------------------------
     def get_scenario_filename(self):
@@ -475,6 +553,35 @@ class CATNSimMngr:
 
 
     # ---------------------------------------------------------------------------------------------
+    def sync_atn_simulator(self, f_core_filename, f_ptracks_filename):
+        """
+        O método sincroniza a base de dados do simulador CORE e do Gerador de Pistas (ptracks).
+        Se o f_core_filename for igual "New" o sistema cria os arquivo do cenário no CORE.
+        Se o f_ptracks_filename for igual "New" o sistema cria a base de dados mínima o necessário
+        para a execução do ptracks.
+        Se o f_core_filename for igual f_ptracks_filename o sistema atualiza o cenário do CORE com os
+        dados da base de dados do ptracks.
+
+        :param f_core_filename: o nome do arquivo do cenário de simulação do CORE.
+        :param f_ptracks_filename: o nome do arquivo de exercício do Gerador de Pistas (ptracks).
+        :return: None se a sincronização da base de dados foi realizada com sucesso caso contrário
+        a mensagem de erro.
+        """
+        # Criar arquivo de cenário no CORE
+        ls_msg = None
+        if f_core_filename.upper() == "NEW":
+            ls_msg = self.create_core_scenario(f_ptracks_filename)
+
+        if f_ptracks_filename.upper() == "NEW":
+            ls_msg = self.create_ptracks_files(f_core_filename)
+
+        if f_core_filename == f_ptracks_filename:
+            ls_msg = self.update_core_scenario(f_core_filename)
+
+        return ls_msg
+
+
+    # ---------------------------------------------------------------------------------------------
     def terminate_processes(self, f_edit_mode=False):
         """
         Ends the processes.
@@ -494,5 +601,16 @@ class CATNSimMngr:
             # Stop processes.
             self.track_mngr.stop_processes()
 
+
+    # ---------------------------------------------------------------------------------------------
+    def update_core_scenario(self, f_core_filename):
+        """
+
+        :param f_core_filename:
+        :return:
+        """
+        ls_msg = "OK"
+
+        return ls_msg
 
 # < the end >--------------------------------------------------------------------------------------

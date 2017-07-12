@@ -40,23 +40,16 @@
    <item>
     <layout class="QVBoxLayout" name="verticalLayout">
      <item>
-      <widget class="QPushButton" name="btnNew">
+      <widget class="QPushButton" name="btnSync">
        <property name="text">
-        <string>New</string>
+        <string>Sync</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="btnUpdate">
+      <widget class="QPushButton" name="btnClose">
        <property name="text">
-        <string>Update</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="btnCancel">
-       <property name="text">
-        <string>Cancel</string>
+        <string>Close</string>
        </property>
       </widget>
      </item>
