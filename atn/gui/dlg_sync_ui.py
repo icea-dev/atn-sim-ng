@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'dlg_sync.ui'
 #
-# Created: Tue Jul 11 09:28:14 2017
+# Created: Wed Jul 12 11:29:19 2017
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -26,7 +26,7 @@ except AttributeError:
 class Ui_dlg_sync(object):
     def setupUi(self, dlg_sync):
         dlg_sync.setObjectName(_fromUtf8("dlg_sync"))
-        dlg_sync.resize(400, 300)
+        dlg_sync.resize(319, 300)
         self.horizontalLayout = QtGui.QHBoxLayout(dlg_sync)
         self.horizontalLayout.setObjectName(_fromUtf8("horizontalLayout"))
         self.qtwTabFiles = QtGui.QTableWidget(dlg_sync)
@@ -34,12 +34,10 @@ class Ui_dlg_sync(object):
         self.qtwTabFiles.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
         self.qtwTabFiles.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
         self.qtwTabFiles.setObjectName(_fromUtf8("qtwTabFiles"))
-        self.qtwTabFiles.setColumnCount(2)
+        self.qtwTabFiles.setColumnCount(1)
         self.qtwTabFiles.setRowCount(0)
         item = QtGui.QTableWidgetItem()
         self.qtwTabFiles.setHorizontalHeaderItem(0, item)
-        item = QtGui.QTableWidgetItem()
-        self.qtwTabFiles.setHorizontalHeaderItem(1, item)
         self.horizontalLayout.addWidget(self.qtwTabFiles)
         self.verticalLayout = QtGui.QVBoxLayout()
         self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
@@ -59,9 +57,7 @@ class Ui_dlg_sync(object):
     def retranslateUi(self, dlg_sync):
         dlg_sync.setWindowTitle(_translate("dlg_sync", "Sync CORE - Track Generator", None))
         item = self.qtwTabFiles.horizontalHeaderItem(0)
-        item.setText(_translate("dlg_sync", "CORE", None))
-        item = self.qtwTabFiles.horizontalHeaderItem(1)
-        item.setText(_translate("dlg_sync", "Track Generator", None))
+        item.setText(_translate("dlg_sync", "CORE Simulations Scenarios", None))
         self.btnSync.setText(_translate("dlg_sync", "Sync", None))
         self.btnClose.setText(_translate("dlg_sync", "Close", None))
 

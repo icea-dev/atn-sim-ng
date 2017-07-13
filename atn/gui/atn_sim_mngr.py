@@ -162,8 +162,10 @@ class CATNSimMngr:
             else:
                 # File was not created,it restores the initial conditions
                 ls_msg = "Track Generator files was not created!"
-
         else:
+            # arquivo de tráfego já existe tem que sincronizar (atualizar)
+            # fazer algoritmo para atualizar o arquivo de tráfegos exclusão e inclusão
+            # de tráfegos.
             ls_msg = "Error in creating the Track Generator files!"
 
 
@@ -556,11 +558,6 @@ class CATNSimMngr:
     def sync_atn_simulator(self, f_core_filename, f_ptracks_filename):
         """
         O método sincroniza a base de dados do simulador CORE e do Gerador de Pistas (ptracks).
-        Se o f_core_filename for igual "New" o sistema cria os arquivo do cenário no CORE.
-        Se o f_ptracks_filename for igual "New" o sistema cria a base de dados mínima o necessário
-        para a execução do ptracks.
-        Se o f_core_filename for igual f_ptracks_filename o sistema atualiza o cenário do CORE com os
-        dados da base de dados do ptracks.
 
         :param f_core_filename: o nome do arquivo do cenário de simulação do CORE.
         :param f_ptracks_filename: o nome do arquivo de exercício do Gerador de Pistas (ptracks).
@@ -569,14 +566,14 @@ class CATNSimMngr:
         """
         # Criar arquivo de cenário no CORE
         ls_msg = None
-        if f_core_filename.upper() == "NEW":
-            ls_msg = self.create_core_scenario(f_ptracks_filename)
+        #if f_core_filename.upper() == "NEW":
+        #    ls_msg = self.create_core_scenario(f_ptracks_filename)
 
-        if f_ptracks_filename.upper() == "NEW":
-            ls_msg = self.create_ptracks_files(f_core_filename)
+        #if f_ptracks_filename.upper() == "NEW":
+        ls_msg = self.create_ptracks_files(f_core_filename)
 
-        if f_core_filename == f_ptracks_filename:
-            ls_msg = self.update_core_scenario(f_core_filename)
+        #if f_core_filename == f_ptracks_filename:
+        #    ls_msg = self.update_core_scenario(f_core_filename)
 
         return ls_msg
 

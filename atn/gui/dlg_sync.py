@@ -50,7 +50,7 @@ class CDlgSync(QtGui.QDialog, dsync_ui.Ui_dlg_sync):
         # create window
         self.setupUi(self)
 
-        self.qtwTabFiles.setColumnCount(2)
+        self.qtwTabFiles.setColumnCount(1)
         self.qtwTabFiles.horizontalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
 
         # do signal/slot connections
@@ -94,9 +94,9 @@ class CDlgSync(QtGui.QDialog, dsync_ui.Ui_dlg_sync):
             if l_oCoreItem is not None:
                 self.__s_core_filename = str(l_oCoreItem.text())
 
-            l_oPTracksItem = self.qtwTabFiles.item(l_iRow, 1)
-            if l_oPTracksItem is not None:
-                self.__s_ptracks_filename = str(l_oPTracksItem.text())
+            #l_oPTracksItem = self.qtwTabFiles.item(l_iRow, 1)
+            #if l_oPTracksItem is not None:
+                #self.__s_ptracks_filename = str(l_oPTracksItem.text())
 
 
     # ---------------------------------------------------------------------------------------------
@@ -146,32 +146,32 @@ class CDlgSync(QtGui.QDialog, dsync_ui.Ui_dlg_sync):
             # core name
             self.qtwTabFiles.setItem(li_row, 0, QtGui.QTableWidgetItem( file ) )
 
-            if file in self.llst_ptracks:
+            #if file in self.llst_ptracks:
                 # ptracks name
-                self.qtwTabFiles.setItem(li_row, 1, QtGui.QTableWidgetItem(file))
-                li_find = li_find + 1
-            else:
-                self.qtwTabFiles.setItem(li_row, 1, QtGui.QTableWidgetItem("New"))
+                #self.qtwTabFiles.setItem(li_row, 1, QtGui.QTableWidgetItem(file))
+                #li_find = li_find + 1
+            #else:
+                #self.qtwTabFiles.setItem(li_row, 1, QtGui.QTableWidgetItem("New"))
 
             li_row = li_row + 1
 
-        if li_find != len(self.llst_ptracks):
-            for file in self.llst_ptracks:
-                if file in self.llst_core:
-                    continue
+        #if li_find != len(self.llst_ptracks):
+            #for file in self.llst_ptracks:
+                #if file in self.llst_core:
+                    #continue
 
                 # cria nova linha na tabela
-                self.qtwTabFiles.insertRow(li_row)
+                #self.qtwTabFiles.insertRow(li_row)
 
                 # core name
-                self.qtwTabFiles.setItem(li_row, 0, QtGui.QTableWidgetItem( "New" ) )
+                #self.qtwTabFiles.setItem(li_row, 0, QtGui.QTableWidgetItem( "New" ) )
 
                 # ptracks name
-                self.qtwTabFiles.setItem(li_row, 1, QtGui.QTableWidgetItem(file))
+                #self.qtwTabFiles.setItem(li_row, 1, QtGui.QTableWidgetItem(file))
 
         # redefine o tamanho da QTableWidget
-        self.qtwTabFiles.resizeRowsToContents()
-        self.qtwTabFiles.resizeColumnsToContents()
+        #self.qtwTabFiles.resizeRowsToContents()
+        #self.qtwTabFiles.resizeColumnsToContents()
 
 
 # < the end>---------------------------------------------------------------------------------------

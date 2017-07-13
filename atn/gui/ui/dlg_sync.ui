@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
+    <width>319</width>
     <height>300</height>
    </rect>
   </property>
@@ -27,12 +27,7 @@
      </property>
      <column>
       <property name="text">
-       <string>CORE</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>Track Generator</string>
+       <string>CORE Simulations Scenarios</string>
       </property>
      </column>
     </widget>
