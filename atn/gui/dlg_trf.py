@@ -50,11 +50,11 @@ class CDlgTraf(QtGui.QDialog, dtrf_ui.Ui_dlg_trf):
         # create window
         self.setupUi(self)
 
-        self.qtw_trf.setColumnCount(13)
+        self.qtw_trf.setColumnCount(14)
         self.qtw_trf.setHorizontalHeaderLabels(
             ["Node", "Latitude", "Longitude", "Type of Acft", "SSR", "Callsign", "Departure", "Arrival", "Heading", "Speed",
-             "Altitude", "Procedure", "ID"])
-        self.qtw_trf.setColumnHidden(12, True)
+             "Altitude", "Procedure", "Time (min)", "ID"])
+        self.qtw_trf.setColumnHidden(13, True)
 
         self.qtw_trf.horizontalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
 
@@ -251,7 +251,9 @@ class CDlgTraf(QtGui.QDialog, dtrf_ui.Ui_dlg_trf):
             self.qtw_trf.insertRow(l_row)
 
             # node name
-            self.qtw_trf.setItem(l_row, 0, QtGui.QTableWidgetItem( f_table[l_row]['node'] ))
+            lqtw_trf_item = QtGui.QTableWidgetItem( f_table[l_row]['node'] )
+            lqtw_trf_item.setTextAlignment(QtCore.Qt.AlignCenter)
+            self.qtw_trf.setItem(l_row, 0, lqtw_trf_item)
 
             # cria doubleSpinBox para latitude
             self.lat = QtGui.QDoubleSpinBox()
@@ -283,14 +285,24 @@ class CDlgTraf(QtGui.QDialog, dtrf_ui.Ui_dlg_trf):
             self.qtw_trf.setCellWidget(l_row, 3, self.cb)
 
             # ssr
-            self.qtw_trf.setItem(l_row, 4, QtGui.QTableWidgetItem(f_table[l_row]['ssr']))
+            lqtw_trf_item = QtGui.QTableWidgetItem(f_table[l_row]['ssr'])
+            lqtw_trf_item.setTextAlignment(QtCore.Qt.AlignCenter)
+            self.qtw_trf.setItem(l_row, 4, lqtw_trf_item)
 
             # indicativo
-            self.qtw_trf.setItem(l_row, 5, QtGui.QTableWidgetItem(f_table[l_row]['indicativo']))
+            lqtw_trf_item = QtGui.QTableWidgetItem(f_table[l_row]['indicativo'])
+            lqtw_trf_item.setTextAlignment(QtCore.Qt.AlignCenter)
+            self.qtw_trf.setItem(l_row, 5, lqtw_trf_item)
+
             # origem
-            self.qtw_trf.setItem(l_row, 6, QtGui.QTableWidgetItem(f_table[l_row]['origem']))
+            lqtw_trf_item = QtGui.QTableWidgetItem(f_table[l_row]['origem'])
+            lqtw_trf_item.setTextAlignment(QtCore.Qt.AlignCenter)
+            self.qtw_trf.setItem(l_row, 6, lqtw_trf_item)
+
             # destino
-            self.qtw_trf.setItem(l_row, 7, QtGui.QTableWidgetItem(f_table[l_row]['destino']))
+            lqtw_trf_item = QtGui.QTableWidgetItem(f_table[l_row]['destino'])
+            lqtw_trf_item.setTextAlignment(QtCore.Qt.AlignCenter)
+            self.qtw_trf.setItem(l_row, 7, lqtw_trf_item)
 
             # cria spinBox para proa
             self.proa = QtGui.QSpinBox()
@@ -328,8 +340,13 @@ class CDlgTraf(QtGui.QDialog, dtrf_ui.Ui_dlg_trf):
             # procedimento
             self.qtw_trf.setCellWidget(l_row, 11, self.prc)
 
+            # tempo de apresentação do tráfego
+            lqtw_trf_item = QtGui.QTableWidgetItem(str(f_table[l_row]['temptrafego']))
+            lqtw_trf_item.setTextAlignment(QtCore.Qt.AlignCenter)
+            self.qtw_trf.setItem(l_row, 12, lqtw_trf_item)
+
             # traffic number
-            self.qtw_trf.setItem(l_row, 12, QtGui.QTableWidgetItem(f_table[l_row]['id']))
+            self.qtw_trf.setItem(l_row, 13, QtGui.QTableWidgetItem(f_table[l_row]['id']))
 
         # redefine o tamanho da QTableWidget
         self.qtw_trf.resizeRowsToContents()
@@ -394,7 +411,7 @@ class CDlgTraf(QtGui.QDialog, dtrf_ui.Ui_dlg_trf):
         # para todas as linhas da tabela...
         for l_row in xrange(0, self.qtw_trf.rowCount()):
             # node
-            l_node = self.qtw_trf.item(l_row, 12).text().toUtf8()
+            l_node = self.qtw_trf.item(l_row, 13).text().toUtf8()
 
             # latitude
             l_latitude = self.qtw_trf.cellWidget(l_row, 1).value()
@@ -419,11 +436,14 @@ class CDlgTraf(QtGui.QDialog, dtrf_ui.Ui_dlg_trf):
             # procedimento
             l_procedimento = self.qtw_trf.cellWidget(l_row, 11).currentText().toUtf8()
 
+            # tempo de apresentação do tráfego
+            l_temptrafego = int(self.qtw_trf.item(l_row, 12).text().toUtf8())
+
             l_data = {"ntrf": l_node, "latitude": l_latitude, "longitude": l_longitude,
                     "designador": l_designador, "ssr": l_ssr, "indicativo": l_indicativo,
                     "origem": l_origem, "destino": l_destino, "proa": l_proa,
                     "velocidade": l_velocidade, "altitude": l_altitude,
-                    "procedimento": l_procedimento}
+                    "procedimento": l_procedimento, "temptrafego": l_temptrafego}
 
             # do the substitution
             l_result.append(l_src.substitute(l_data))

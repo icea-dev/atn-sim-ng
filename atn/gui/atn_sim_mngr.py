@@ -39,6 +39,7 @@ import os
 import time
 
 import core_mngr as coremngr
+import parser_utils as parser
 import track_generator_mngr as trackmngr
 import webbrowser as web
 import wnd_main_atn_sim as wmain
@@ -141,38 +142,6 @@ class CATNSimMngr:
 
 
     # ---------------------------------------------------------------------------------------------
-    def create_ptracks_files(self, f_core_filename):
-        """
-
-        :param f_core_filename:
-        :return:
-        """
-        ls_msg = "OK"
-
-        if self.track_mngr.check_files(f_core_filename):
-            ls_scenario_filename_path = self.core_mngr.get_scenario_dir() + f_core_filename + ".xml"
-
-            if self.wmain.get_aircrafts_data(self.scenario_filename,
-                                             self.extract_anvs(ls_scenario_filename_path),
-                                             self.track_mngr.get_traf_filename()):
-
-                # Creates the file for Track Generator
-               self.track_mngr.create_file(self.wmain.get_dialog_data())
-
-            else:
-                # File was not created,it restores the initial conditions
-                ls_msg = "Track Generator files was not created!"
-        else:
-            # arquivo de tráfego já existe tem que sincronizar (atualizar)
-            # fazer algoritmo para atualizar o arquivo de tráfegos exclusão e inclusão
-            # de tráfegos.
-            ls_msg = "Error in creating the Track Generator files!"
-
-
-        return ls_msg
-
-
-    # ---------------------------------------------------------------------------------------------
     def extract_anvs(self, f_xml_filename):
         """
         Extract the aircraft that were created by the core-gui.
@@ -263,7 +232,7 @@ class CATNSimMngr:
                                 "designador": "B737", "ssr": str(7001 + l_index),
                                 "indicativo": "{}X{:03d}".format(str(ls_host_id[:3]).upper(), l_index + 1),
                                 "origem": "SBGR", "destino": "SBBR", "proa": 60, "velocidade": 500,
-                                "altitude": 2000, "procedimento": "TRJ200", "id": str(li_ntrf)}
+                                "altitude": 2000, "procedimento": "TRJ200", "temptrafego": 0, "id": str(li_ntrf)}
 
                 l_table_list.append(l_table_item)
 
@@ -305,6 +274,91 @@ class CATNSimMngr:
         """
 
         return self.track_mngr.get_root_dir()
+
+
+    # ---------------------------------------------------------------------------------------------
+    def parser_trf_xml(self, fs_trf_pn):
+        """
+        carrega o arquivo de tráfego
+
+        @param fs_trf_pn: pathname do arquivo em disco
+        """
+        # check input
+        assert fs_trf_pn
+
+        # cria o QFile para o arquivo XML do tráfego
+        l_data_file = QtCore.QFile(fs_trf_pn)
+        assert l_data_file is not None
+
+        # abre o arquivo XML do tráfego
+        l_data_file.open(QtCore.QIODevice.ReadOnly)
+
+        # erro na abertura do arquivo ?
+        if not l_data_file.isOpen():
+            return None
+
+        # cria o documento XML do tráfego
+        l_xdoc_trf = QtXml.QDomDocument("trafegos")
+        assert l_xdoc_trf is not None
+
+        # erro na carga do documento ?
+        if not l_xdoc_trf.setContent(l_data_file):
+            # fecha o arquivo
+            l_data_file.close()
+
+            return None
+
+        # fecha o arquivo
+        l_data_file.close()
+
+        # obtém o elemento raíz do documento
+        l_elem_root = l_xdoc_trf.documentElement()
+        assert l_elem_root is not None
+
+        # faz o parse dos atributos do elemento raíz
+        ldct_root = parser.parse_root_element(l_elem_root)
+
+        # cria uma lista com os elementos de tráfego
+        l_node_list = l_elem_root.elementsByTagName("trafego")
+
+        llst_aircraft_ptracks = []
+
+        # para todos os nós na lista...
+        for li_ndx in xrange(l_node_list.length()):
+            # inicia o dicionário de dados
+            ldct_data = {}
+
+            # obtém um nó da lista
+            l_element = l_node_list.at(li_ndx).toElement()
+            assert l_element is not None
+
+            # read identification if available
+            if l_element.hasAttribute("nTrf"):
+                ldct_data["nTrf"] = int(l_element.attribute("nTrf"))
+
+            # obtém o primeiro nó da sub-árvore
+            l_node = l_element.firstChild()
+            assert l_node is not None
+
+            # percorre a sub-árvore
+            while not l_node.isNull():
+                # tenta converter o nó em um elemento
+                l_element = l_node.toElement()
+                assert l_element is not None
+
+                # o nó é um elemento ?
+                if not l_element.isNull():
+                    # atualiza o dicionário de dados
+                    ldct_data.update(parser.parse_trafego(l_element))
+
+                # próximo nó
+                l_node = l_node.nextSibling()
+                assert l_node is not None
+
+            # carrega os dados de tráfego a partir de um dicionário
+            llst_aircraft_ptracks.append(ldct_data)
+
+        return llst_aircraft_ptracks
 
 
     # ---------------------------------------------------------------------------------------------
@@ -555,28 +609,60 @@ class CATNSimMngr:
 
 
     # ---------------------------------------------------------------------------------------------
-    def sync_atn_simulator(self, f_core_filename, f_ptracks_filename):
+    def sync_atn_simulator(self, f_core_filename):
         """
-        O método sincroniza a base de dados do simulador CORE e do Gerador de Pistas (ptracks).
+        The method synchronize the CORE database and the Track generator (ptracks).
 
-        :param f_core_filename: o nome do arquivo do cenário de simulação do CORE.
-        :param f_ptracks_filename: o nome do arquivo de exercício do Gerador de Pistas (ptracks).
-        :return: None se a sincronização da base de dados foi realizada com sucesso caso contrário
-        a mensagem de erro.
+        :param f_core_filename: CORE simulation scenario.
+        :return: None if the synchronization of the database was successfully performed otherwise
+        an error message.
         """
-        # Criar arquivo de cenário no CORE
-        ls_msg = None
-        #if f_core_filename.upper() == "NEW":
-        #    ls_msg = self.create_core_scenario(f_ptracks_filename)
+        # Creates the full file name path of the CORE simulation scenario.
+        ls_scenario_pn = self.core_mngr.get_scenario_dir() + "/" + f_core_filename + ".xml"
 
-        #if f_ptracks_filename.upper() == "NEW":
-        ls_msg = self.create_ptracks_files(f_core_filename)
+        # Gets the aircraft data from the CORE simulation scenario
+        llst_aircraft_core = self.extract_anvs(ls_scenario_pn)
 
-        #if f_core_filename == f_ptracks_filename:
-        #    ls_msg = self.update_core_scenario(f_core_filename)
+        # File of ptracks aircraft of the chosen CORE simulation scenarioexists in the database ?
+        if self.track_mngr.check_files(f_core_filename):
+            # File exists, get dadta from ptracks aircraft
+            llst_aircraft_ptracks = self.parser_trf_xml(self.track_mngr.get_traf_filename())
 
-        return ls_msg
+            llst_aircraft_core_new = []
 
+            for dct_aircraft_core in llst_aircraft_core:
+                li_trf = int(dct_aircraft_core['id'])
+                for d_ptracks in llst_aircraft_ptracks:
+                    if li_trf == int(str(d_ptracks['nTrf'])):
+                        dct_aircraft_core['designador'] = str(d_ptracks['designador'])
+                        dct_aircraft_core['ssr'] = str(d_ptracks['ssr'])
+                        dct_aircraft_core['indicativo'] = str(d_ptracks['indicativo'])
+                        dct_aircraft_core['origem'] = str(d_ptracks['origem'])
+                        dct_aircraft_core['destino'] = str(d_ptracks['procedimento'])
+                        dct_aircraft_core['procedimento'] = str(d_ptracks['procedimento'])
+                        dct_aircraft_core['proa'] = float(str(d_ptracks['proa']))
+                        dct_aircraft_core['velocidade'] = float(str(d_ptracks['velocidade']))
+                        dct_aircraft_core['altitude'] = float(str(d_ptracks['altitude']))
+                        dct_aircraft_core['latitude'] = float(str(d_ptracks['coord']['cpoA']))
+                        dct_aircraft_core['longitude'] = float(str(d_ptracks['coord']['cpoB']))
+                        dct_aircraft_core['temptrafego'] = int(str(d_ptracks['temptrafego']))
+
+                        break;
+
+                llst_aircraft_core_new.append(dct_aircraft_core.copy())
+
+            llst_aircraft_core = []
+            llst_aircraft_core = list(llst_aircraft_core_new)
+
+        # Displays the GUI to create the file in ptracks database.
+        if self.wmain.get_aircrafts_data(f_core_filename,
+                                         llst_aircraft_core,
+                                         self.track_mngr.get_traf_filename()):
+            # Creates the file for Track Generator
+            self.track_mngr.create_file(self.wmain.get_dialog_data())
+            return True
+
+        return False
 
     # ---------------------------------------------------------------------------------------------
     def terminate_processes(self, f_edit_mode=False):

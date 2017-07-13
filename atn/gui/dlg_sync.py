@@ -60,10 +60,9 @@ class CDlgSync(QtGui.QDialog, dsync_ui.Ui_dlg_sync):
 
         self.__mediator = f_mediator
 
-        self.llst_core, self.llst_ptracks = self.__mediator.get_list_core_ptracks()
+        self.llst_core, llst_ptracks = self.__mediator.get_list_core_ptracks()
 
         self.__s_core_filename = None
-        self.__s_ptracks_filename = None
 
         self.populate_table()
 
@@ -109,16 +108,20 @@ class CDlgSync(QtGui.QDialog, dsync_ui.Ui_dlg_sync):
         """
         # Is there a mediator
         ls_msg = None
-        if self.__mediator is not None:
-            ls_msg = self.__mediator.sync_atn_simulator(self.__s_core_filename, self.__s_ptracks_filename)
 
-        if ls_msg is not None:
-            if ls_msg != "OK":
-                QtGui.QMessageBox.warning(self, self.tr("Sync Database"), ls_msg, QtGui.QMessageBox.Ok)
-            else:
-                QtGui.QMessageBox.information(self, self.tr("Sync Database"),
-                                              self.tr("Synchornized database!"),
-                                              QtGui.QMessageBox.Ok)
+        if self.__s_core_filename is None:
+            QtGui.QMessageBox.warning(self, self.tr("Sync Database"),
+                                      self.tr("Select a CORE simulation scenario!"),
+                                      QtGui.QMessageBox.Ok)
+            return
+
+        if self.__mediator is not None:
+            l_retCode = self.__mediator.sync_atn_simulator(self.__s_core_filename)
+
+        if l_retCode:
+            QtGui.QMessageBox.information(self, self.tr("Sync Database"),
+                                          self.tr("Synchronized database!"),
+                                          QtGui.QMessageBox.Ok)
 
 
     # ---------------------------------------------------------------------------------------------
@@ -132,10 +135,8 @@ class CDlgSync(QtGui.QDialog, dsync_ui.Ui_dlg_sync):
         self.qtwTabFiles.setRowCount(0)
 
         self.llst_core.sort()
-        self.llst_ptracks.sort()
 
         li_row = 0
-        li_find = 0
 
         # para todas as linhas da tabela...
         for file in self.llst_core:
@@ -146,32 +147,7 @@ class CDlgSync(QtGui.QDialog, dsync_ui.Ui_dlg_sync):
             # core name
             self.qtwTabFiles.setItem(li_row, 0, QtGui.QTableWidgetItem( file ) )
 
-            #if file in self.llst_ptracks:
-                # ptracks name
-                #self.qtwTabFiles.setItem(li_row, 1, QtGui.QTableWidgetItem(file))
-                #li_find = li_find + 1
-            #else:
-                #self.qtwTabFiles.setItem(li_row, 1, QtGui.QTableWidgetItem("New"))
-
             li_row = li_row + 1
-
-        #if li_find != len(self.llst_ptracks):
-            #for file in self.llst_ptracks:
-                #if file in self.llst_core:
-                    #continue
-
-                # cria nova linha na tabela
-                #self.qtwTabFiles.insertRow(li_row)
-
-                # core name
-                #self.qtwTabFiles.setItem(li_row, 0, QtGui.QTableWidgetItem( "New" ) )
-
-                # ptracks name
-                #self.qtwTabFiles.setItem(li_row, 1, QtGui.QTableWidgetItem(file))
-
-        # redefine o tamanho da QTableWidget
-        #self.qtwTabFiles.resizeRowsToContents()
-        #self.qtwTabFiles.resizeColumnsToContents()
 
 
 # < the end>---------------------------------------------------------------------------------------

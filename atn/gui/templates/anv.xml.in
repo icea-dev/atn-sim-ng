@@ -4,7 +4,7 @@
         <indicativo>$indicativo</indicativo>
         <origem>$origem</origem>
         <destino>$destino</destino>
-        <temptrafego>0</temptrafego>
+	<temptrafego>$temptrafego</temptrafego>
         <coord>
             <tipo>L</tipo>
             <cpoA>$latitude</cpoA>
