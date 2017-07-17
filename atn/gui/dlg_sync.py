@@ -60,11 +60,7 @@ class CDlgSync(QtGui.QDialog, dsync_ui.Ui_dlg_sync):
 
         self.__mediator = f_mediator
 
-        self.llst_core, llst_ptracks = self.__mediator.get_list_core_ptracks()
-
         self.__s_core_filename = None
-
-        self.populate_table()
 
 
     # ---------------------------------------------------------------------------------------------
@@ -149,5 +145,15 @@ class CDlgSync(QtGui.QDialog, dsync_ui.Ui_dlg_sync):
 
             li_row = li_row + 1
 
+
+    # ---------------------------------------------------------------------------------------------
+    def show(self):
+        """
+
+        :return:
+        """
+        self.llst_core, llst_ptracks = self.__mediator.get_list_core_ptracks()
+        self.populate_table()
+        super(CDlgSync,self).show()
 
 # < the end>---------------------------------------------------------------------------------------

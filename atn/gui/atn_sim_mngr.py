@@ -623,7 +623,7 @@ class CATNSimMngr:
         # Gets the aircraft data from the CORE simulation scenario
         llst_aircraft_core = self.extract_anvs(ls_scenario_pn)
 
-        # File of ptracks aircraft of the chosen CORE simulation scenarioexists in the database ?
+        # File of ptracks aircraft of the chosen CORE simulation scenario exists in the database ?
         if self.track_mngr.check_files(f_core_filename):
             # File exists, get dadta from ptracks aircraft
             llst_aircraft_ptracks = self.parser_trf_xml(self.track_mngr.get_traf_filename())
@@ -638,7 +638,7 @@ class CATNSimMngr:
                         dct_aircraft_core['ssr'] = str(d_ptracks['ssr'])
                         dct_aircraft_core['indicativo'] = str(d_ptracks['indicativo'])
                         dct_aircraft_core['origem'] = str(d_ptracks['origem'])
-                        dct_aircraft_core['destino'] = str(d_ptracks['procedimento'])
+                        dct_aircraft_core['destino'] = str(d_ptracks['destino'])
                         dct_aircraft_core['procedimento'] = str(d_ptracks['procedimento'])
                         dct_aircraft_core['proa'] = float(str(d_ptracks['proa']))
                         dct_aircraft_core['velocidade'] = float(str(d_ptracks['velocidade']))
@@ -663,6 +663,7 @@ class CATNSimMngr:
             return True
 
         return False
+
 
     # ---------------------------------------------------------------------------------------------
     def terminate_processes(self, f_edit_mode=False):

@@ -408,6 +408,7 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         if self.mediator:
             self.mediator.run_track_generator_database_manager()
 
+
     # ---------------------------------------------------------------------------------------------
     def cbk_sync_core_ptracks(self):
         """
@@ -420,5 +421,6 @@ class CWndMainATNSim(QtGui.QMainWindow, wmain_ui.Ui_CWndMainATNSim):
         # Is there a mediator ?
         if self.mediator:
             self.dlg_sync.show()
+
 
 # < the end>---------------------------------------------------------------------------------------
