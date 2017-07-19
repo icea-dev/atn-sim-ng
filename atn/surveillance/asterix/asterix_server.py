@@ -87,13 +87,13 @@ if '__main__' == __name__:
         conf = ConfigParser.ConfigParser()
         conf.read(config)
 
-        sic = conf.getint("General", "sic")
+        sic = conf.getint("glb", "sic")
 
-        port = conf.getint("General", "port")
+        port = conf.getint("glb", "port")
 
-        tx_port = conf.getint("General", "txport")
+        tx_port = conf.getint("glb", "txport")
 
-        net = conf.get("General", "net")
+        net = conf.get("glb", "net")
 
     queue = Queue.Queue(QUEUE_SIZE)
 
