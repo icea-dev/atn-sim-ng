@@ -4,7 +4,7 @@ python -m adsb.asterix_server.asterix_server -c asterixserver.cfg
 
 Configuração do asterixserver.cfg
 
-[General]
+[glb]
 sic = ${soma(node.name)}
 port = 40000 + ${soma(node.name)}
 txport = 50000 + ${soma(node.name)}
@@ -32,7 +32,7 @@ port = 30001
 [asterix]
 type = asterix
 server = 127.0.0.1
-port = ${soma(node.name)}
+port = 40000 + ${soma(node.name)}
 
 Onde:
 ${node.name} 	   O nome do nó no core.
