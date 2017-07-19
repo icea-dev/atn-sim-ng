@@ -1,6 +1,6 @@
 Para executar o serviço AsterixServer:
 
-python -m adsb.asterix_server.asterix_server -c asterixserver.cfg
+python -m atn.surveillance.asterix.asterix_server -c asterixserver.cfg
 
 Configuração do asterixserver.cfg
 

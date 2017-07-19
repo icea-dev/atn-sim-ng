@@ -41,7 +41,7 @@ __date__ = "2016/03"
 def usage():
     """Shows a help to use application.
     """
-    print "Usage: python -m atn.surveillance.asterix.server [options]"
+    print "Usage: python -m atn.surveillance.asterix_server [options]"
     print ""
     print "Options:"
     print " -h, --help          Display this help and exit."
