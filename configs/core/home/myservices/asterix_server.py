@@ -66,4 +66,4 @@ class AsterixServer(CoreService):
             return 'echo "  network %s"' % (net)
 
 # this line is required to add the above class to the list of available services
-addservice(AdsbIn)
+addservice(AsterixServer)
