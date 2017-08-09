@@ -1,45 +1,53 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-#
-# Copyright 2016, ICEA
-#
-# This file is part of atn-sim
-#
-# atn-sim is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# atn-sim is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
+---------------------------------------------------------------------------------------------------
+This file is part of atn-sim
 
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+revision 0.1  2017/Jul  Matias
+initial release (Linux/Python)
+---------------------------------------------------------------------------------------------------
+"""
+__version__ = "$revision: 0.1$"
+__author__ = "Ivan Matias"
+__date__ = "2017/07"
+
+# < imports >--------------------------------------------------------------------------------------
 import binascii
 import ConfigParser
+import logging
 import math
-import MySQLdb
+import netifaces
 import os
+import threading
 import time
 import socket
 
-from ..icea.icea_protocol import Icea
-from ..asterix import asterix_utils
+from collections import deque
 
-from ... import core_utils
-from ... import emane_utils
+from ...network import mcast_socket
+from ..asterix import asterix_utils
 from ... import geo_utils
 
-__author__ = "Marcio Monteiro, Ivan Matias"
-__version__ = "0.1"
-__date__ = "2016-dec-23"
+M_LOG = logging.getLogger(__name__)
+M_LOG.setLevel(logging.DEBUG)
+M_LOG_FILE = "radar.log"
 
-# -----------------------------------------------------------------------------
-# class Radar
-# -----------------------------------------------------------------------------
+
+# < class Radar >----------------------------------------------------------------------------------
 class Radar:
 
     """
@@ -53,295 +61,89 @@ class Radar:
     DEG_SETOR = 11.25
 
     # PSR default values
-    sweep_time = 4.0
-    vertical_coverage = 60000
-    psr_horizontal_coverage = 80 * NM_TO_M
-    ssr_horizontal_coverage = 200 * NM_TO_M
+    SWEEP_TIME = 4.0
+    VERTICAL_COVERAGE = 60000.0
+    PSR_HORIZONTAL_COVERAGE = 80.0 * NM_TO_M
+    SSR_HORIZONTAL_COVERAGE = 200.0 * NM_TO_M
 
     # Default values
-    net_ip = "172.16.0.255"
-    net_port = 20000
-    net_mode = "broadcast"
-    net_proto = "asterix"
+    NET_IFACE = "ctrl0"
+    NET_PTRACKS_PORT = 1970
+    NET_PTRACKS_GROUP = "235.12.2.4"
+    NET_IP_DEFAULT = "172.16.0.255"
+    NET_PORT_DEFAULT = 20000
 
-    db_name = 'atn_sim'
-    db_user = 'atn_sim'
-    db_pass = 'atn_sim'
-    db_host = '172.17.255.254'
-
-    sac = 232  # E8: Brazil
-    sic = 0
+    # ASTERIX Data Source Identifier
+    SAC = 232  # E8: Brazil
+    SIC = 0
 
 
-    # -------------------------------------------------------------------------
-    # method constructor
-    # -------------------------------------------------------------------------
-    def __init__(self, config="radar.cfg"):
+    # -----------------------------------------------------------------------------------
+    def __init__(self, fs_config="radar.cfg"):
         """
         Initialize attributes of class
         """
+        # logger
+        M_LOG.info("__init__:>>")
 
-        # Node name of radar in simulation
-        self.nodename = core_utils.get_node_name()
+        #
+        self.__f_latitude = 0.0
+        self.__f_longitude = 0.0
+        self.__f_altitude = 0.0
 
-        # Node number of radar in simulation
-        self.nodenumber = core_utils.get_node_number()
+        # Radar parameters
+        self.__f_sweep_time = self.SWEEP_TIME
+        self.__f_vertical_coverage = self.VERTICAL_COVERAGE
+        self.__f_psr_horizontal_coverage = self.PSR_HORIZONTAL_COVERAGE
+        self.__f_ssr_horizontal_coverage = self.SSR_HORIZONTAL_COVERAGE
 
-        # Simulation ID
-        self.session_id = core_utils.get_session_id()
+        # Network parameters
+        self.__s_net_ip = self.NET_IP_DEFAULT
+        self.__i_net_port = self.NET_PORT_DEFAULT
 
-        # NEM ID
-        self.nemid = core_utils.get_nem_id(node_name=self.nodename, session_id=self.session_id)
+        # Locking
+        self.__lock = threading.Lock()
 
-        self.nodenames = {}
-        self.nodenumbers = {}
+        # List of aircraft
+        self.__tracks = {}
 
-        # Reading configuration file
-        if os.path.exists(config):
-            print "Configuration file %s found." % config
-            conf = ConfigParser.ConfigParser()
-            conf.read(config)
-
-            self.latitude  = conf.getfloat("Location", "latitude")
-            self.longitude = conf.getfloat("Location", "longitude")
-            self.altitude  = conf.getfloat("Location", "altitude")
-
-            # Radar parameters
-            self.sweep_time = conf.getfloat("PSR", "sweep_time")
-            self.vertical_coverage = conf.getfloat("PSR", "vertical_coverage")
-            self.psr_horizontal_coverage = conf.getfloat("PSR", "psr_horizontal_coverage") * self.NM_TO_M
-            self.ssr_horizontal_coverage = conf.getfloat("PSR", "ssr_horizontal_coverage") * self.NM_TO_M
-
-            # Network parameters
-            self.net_ip = conf.get("Network", "destination")
-            self.net_port = conf.getint("Network", "port")
-            self.net_mode = conf.get("Network", "mode")
-            self.net_proto = conf.get("Network", "protocol")
-
-            # System Area Code (SAC)
-            if conf.has_option("Network", "sac"):
-                self.sac = int(conf.get("Network", "sac"), 16)  # in hex
-
-            # System Identification Code (SIC)
-            if conf.has_option("Network", "sic"):
-                self.sic = int(conf.get("Network", "sic"), 16)  # in hex
-
-            # Placing radar on the proper location
-            # set_location(nemid, lat, lon, alt, heading, speed, climb)
-            emane_utils.set_location(nemid=self.nemid, lat=self.latitude, lon=self.longitude, alt=self.altitude,
-                                     heading=0.0, speed=0.0, climb=0.0)
-        else:
-            location = emane_utils.get_nem_location(nem_id=self.nemid)
-
-            self.latitude = location["latitude"]
-            self.longitude = location["longitude"]
-            self.altitude = location["altitude"]
-
-        if self.net_proto.lower() == "icea":
-            self.encoder = Icea()
-
-            # Pre-calculating for speed
-            self.empty_msg = {}
-            for sector in range(0, 32):
-                self.empty_msg[sector] = self.encoder.get_empty_sector_msg(sector)
-        elif self.net_proto.lower() == "asterix":
-            pass
-        else:
-            print "Radar protocol %s is not supported." % self.net_proto
-            self.encoder = None
-
-        # DB connection with general purposes
-        self.db = MySQLdb.connect(self.db_host, self.db_user, self.db_pass, self.db_name)
-
-        # DB connection specific for thread _process_msg()
-        self.db_process = MySQLdb.connect(self.db_host, self.db_user, self.db_pass, self.db_name)
-
-        print "Location of Radar:"
-        print "  Latitude:  %f" % self.latitude
-        print "  Longitude: %f" % self.longitude
-        print "  Altitude:  %f m" % self.altitude
-        print "Network settings:"
-        print "  Destination:  %s" % self.net_ip
-        print "  Port:         %s" % self.net_port
-        print "  Mode:         %s" % self.net_mode
-        print "  Radar Proto.: %s" % self.net_proto
-        print "  SAC:          %s" % self.sac
-        print "  SIC:          %s" % self.sic
+        # Message Queue
+        self.__q_queue = deque([])
 
         # sock (socket):  The end point to send ASTERIX CAT 21.
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        self.__sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.__sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.__sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+
+        # ASTERIX Data Source Identifier
+        self.__i_sac = int(self.SAC, 16)
+        self.__i_sic = int(self.SIC, 16)
+
+        # load configuration file
+        self.__load_config(fs_config)
+
+        # logger
+        M_LOG.info("__init__:<<")
 
 
-    # -------------------------------------------------------------------------
-    # method start
-    # -------------------------------------------------------------------------
-    def start(self):
-        """method start
-
-        This method has the cyclic function 4/2 for aircraft that are within
-        the radar coverage and send in broadcast mode (UDP) network
-        """
-
-        while True:
-
-            t0 = time.time()
-
-            if self.net_proto == "ASTERIX":
-
-                # ToDo: must call detect for each sector, otherwise there will be delays on detected track
-                tracks = self.detect()
-                tp = time.time()
-
-                for s in range(0, 32):
-
-                    send_n = False
-                    if s == 25:
-                        send_n = True
-
-                    self.broadcast_asterix(tracks, s, send_n)
-
-                dtp = time.time() - tp
-
-                time.sleep(4.0 - dtp)
-            elif self.net_proto == "ICEA":
-                tracks = self.detect()
-                self.broadcast_icea(tracks)
-
-                time.sleep(self.sweep_time - (time.time() - t0))
-
-            print "Objects detected: %d" % len(tracks)
-            for t in tracks:
-                print "  > %s: %f %f %f %f %f %s" % (t[7], t[1], t[2], t[3], t[4], t[5], t[8])
-
-            dt = time.time() - t0
-            print "Complete rotation in %f sec" % dt
-
-
-
-
-
-    # -------------------------------------------------------------------------
-    # method detect - aircraft(s) on the sector actual
-    # -------------------------------------------------------------------------
-    def detect(self):
-        """method detect
-
-        This method  has the function of detecting  moving objects within CORE,
-        apply detection filters (horizontal and vertical) and finally generate
-        a list of targets that are within the radar coverage.
-        """
-
-        detected_tracks = []
-
-        for i in emane_utils.get_all_locations():
-
-            nemid = i["nem"]
-            lat = i["latitude"]
-            lon = i["longitude"]
-            alt = i["altitude"]
-
-            if nemid not in self.nodenames:
-                self.nodenames[nemid] = core_utils.get_node_name(nem_id=nemid, session_id=self.session_id)
-                self.nodenumbers[nemid] = core_utils.get_node_number(node_name=self.nodenames[nemid],
-                                                                     session_id=self.session_id)
-
-            nodenum = self.nodenumbers[nemid]
-
-            # Prevent radar to detect itself
-            if nodenum == self.nodenumber:
-                continue
-
-            x, y = self.calc_distance_from(lat, lon, alt)
-
-            z = float(alt)
-
-            # (azimuth, elevation, magnitude) = core_utils.get_node_velocity(nemid)
-
-            azimuth = i["azimuth"]
-            elevation = i["elevation"]
-            magnitude = i["magnitude"]
-
-            # Climb rate (in m/s)
-            climb_rate = float(magnitude) * math.sin(math.radians(float(elevation)))
-
-            # Speed (in m/s)
-            speed = float(magnitude) * math.cos(math.radians(float(elevation)))
-
-            # SSR and Callsign
-            callsign, ssr = self.read_transponder(nemid)
-
-            # Sector
-            h_angle = RadarUtils.calc_horizontal_angle(x, y, z)
-
-            sector = int(h_angle / self.DEG_SETOR)
-
-            # Radar distance detection
-            hdist_2d = math.sqrt(x*x + y*y)
-
-            if hdist_2d > self.ssr_horizontal_coverage:
-                # print "Rejecting (%d): %f > %f" % (nodenum, hdist_2d, self.ssr_horizontal_coverage)
-                continue
-
-            # ToDo: how to encode primary radar plots?
-            if callsign is not None and ssr is not None:
-                detected_tracks.append([nodenum,
-                                        x * self.M_TO_NM,
-                                        y * self.M_TO_NM,
-                                        z * self.M_TO_FT,
-                                        azimuth,
-                                        speed * self.MPS_TO_KT,
-                                        ssr,
-                                        callsign,
-                                        sector,
-                                        h_angle,
-                                        ])
-
-        return detected_tracks
-
-    def read_transponder(self, nemid):
-        #
-        # Read transponder's parameters using database shared memory
-        #
-        # ToDo: read this information from aircraft transponder
-        try:
-            cursor = self.db_process.cursor()
-            cursor.execute("SELECT callsign, performance_type, ssr_squawk FROM transponder WHERE nem_id=%d" % nemid)
-            result = cursor.fetchone()
-
-            if result is not None:
-
-                db_callsign = result[0]
-                db_perftype = result[1]
-                db_squawk = result[2]
-
-                cursor.close()
-
-                return db_callsign, db_squawk
-
-        except MySQLdb.Error, e:
-            print "read_transponder(): MySQL Error [%d]: %s" % (e.args[0], e.args[1])
-
-        return None, None
-
-    def broadcast_asterix(self, tracks, sector, north_flag=False):
+    # ---------------------------------------------------------------------------------------------
+    def __broadcast_asterix(self, fi_sector, fb_north_flag=False):
 
         # sac = 232
         # sic = 10
-        tod = time.time()
+        ltt_time_of_day = time.time()
 
-        sector_record = {
+        ldct_sector_record = {
             444: {'MsgTyp': 2},
-            10: {'SAC': self.sac, 'SIC': self.sic},
-            20: {'Azi': (sector * 11.25)},
-            30: {'ToD': tod}
+            10: {'SAC': self.__i_sac, 'SIC': self.__i_sic},
+            20: {'Azi': (fi_sector * 11.25)},
+            30: {'ToD': ltt_time_of_day}
         }
 
-        north_record = {
+        ldct_north_record = {
             444: {'MsgTyp': 2},
-            10: {'SAC': self.sac, 'SIC': self.sic},
-            30: {'ToD': (tod+0.867)},
+            10: {'SAC': self.__i_sac, 'SIC': self.__i_sic},
+            30: {'ToD': (ltt_time_of_day + 0.867)},
             41: {'RotS': 4},
             # 50: {'COM_presence': 1, 'PSR_presence': 1, 'MDS_presence': 1, 'fx': 0,
             #      # COM
@@ -365,187 +167,427 @@ class Radar:
         # 8: sector
         # 9: theta (h_angle)
 
-        detected_tracks = []
+        llst_detected_tracks = []
 
-        for t in tracks:
+        for li_track_number, ldct_track in self.__tracks.items():
 
-            if t[8] != sector:
+            self.__lock.acquire()
+            if ldct_track['sector'] != fi_sector and ldct_track['detect'] is not True:
                 continue
 
-            dist = math.sqrt(t[1]*t[1] + t[2]*t[2] + t[3]*t[3])  # Distance from radar (3D)
-            dist2d = math.sqrt(t[1]*t[1] + t[2]*t[2])  # Distance from radar (2D)
+            li_spi = 0
+            if ldct_track['spi'] is True:
+                li_spi = 1
 
-            track_record = {
-                10: {'SAC': self.sac, 'SIC': self.sic},
-                140: {'ToD': tod},
-                20: {'TYP': 2, 'SIM': 0, 'RDP': 0, 'SPI': 0, 'RAB': 0, 'FX': 1, 'TST': 0, 'ME': 0, 'MI': 0, 'FOEFRI': 0, 'FX2': 0},
-                40: {'RHO': dist2d, 'THETA': t[9]},
-                70: {'V': 0, 'G': 0, 'L': 0, 'Mode3A': int(t[6], 8)},
-                90: {'V': 0, 'G': 0, 'FL': (t[3]/100)},
-                161: {'Tn': t[0]},
-                200: {'CGS': t[5], 'CHdg': t[4]},
+            ldct_track_record = {
+                10: {'SAC': self.__i_sac, 'SIC': self.__i_sic},
+                140: {'ToD': ltt_time_of_day},
+                20: {'TYP': 2, 'SIM': 0, 'RDP': 0, 'SPI': li_spi, 'RAB': 0, 'FX': 1, 'TST': 0, 'ME': 0, 'MI': 0, 'FOEFRI': 0, 'FX2': 0},
+                40: {'RHO': ldct_track['rho'] , 'THETA': ldct_track['theta']},
+                70: {'V': 0, 'G': 0, 'L': 0, 'Mode3A': int(ldct_track['ssr'], 8)},
+                90: {'V': 0, 'G': 0, 'FL': (ldct_track['fl']/100)},
+                161: {'Tn': li_track_number},
+                200: {'CGS': ldct_track['ground_speed'], 'CHdg': ldct_track['heading']},
                 170: {'CNF': 0, 'RAD': 2, 'DOU': 0, 'MAH': 0, 'CDM': 0, 'FX': 1, 'TRE': 0, 'GHO': 0, 'SUP': 0, 'TCC': 0, 'FX2': 0}
             }
+            self.__lock.release()
 
-            detected_tracks.append(track_record)
+            llst_detected_tracks.append(ldct_track_record)
 
-        if len(detected_tracks) > 0:
-            sector_record = {48: detected_tracks, 34: [sector_record]}
+        if len(llst_detected_tracks) > 0:
+            ldct_asterix_record = {48: llst_detected_tracks, 34: [ldct_sector_record]}
         else:
-            sector_record = {34: [sector_record]}
+            ldct_asterix_record = {34: [ldct_sector_record]}
 
-        north_record = {34: [north_record]}
+        self.__transmit(ldct_asterix_record)
 
-        # encoded_sector = self.asterix_encode(sector_record)
-        # encoded_north = self.asterix_encode(north_record)
+        if fb_north_flag:
+            ldct_asterix_north_record = {34: [ldct_north_record]}
 
-        # self.net_send(encoded_sector)
-        self.transmit(sector_record)
-
-        if north_flag:
-            # self.net_send(encoded_north)
-            # self.transmit(encoded_north)
-            self.transmit(north_record)
-
-    def asterix_encode(self, asterix_record):
-        # Encoding data to ASTERIX format
-        data_bin = asterix_utils.encode(asterix_record)
-        return hex(data_bin).rstrip("L").lstrip("0x")
-
-    def transmit(self, asterix_record):
-        # Encoding data to ASTERIX format
-        data_bin = asterix_utils.encode(asterix_record)
-        # print ("%x" % data_bin)
-        msg = hex(data_bin).rstrip("L").lstrip("0x")
-        self.sock.sendto(binascii.unhexlify(msg), (self.net_ip, self.net_port))
-        # print msg
+            self.__transmit(ldct_asterix_north_record)
 
 
-    # -------------------------------------------------------------------------
-    # method broadcast
-    # -------------------------------------------------------------------------
-    def broadcast_icea(self, tracks):
-        """method broadcast
-
-        This method sends first message empty sector network and seeks to identify
-        the aircraft that are within the current sector, formats the messages from
-        the aircraft to the icea protocol to be sent on the network.
-        """
-
-        # get aircraft(s) of sector actual
-        messages = self.encoder.encode_icea(tracks)
-
-        if messages is None:
-            return
-
-        for sector in range(0, 32):
-
-            # send message empty sector
-            self.net_send(self.empty_msg[sector])
-
-            for i in range(0, len(messages)):
-
-                # sectors iquals
-                if tracks[i][-1] == sector:
-
-                   # send message track
-                   self.net_send(messages[i])
-
-
-    # -------------------------------------------------------------------------
-    # method calc_distance_from
-    # -------------------------------------------------------------------------
-    def calc_distance_from(self, lat, lon, alt):
+    # ---------------------------------------------------------------------------------------------
+    def __calc_distance_from(self, ff_lat, ff_lon, ff_alt):
         """method calc_distance_from
 
         This method calculates the distance of the aircraft on radar
         """
-        x, y, z = geo_utils.geog2enu(float(lat), float(lon), float(alt), self.latitude, self.longitude, self.altitude)
+        lf_x, lf_y, lf_z = geo_utils.geog2enu(ff_lat, ff_lon, ff_alt,
+                                              self.__f_latitude, self.__f_longitude,
+                                              self.__f_altitude)
 
-        return x, y
+        return lf_x, lf_y
 
 
-    # -------------------------------------------------------------------------
-    # method net_send
-    # -------------------------------------------------------------------------
-    def net_send(self, msg):
-        """method net_send
-
-        This method performs the post on the network in broadcast mode and udp
+    # ---------------------------------------------------------------------------------------------
+    def __listen_ptracks(self):
         """
 
-        hex_msg = binascii.unhexlify(msg)
+        :return:
+        """
 
-        # UDP
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        # IP address of incoming messages
+        ls_ip = netifaces.addresses(self.NET_IFACE)[2][0]['addr']
+        l_sock = mcast_socket.McastSocket(local_port=self.NET_PTRACKS_PORT, reuse=True)
+        l_sock.mcast_add(self.NET_PTRACKS_GROUP, ls_ip)
 
-        if self.net_mode == "broadcast":
-            sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-
-        # send msg
-        try:
-            sock.sendto(hex_msg, (self.net_ip, self.net_port))
-        except IOError, e:
-            if e.errno == 101:
-                #print "Network unreachable"
-                pass
-        finally:
-            sock.close()
+        while True:
+            l_data, l_sender = l_sock.recvfrom(1024)
+            # Inserting received messages in the queue
+            self.__q_queue.append(l_data)
 
 
-# -----------------------------------------------------------------------------
-# class RadarUtils
-# -----------------------------------------------------------------------------
+    # ---------------------------------------------------------------------------------------------
+    def __load_config(self, fs_config):
+        """
+        load configuration from file.
+
+        :param fs_config: configuration file.
+        :return:
+        """
+        # logger
+        M_LOG.info("__load_config:>>")
+
+
+        # Reading configuration file
+        if os.path.exists(fs_config):
+            M_LOG.info("Configuration file %s found." % fs_config)
+
+            l_cparser = ConfigParser.ConfigParser()
+            l_cparser.read(fs_config)
+
+            self.__f_latitude  = l_cparser.getfloat("Location", "latitude")
+            self.__f_longitude = l_cparser.getfloat("Location", "longitude")
+            self.__f_altitude  = l_cparser.getfloat("Location", "altitude")
+
+            # Radar parameters
+            self.__f_sweep_time = l_cparser.getfloat("PSR", "sweep_time")
+            self.__f_vertical_coverage = l_cparser.getfloat("PSR", "vertical_coverage")
+            self.__f_psr_horizontal_coverage = l_cparser.getfloat("PSR", "psr_horizontal_coverage") * self.NM_TO_M
+            self.__f_ssr_horizontal_coverage = l_cparser.getfloat("PSR", "ssr_horizontal_coverage") * self.NM_TO_M
+
+            # Network parameters
+            self.__s_net_ip = l_cparser.get("Network", "destination")
+            self.__i_net_port = l_cparser.getint("Network", "port")
+
+            # System Area Code (SAC)
+            if l_cparser.has_option("Network", "sac"):
+                self.__i_sac = int(l_cparser.get("Network", "sac"), 16)  # in hex
+
+            # System Identification Code (SIC)
+            if l_cparser.has_option("Network", "sic"):
+                self.__i_sic = int(l_cparser.get("Network", "sic"), 16)  # in hex
+
+            # Placing radar on the proper location
+            # set_location(nemid, lat, lon, alt, heading, speed, climb)
+            #emane_utils.set_location(nemid=self.nemid, lat=self.latitude, lon=self.longitude, alt=self.altitude,
+            #                         heading=0.0, speed=0.0, climb=0.0)
+
+        M_LOG.debug("Location of Radar:")
+        M_LOG.debug("  Latitude:  %f" % self.__f_latitude)
+        M_LOG.debug("  Longitude: %f" % self.__f_longitude)
+        M_LOG.debug("  Altitude:  %f m" % self.__f_altitude)
+        M_LOG.debug("Network settings:")
+        M_LOG.debug("  Destination:  %s" % self.__s_net_ip)
+        M_LOG.debug("  Port:         %d" % self.__i_net_port)
+        M_LOG.debug("ASTERIX settings:")
+        M_LOG.debug("  SAC:          %d" % self.__i_sac)
+        M_LOG.debug("  SIC:          %d" % self.__i_sic)
+
+        # logger
+        M_LOG.info("__load_config:<<")
+
+
+    # ---------------------------------------------------------------------------------------------
+    def __process_msg(self, data):
+        """
+
+        :param data:
+        :return:
+        """
+        # logger
+        M_LOG.info("__process_msg:>>")
+
+        # ex: 1#7003#-1#4656.1#-16.48614#-47.947058#210.8#9.7#353.9#TAM6543#B737#21653.3006492#icao24
+
+        llst_message = data.split('#')
+
+        # Node number
+        li_msg_num = int(llst_message[0])
+
+        # SSR
+        ls_ssr = llst_message[1]
+
+        # SPI
+        li_msg_spi = int(llst_message[2])
+
+        # if spi > 0, SPI=ON, otherwise SPI=OFF
+        if li_msg_spi > 1:
+            lb_spi = True
+        else:
+            lb_spi = False
+
+        # Altitude (meters)
+        lf_altitude = float(llst_message[3])
+
+        # Latitude (degrees)
+        lf_latitude = float(llst_message[4])
+
+        # Longitude (degrees)
+        lf_longitude = float(llst_message[5])
+
+        # Ground speed (knots)
+        lf_ground_speed = float(llst_message[6])
+        lf_ground_speed = lf_ground_speed * self.KT_TO_MPS
+
+        # Vertical rate (m/s)
+        lf_vertical_rate = float(llst_message[7])
+
+        # Heading (degrees)
+        lf_heading = float(llst_message[8])
+
+        # Callsign
+        ls_callsign = llst_message[9]
+
+        # Aircraft performance type
+        ls_aircraft_type = llst_message[10]
+
+        # Timestamp
+        # self.old_timestamp = self.timestamp
+        lf_timestamp = float(llst_message[11])
+
+        # ICAO 24 bit code
+        ls_icao24 = llst_message[12]
+
+        # Radar detect
+        lf_x, lf_y = self.__calc_distance_from(lf_latitude, lf_longitude, lf_altitude)
+
+        lf_z = lf_altitude
+
+        # Sector
+        lf_h_angle = RadarUtils.calc_horizontal_angle(lf_x, lf_y, lf_z)
+
+        li_sector = int(lf_h_angle / self.DEG_SETOR)
+
+        # Radar distance detection
+        lf_hdist_2d = math.sqrt(lf_x * lf_x + lf_y * lf_y)
+
+        lb_detect = True
+        if lf_hdist_2d > self.__f_ssr_horizontal_coverage:
+            lb_detect = False
+
+        # Convert to NM
+        lf_hdist_2d = lf_hdist_2d * self.M_TO_NM
+        # Distance from radar (3D)
+        lf_slant_range = math.sqrt(lf_x * lf_x + lf_y * lf_y + lf_z * lf_z) * self.M_TO_NM
+
+        # Altitude in feet
+        lf_altitude = lf_altitude * self.FT_TO_M
+
+        l_track = {
+            'detect': lb_detect,
+            'sector': li_sector,
+            'ssr': ls_ssr,
+            'spi': lb_spi,
+            'slant_range' : lf_slant_range,
+            'rho' : lf_hdist_2d,
+            'theta': lf_h_angle,
+            'fl': lf_altitude,
+            # m/s
+            'ground_speed': lf_ground_speed,
+            # degrees
+            'heading': lf_heading,
+        }
+
+        self.__lock.acquire()
+        self.__tracks[li_msg_num] = l_track
+        self.__lock.release()
+
+        # logger
+        M_LOG.info("__process_msg:<<")
+
+
+    # ---------------------------------------------------------------------------------------------
+    def __process_queue(self):
+        """
+
+        :return:
+        """
+        # logger
+        M_LOG.info("__process_queue:>>")
+
+        while True:
+            if len(self.__q_queue) == 0:
+                time.sleep(0.5)
+                continue
+            else:
+                self.__process_msg(self.__queue.popleft())
+
+        # logger
+        M_LOG.info("__process_queue:<<")
+
+
+    # ---------------------------------------------------------------------------------------------
+    def __send_asterix_data(self):
+        """
+        This method has the cyclic function 4/2 for aircraft that are within
+        the radar coverage and send in broadcast mode (UDP) network
+        """
+        # logger
+        M_LOG.info("__send_asterix_data:>>")
+
+        while True:
+
+            ltt_time0 = time.time()
+            ltt_timep = time.time()
+
+            for li_sector in range(0, 32):
+
+                lb_send_north = False
+                if li_sector == 25:
+                    lb_send_north = True
+
+                self.broadcast_asterix(li_sector, lb_send_north)
+
+            ltt_deltap = time.time() - ltt_timep
+
+            time.sleep(self.__f_sweep_time - ltt_deltap)
+
+            #M_LOG.debug("Objects detected: %d" % len(tracks))
+            #for t in tracks:
+            #    print "  > %s: %f %f %f %f %f %s" % (t[7], t[1], t[2], t[3], t[4], t[5], t[8])
+            #
+            ltt_deltat = time.time() - ltt_time0
+            M_LOG.debug("Complete rotation in %f sec" % ltt_deltat)
+
+        # logger
+        M_LOG.info("__send_asterix_data:<<")
+
+
+    # -----------------------------------------------------------------------------------
+    def __transmit(self, fdct_asterix_record):
+        """
+
+        :param fdct_asterix_record:
+        :return:
+        """
+        # logger
+        M_LOG.info("__transmit:>>")
+
+        # Encoding data to ASTERIX format
+        lbuf_data_bin = asterix_utils.encode(fdct_asterix_record)
+        lbuf_msg = hex(lbuf_data_bin).rstrip("L").lstrip("0x")
+        self.sock.sendto(binascii.unhexlify(lbuf_msg), (self.__s_net_ip, self.__i_net_port))
+
+        # logger
+        M_LOG.info("__transmit:<<")
+
+
+    # ---------------------------------------------------------------------------------------------
+    def start(self):
+        """
+
+        :return:
+        """
+        # logger
+        M_LOG.info("start:>>")
+
+        l_thread1 = threading.Thread(target=self.__send_asterix_data, args=())
+        l_thread2 = threading.Thread(target=self.__listen_ptracks, args=())
+        l_thread3 = threading.Thread(target=self.__process_queue, args=())
+
+        l_thread1.start();
+        l_thread2.start();
+        l_thread3.start();
+
+        # logger
+        M_LOG.info("start:<<")
+
+
+# < class RadarUtils >-----------------------------------------------------------------------------
 class RadarUtils:
 
     DEG_PI_3 = 60.0           # PI / 3
     DEG_PI_2 = 90.0           # PI / 2
-    DEG_PI = 180.0          # PI
-    DEG_3PI_2 = 270.0          # 3 PI / 2
-    DEG_2PI = 360.0          # 2 PI
-    RAD_DEG = 57.29577951    # Converte RAD para DEG
-    DEG_RAD = 0.017453292    # Converte DEG para RAD
+    DEG_PI = 180.0            # PI
+    DEG_3PI_2 = 270.0         # 3 PI / 2
+    DEG_2PI = 360.0           # 2 PI
+    RAD_DEG = 57.29577951     # Converte RAD para DEG
+    DEG_RAD = 0.017453292     # Converte DEG para RAD
     DEG_SETOR = 11.25
 
+
+    # ---------------------------------------------------------------------------------------------
     @staticmethod
-    def calc_horizontal_angle(x_pos, y_pos, z_pos = None):
+    def calc_horizontal_angle(ff_x_pos, ff_y_pos, ff_z_pos = None):
+        """
+
+        :param ff_x_pos:
+        :param ff_y_pos:
+        :param ff_z_pos:
+        :return:
+        """
 
         # calcula a nova radial (proa de demanda)
-        if x_pos > 0:
-            return 90.0 - math.degrees(math.atan(y_pos / x_pos))
+        if ff_x_pos > 0:
+            return 90.0 - math.degrees(math.atan(ff_y_pos / ff_x_pos))
 
-        if x_pos < 0:
-            angle_tmp = 270.0 - math.degrees(math.atan(y_pos / x_pos))
+        if ff_x_pos < 0:
+            lf_angle_tmp = 270.0 - math.degrees(math.atan(ff_y_pos / ff_x_pos))
 
-            if angle_tmp >= 360.0:
-                return angle_tmp - 360.0
+            if lf_angle_tmp >= 360.0:
+                return lf_angle_tmp - 360.0
             else:
-                return angle_tmp
+                return lf_angle_tmp
 
-        if y_pos >= 0:
-            return 0
+        if ff_y_pos >= 0:
+            return 0.0
         else:
             return RadarUtils.DEG_PI
 
+
+    # ---------------------------------------------------------------------------------------------
     @staticmethod
-    def calc_vertical_angle(x_pos, y_pos, z_pos):
-        if z_pos == 0.0:
+    def calc_vertical_angle(ff_x_pos, ff_y_pos, ff_z_pos):
+        """
+
+        :param ff_x_pos:
+        :param ff_y_pos:
+        :param ff_z_pos:
+        :return:
+        """
+
+        if ff_z_pos == 0.0:
             return 0.0
 
-        if x_pos == 0.0:
+        if ff_x_pos == 0.0:
             return 90.0
 
-        v_angle = math.atan(z_pos / abs(x_pos))
+        lf_v_angle = math.atan(ff_z_pos / abs(ff_x_pos))
 
-        if z_pos < 0:
-            return -v_angle
+        if ff_z_pos < 0:
+            return -lf_v_angle
 
-        return v_angle
+        return lf_v_angle
 
 
-if __name__ == '__main__':
+# < main >-----------------------------------------------------------------------------------------
+def main():
 
-    # session_id = core_utils.get_session_id()
+    l_oRadar = Radar()
+    l_oRadar.start()
 
-    radar = Radar()
-    radar.start()
+# -------------------------------------------------------------------------------------------------
+# this is the bootstrap process
+
+if "__main__" == __name__:
+
+    # logger
+    logging.basicConfig(filename=M_LOG_FILE, filemode="w", format="%(asctime)s %(levelname)s: %(message)s")
+
+    # jump start
+    main()
+
+# < the end >--------------------------------------------------------------------------------------
+
