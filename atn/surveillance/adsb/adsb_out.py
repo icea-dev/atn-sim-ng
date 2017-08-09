@@ -176,6 +176,7 @@ class AdsbOut:
 
         self.logger.info("Finished thread generate airbone position")
 
+
     # -------------------------------------------------------------------------
     def _start_airborne_velocity(self, rate=1.0):
         """
