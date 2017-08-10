@@ -1,0 +1,386 @@
+node n1 {
+    type wlan
+    network-config {
+	hostname 1090Mhz
+	!
+	interface wireless
+	 ipv6 address 2001::0/128
+	 ip address 10.0.0.7/24
+	!
+	mobmodel
+	coreapi
+	emane_rfpipe
+	!
+    }
+    custom-config {
+	custom-config-id emane_rfpipe
+	custom-command {11 3 11 2 10 9 9 11 9 9 4 4 4 2 9 9 9 11 10 4 10}
+	config {
+	enablepromiscuousmode=on
+	datarate=1M
+	flowcontrolenable=on
+	flowcontroltokens=10
+	pcrcurveuri=/usr/share/emane/xml/models/mac/rfpipe/rfpipepcr.xml
+	jitter=0.0
+	delay=0.0
+	radiometricenable=on
+	radiometricreportinterval=1.0
+	neighbormetricdeletetime=60.0
+	bandwidth=1M
+	frequency=1.090G
+	frequencyofinterest=1.090G
+	subid=1
+	systemnoisefigure=4.0
+	txpower=100.0
+	fixedantennagain=5.5
+	fixedantennagainenable=on
+	noisemode=none
+	noisebinsize=20
+	propagationmodel=freespace
+	}
+    }
+    custom-config {
+	custom-config-id basic_range
+	custom-command {3 3 9 9 9}
+	config {
+	range=275
+	bandwidth=54000000
+	jitter=0
+	delay=20000
+	error=0
+	}
+    }
+    canvas c1
+    iconcoords {769.0 55.0}
+    labelcoords {769.0 87.0}
+    interface-peer {e0 n2}
+    interface-peer {e1 n3}
+    interface-peer {e2 n4}
+    interface-peer {e3 n5}
+    interface-peer {e4 n6}
+    interface-peer {e5 n7}
+    interface-peer {e6 n8}
+    interface-peer {e7 n9}
+}
+
+node n2 {
+    type router
+    model ground-station
+    network-config {
+	hostname n2
+	!
+	interface eth0
+	 ipv6 address 2001::1/128
+	 mac address 00:00:00:aa:00:00
+	 ip address 10.0.0.1/24
+	!
+    }
+    canvas c1
+    iconcoords {451.0 344.0}
+    labelcoords {451.0 376.0}
+    services {zebra OSPFv3MDR IPForward Dump1090 AdsbIn}
+    interface-peer {eth0 n1}
+    custom-config {
+	custom-config-id service:AdsbIn:adsb_in.cfg
+	custom-command adsb_in.cfg
+	config {
+	[glb]
+	destinations = dump1090 
+	
+	[dump1090]
+	type = dump1090
+	server = localhost
+	port = 30001
+	}
+    }
+    custom-config {
+	custom-config-id service:AdsbIn
+	custom-command AdsbIn
+	config {
+	dirs=()
+	files=('adsb_in.cfg', 'adsb_in.sh')
+	startidx=50
+	cmdup=('sh adsb_in.sh',)
+	cmddown=()
+	cmdval=()
+	meta=
+	starttime=
+	}
+    }
+}
+
+node n3 {
+    type router
+    model aircraft
+    network-config {
+	hostname n3
+	!
+	interface eth0
+	 ipv6 address 2001::2/128
+	 mac address 00:00:00:aa:00:00
+	 ip address 10.0.0.2/24
+	!
+    }
+    canvas c1
+    iconcoords {107.0 178.0}
+    labelcoords {107.0 210.0}
+    services {zebra OSPFv3MDR vtysh IPForward DefaultMulticastRoute AdsbOut}
+    interface-peer {eth0 n1}
+}
+
+node n4 {
+    type router
+    model aircraft
+    network-config {
+	hostname n4
+	!
+	interface eth0
+	 ipv6 address 2001::3/128
+	 mac address 00:00:00:aa:00:01
+	 ip address 10.0.0.3/24
+	!
+    }
+    canvas c1
+    iconcoords {183.0 179.0}
+    labelcoords {183.0 211.0}
+    services {zebra OSPFv3MDR vtysh IPForward DefaultMulticastRoute AdsbOut}
+    interface-peer {eth0 n1}
+}
+
+node n5 {
+    type router
+    model aircraft
+    network-config {
+	hostname n5
+	!
+	interface eth0
+	 ipv6 address 2001::4/128
+	 mac address 00:00:00:aa:00:02
+	 ip address 10.0.0.4/24
+	!
+    }
+    canvas c1
+    iconcoords {113.0 257.0}
+    labelcoords {113.0 289.0}
+    services {zebra OSPFv3MDR vtysh IPForward DefaultMulticastRoute AdsbOut}
+    interface-peer {eth0 n1}
+}
+
+node n6 {
+    type router
+    model aircraft
+    network-config {
+	hostname n6
+	!
+	interface eth0
+	 ipv6 address 2001::5/128
+	 mac address 00:00:00:aa:00:03
+	 ip address 10.0.0.5/24
+	!
+    }
+    canvas c1
+    iconcoords {189.0 258.0}
+    labelcoords {189.0 290.0}
+    services {zebra OSPFv3MDR vtysh IPForward DefaultMulticastRoute AdsbOut}
+    interface-peer {eth0 n1}
+}
+
+node n7 {
+    type router
+    model aircraft
+    network-config {
+	hostname n7
+	!
+	interface eth0
+	 ipv6 address 2001::6/128
+	 mac address 00:00:00:aa:00:04
+	 ip address 10.0.0.6/24
+	!
+    }
+    canvas c1
+    iconcoords {117.0 339.0}
+    labelcoords {117.0 371.0}
+    services {zebra OSPFv3MDR vtysh IPForward DefaultMulticastRoute AdsbOut}
+    interface-peer {eth0 n1}
+}
+
+node n8 {
+    type router
+    model aircraft
+    network-config {
+	hostname n8
+	!
+	interface eth0
+	 ipv6 address 2001::7/128
+	 mac address 00:00:00:aa:00:05
+	 ip address 10.0.0.7/24
+	!
+    }
+    canvas c1
+    iconcoords {193.0 342.0}
+    labelcoords {193.0 374.0}
+    services {zebra OSPFv3MDR vtysh IPForward DefaultMulticastRoute AdsbOut}
+    interface-peer {eth0 n1}
+}
+
+node n9 {
+    type router
+    model radar
+    network-config {
+	hostname n9
+	!
+	interface eth1
+	 ip address 10.0.1.1/24
+	 ipv6 address 2001:0::1/64
+	!
+	interface eth0
+	 ip address 10.0.0.8/24
+	 ipv6 address 2001::8/128
+	!
+    }
+    canvas c1
+    iconcoords {595.0 352.0}
+    labelcoords {595.0 384.0}
+    interface-peer {eth0 n1}
+    custom-config {
+	custom-config-id service:Radar
+	custom-command Radar
+	config {
+	files=('radar.cfg', 'radar.sh', )
+	}
+    }
+    custom-config {
+	custom-config-id service:Radar:radar.cfg
+	custom-command radar.cfg
+	config {
+	[Location]
+	; Latitude of radar (in decimal degrees)
+	latitude = -15.870969
+	
+	; Longitude of radar (in decimal degrees)
+	longitude = -47.917024
+	
+	; Altitude of radar (in meters)
+	altitude = 2681
+	
+	[PSR]
+	
+	; The maximum horizontal distance of a detectable object (in NM)
+	psr_horizontal_coverage = 80
+	
+	; The maximum altitude of a detectable object (in FT)
+	vertical_coverage = 60000
+	
+	; Minimum elevation angle of detectable objects (in degrees)
+	min_angle = 0
+	
+	; Maximum elevation angle of detectable objects (in degrees)
+	max_angle = 85
+	
+	; The maximum horizontal distance of Secundary SSR (in NM)
+	ssr_horizontal_coverage = 200
+	
+	; The time it takes to sweep the entire 360 degrees horizon (in seconds)
+	sweep_time = 4.0
+	
+	[Network]
+	
+	; IP address of the receiver of radar plots (e.g. ATC system)
+	destination = 10.0.1.255
+	
+	; Transport layer port of the destination
+	port = 65000
+	
+	sac = 232
+	sic = 16
+	
+	
+	}
+    }
+    services {zebra OSPFv3MDR IPForward GPSd Radar}
+    interface-peer {eth1 n10}
+}
+
+node n10 {
+    type router
+    model host
+    network-config {
+	hostname n10
+	!
+	interface eth0
+	 ip address 10.0.1.10/24
+	 ipv6 address 2001:0::10/64
+	!
+    }
+    canvas c1
+    iconcoords {609.0 533.0}
+    labelcoords {609.0 565.0}
+    interface-peer {eth0 n9}
+}
+
+link l1 {
+    nodes {n1 n2}
+}
+
+link l2 {
+    nodes {n1 n3}
+}
+
+link l3 {
+    nodes {n1 n4}
+}
+
+link l4 {
+    nodes {n1 n5}
+}
+
+link l5 {
+    nodes {n1 n6}
+}
+
+link l6 {
+    nodes {n1 n7}
+}
+
+link l7 {
+    nodes {n1 n8}
+}
+
+link l8 {
+    nodes {n1 n9}
+}
+
+link l9 {
+    nodes {n9 n10}
+    bandwidth 0
+}
+
+canvas c1 {
+    name {Canvas1}
+    refpt {0 0 -13.869227 -49.918091 2.0}
+    scale {50000.0}
+    size {1000 900}
+}
+
+option global {
+    interface_names no
+    ip_addresses yes
+    ipv6_addresses yes
+    node_labels yes
+    link_labels yes
+    show_api no
+    background_images no
+    annotations yes
+    grid yes
+    traffic_start 0
+}
+
+option session {
+    controlnet=172.17.0.0/16
+    controlnet_updown_script=
+    enablerj45=1
+    enablesdt=0
+    preservedir=0
+    sdturl=tcp://127.0.0.1:50000/
+}
+
