@@ -30,6 +30,7 @@ import logging
 import netifaces as ni
 import socket
 import threading
+import time
 
 from .adsb_feed import AdsbFeed
 
@@ -47,6 +48,8 @@ class CorePtracksFeed(AdsbFeed):
     # Interface da rede de controle do CORE
     ctrl_net_iface = "ctrl0"
     ctrl_net_port = 4038
+    ctrl_net_radar = "235.12.2.4"
+    ctrl_net_radar_port = 1970
 
     # 'CA' Capability Field : 5 - Signifies Level 2 or above transponder, and the ability to set "CA"
     # code 7, and airbone
@@ -60,7 +63,7 @@ class CorePtracksFeed(AdsbFeed):
     KT_TO_MPS = 0.51444444444
 
     # -------------------------------------------------------------------------------------------------
-    def __init__(self):
+    def __init__(self, fb_send_data_radar=True):
         """
         Constructor
         """
@@ -73,6 +76,9 @@ class CorePtracksFeed(AdsbFeed):
 
         # Locking
         self.data_lock = threading.Lock()
+        self.__dict_lock = threading.Lock()
+
+        self.__d_ptracks_data = {}
 
         # Init attributes aircraft data
         self.ssr = None
@@ -88,6 +94,8 @@ class CorePtracksFeed(AdsbFeed):
         self.timestamp = 0
         self.old_timestamp = 0
         self.icao24 = None
+
+        self.send_data_radar = fb_send_data_radar
 
         # IP address of incoming messages
         self.ctrl_net_host = ni.ifaddresses(self.ctrl_net_iface)[2][0]['addr']
@@ -237,8 +245,10 @@ class CorePtracksFeed(AdsbFeed):
         """
         logging.info("Starting core ptracks feed ...")
         t1 = threading.Thread(target=self.ptracks_read, args=())
-        t1.start()
+        #t2 = threading.Thread(traget=self.ptracks_send, args=())
 
+        t1.start()
+        #t2.start()
 
     # -------------------------------------------------------------------------------------------------
     def process_message(self, message):
@@ -311,8 +321,12 @@ class CorePtracksFeed(AdsbFeed):
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.setsockopt(socket.SOL_SOCKET, 25, self.ctrl_net_iface+'\0')
-
         sock.bind((self.ctrl_net_host, self.ctrl_net_port))
+
+        sock_radar = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock_radar.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        sock_radar.setsockopt(socket.SOL_SOCKET, 25, self.ctrl_net_iface+'\0')
+        sock_radar.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 2)
 
         logging.info("Listen on IP %s port %s " % (self.ctrl_net_host, str(self.ctrl_net_port)))
 
@@ -320,11 +334,40 @@ class CorePtracksFeed(AdsbFeed):
             # Buffer size is 1024 bytes
             data, addr = sock.recvfrom(1024)
             message = data.split("#")
+            l_key = int(message[0])
+
+            if self.send_data_radar is True:
+                #self.__dict_lock.acquire()
+                sock_radar.sendto(data, (self.ctrl_net_radar, self.ctrl_net_radar_port))
+                #self.__d_ptracks_data[l_key] = data
+                #self.__dict_lock.release()
 
             logging.info("Data received [%s]" % data)
             self.data_lock.acquire()
             self.process_message(message)
             self.data_lock.release()
+
+
+    # -------------------------------------------------------------------------------------------------
+    def  ptracks_send(self):
+        """
+        Thread for sending the track generator (ptracks) data
+        :return:
+        """
+        sock_radar = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock_radar.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        sock_radar.setsockopt(socket.SOL_SOCKET, 25, self.ctrl_net_iface+'\0')
+        sock_radar.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 2)
+
+        while True:
+
+            #self.__dict_lock.acquire()
+            if self.__p_tracks_data:
+                for key, data in self.__ptracks_data.items():
+                    sock_radar.sendto(data, (self.ctrl_net_radar, self.ctrl_net_radar_port))
+            #self.__dict_lock.release()
+
+            time.sleep(2.0)
 
 
 # < the end >--------------------------------------------------------------------------------------
