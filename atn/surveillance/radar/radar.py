@@ -35,13 +35,15 @@ import os
 import threading
 import time
 import socket
-import struct
 
 from collections import deque
 
 from ...network import mcast_socket
 from ..asterix import asterix_utils
+from ... import core_utils
+from ... import emane_utils
 from ... import geo_utils
+
 
 M_LOG = logging.getLogger(__name__)
 M_LOG.setLevel(logging.DEBUG)
@@ -297,10 +299,18 @@ class Radar:
             if l_cparser.has_option("Network", "sic"):
                 self.__i_sic = int(l_cparser.get("Network", "sic"))  # in hex
 
-            # Placing radar on the proper location
-            # set_location(nemid, lat, lon, alt, heading, speed, climb)
-            #emane_utils.set_location(nemid=self.nemid, lat=self.latitude, lon=self.longitude, alt=self.altitude,
-            #                         heading=0.0, speed=0.0, climb=0.0)
+        # Node name of radar in simulation
+        ls_node_name = core_utils.get_node_name()
+
+        # Simulation ID
+        li_session_id = core_utils.get_session_id()
+
+        # NEM ID
+        li_nem_id = core_utils.get_nem_id(node_name=ls_node_name, session_id=li_session_id)
+
+        # Placing radar on the proper location
+        emane_utils.set_location(nemid=li_nem_id, lat=self.__f_latitude, lon=self.__f_longitude, alt=self.__f_altitude,
+                                 heading=0.0, speed=0.0, climb=0.0)
 
         M_LOG.debug("Location of Radar:")
         M_LOG.debug("  Latitude:  %f" % self.__f_latitude)
