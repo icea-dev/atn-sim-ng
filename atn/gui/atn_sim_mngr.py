@@ -482,7 +482,8 @@ class CATNSimMngr:
                 return
 
         # Runs core-gui in run mode
-        self.core_mngr.run_gui_exec_mode(l_scenario_filename_path)
+        l_scenario_core = l_scenario_filename_path.replace('xml', 'imn')
+        self.core_mngr.run_gui_exec_mode(l_scenario_core)
 
         # Runs the Track Generator
         self.track_mngr.run()
