@@ -35,6 +35,7 @@ import os
 import threading
 import time
 import socket
+import struct
 
 from collections import deque
 
@@ -53,11 +54,12 @@ class Radar:
     """
     This class emulates the functionality of the radar
     """
-
+    FT_TO_M = 0.3048
     M_TO_FT = 3.28084
     M_TO_NM = 0.000539957
     NM_TO_M = 1852
     MPS_TO_KT = 1.94384
+    KT_TO_MPS = 0.51444444444
     DEG_SETOR = 11.25
 
     # PSR default values
@@ -101,9 +103,6 @@ class Radar:
         self.__s_net_ip = self.NET_IP_DEFAULT
         self.__i_net_port = self.NET_PORT_DEFAULT
 
-        # Locking
-        self.__lock = threading.Lock()
-
         # List of aircraft
         self.__tracks = {}
 
@@ -116,8 +115,8 @@ class Radar:
         self.__sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 
         # ASTERIX Data Source Identifier
-        self.__i_sac = int(self.SAC, 16)
-        self.__i_sic = int(self.SIC, 16)
+        self.__i_sac = self.SAC
+        self.__i_sic = self.SIC
 
         # load configuration file
         self.__load_config(fs_config)
@@ -131,6 +130,9 @@ class Radar:
 
         # sac = 232
         # sic = 10
+        # logger
+        #M_LOG.info("__boradcast_asterix:>>")
+
         ltt_time_of_day = time.time()
 
         ldct_sector_record = {
@@ -169,12 +171,17 @@ class Radar:
 
         llst_detected_tracks = []
 
+        M_LOG.info("__broadcast_asterix:  tracks detected before [%d]" % len(llst_detected_tracks))
         for li_track_number, ldct_track in self.__tracks.items():
 
-            self.__lock.acquire()
-            if ldct_track['sector'] != fi_sector and ldct_track['detect'] is not True:
+            if ldct_track['sector'] != fi_sector:
                 continue
 
+            if ldct_track['detect'] is False:
+                continue
+
+            M_LOG.debug ("__broadcast_asterix:  sector actual [%d] track sector [%d]" % (fi_sector, ldct_track['sector']))
+            M_LOG.debug ("__broadcast_asterix:  track ssr [%s] rho [%f]" % (ldct_track['ssr'], ldct_track['rho']))
             li_spi = 0
             if ldct_track['spi'] is True:
                 li_spi = 1
@@ -190,10 +197,10 @@ class Radar:
                 200: {'CGS': ldct_track['ground_speed'], 'CHdg': ldct_track['heading']},
                 170: {'CNF': 0, 'RAD': 2, 'DOU': 0, 'MAH': 0, 'CDM': 0, 'FX': 1, 'TRE': 0, 'GHO': 0, 'SUP': 0, 'TCC': 0, 'FX2': 0}
             }
-            self.__lock.release()
 
             llst_detected_tracks.append(ldct_track_record)
 
+        M_LOG.info("__broadcast_asterix:  tracks detected after [%d]" % len(llst_detected_tracks))
         if len(llst_detected_tracks) > 0:
             ldct_asterix_record = {48: llst_detected_tracks, 34: [ldct_sector_record]}
         else:
@@ -205,6 +212,9 @@ class Radar:
             ldct_asterix_north_record = {34: [ldct_north_record]}
 
             self.__transmit(ldct_asterix_north_record)
+
+        # logger
+        #M_LOG.info("__broadcast_asterix:<<")
 
 
     # ---------------------------------------------------------------------------------------------
@@ -226,16 +236,24 @@ class Radar:
 
         :return:
         """
+        # logger
+        M_LOG.info("__listen_ptracks:>>")
 
         # IP address of incoming messages
-        ls_ip = netifaces.addresses(self.NET_IFACE)[2][0]['addr']
+        ls_ip = netifaces.ifaddresses(self.NET_IFACE)[2][0]['addr']
         l_sock = mcast_socket.McastSocket(local_port=self.NET_PTRACKS_PORT, reuse=True)
         l_sock.mcast_add(self.NET_PTRACKS_GROUP, ls_ip)
 
+        M_LOG.info("__listen_ptracks:  Waiting for track messages on %s:%d" % (self.NET_PTRACKS_GROUP, self.NET_PTRACKS_PORT))
+
         while True:
             l_data, l_sender = l_sock.recvfrom(1024)
+            M_LOG.debug("__listen_ptracks:  receive data [%s]" % l_data)
+
             # Inserting received messages in the queue
             self.__q_queue.append(l_data)
+
+        M_LOG.info("__listen_ptracks:<<")
 
 
     # ---------------------------------------------------------------------------------------------
@@ -273,11 +291,11 @@ class Radar:
 
             # System Area Code (SAC)
             if l_cparser.has_option("Network", "sac"):
-                self.__i_sac = int(l_cparser.get("Network", "sac"), 16)  # in hex
+                self.__i_sac = int(l_cparser.get("Network", "sac"))  # in hex
 
             # System Identification Code (SIC)
             if l_cparser.has_option("Network", "sic"):
-                self.__i_sic = int(l_cparser.get("Network", "sic"), 16)  # in hex
+                self.__i_sic = int(l_cparser.get("Network", "sic"))  # in hex
 
             # Placing radar on the proper location
             # set_location(nemid, lat, lon, alt, heading, speed, climb)
@@ -310,7 +328,7 @@ class Radar:
         M_LOG.info("__process_msg:>>")
 
         # ex: 1#7003#-1#4656.1#-16.48614#-47.947058#210.8#9.7#353.9#TAM6543#B737#21653.3006492#icao24
-
+        # logger
         llst_message = data.split('#')
 
         # Node number
@@ -385,6 +403,8 @@ class Radar:
         # Altitude in feet
         lf_altitude = lf_altitude * self.FT_TO_M
 
+        M_LOG.debug ("__process_msg:  msg decode")
+
         l_track = {
             'detect': lb_detect,
             'sector': li_sector,
@@ -400,9 +420,7 @@ class Radar:
             'heading': lf_heading,
         }
 
-        self.__lock.acquire()
         self.__tracks[li_msg_num] = l_track
-        self.__lock.release()
 
         # logger
         M_LOG.info("__process_msg:<<")
@@ -417,12 +435,18 @@ class Radar:
         # logger
         M_LOG.info("__process_queue:>>")
 
+        M_LOG.info("__process_queue:  enter loop ...")
+
         while True:
+
+            M_LOG.debug("__process_queue: queue len [%d]" % len(self.__q_queue))
             if len(self.__q_queue) == 0:
                 time.sleep(0.5)
                 continue
             else:
-                self.__process_msg(self.__queue.popleft())
+                while len(self.__q_queue) != 0:
+                    ls_data = self.__q_queue.popleft()
+                    self.__process_msg(ls_data)
 
         # logger
         M_LOG.info("__process_queue:<<")
@@ -448,7 +472,7 @@ class Radar:
                 if li_sector == 25:
                     lb_send_north = True
 
-                self.broadcast_asterix(li_sector, lb_send_north)
+                self.__broadcast_asterix(li_sector, lb_send_north)
 
             ltt_deltap = time.time() - ltt_timep
 
@@ -473,15 +497,17 @@ class Radar:
         :return:
         """
         # logger
-        M_LOG.info("__transmit:>>")
+        #M_LOG.info("__transmit:>>")
 
+        #M_LOG.debug("__transmit:  Sending track messages to %s:%d" % (self.__s_net_ip, self.__i_net_port))
         # Encoding data to ASTERIX format
         lbuf_data_bin = asterix_utils.encode(fdct_asterix_record)
         lbuf_msg = hex(lbuf_data_bin).rstrip("L").lstrip("0x")
-        self.sock.sendto(binascii.unhexlify(lbuf_msg), (self.__s_net_ip, self.__i_net_port))
+        self.__sock.sendto(binascii.unhexlify(lbuf_msg), (self.__s_net_ip, self.__i_net_port))
+        #M_LOG.debug("__transmit: data [%s]" % lbuf_msg)
 
         # logger
-        M_LOG.info("__transmit:<<")
+        #M_LOG.info("__transmit:<<")
 
 
     # ---------------------------------------------------------------------------------------------
