@@ -31,6 +31,8 @@ import multiprocessing
 import sys
 import time
 
+from .factory_attack import FactoryAttack
+
 from ..adsb_in import AdsbIn
 from ..adsb_out import AdsbOut
 from ..feeds.adsb_feed import AdsbFeed
@@ -111,6 +113,10 @@ class CyberAttack(AdsbFeed):
 
         # lista de objetos que fazem o ataque cibernético
         self.__lst_cyber_attack = []
+
+        # cria os ataques
+        for ls_attacks in ls_attacks:
+            self.__lst_cyber_attack.append(FactoryAttack.createCyberAttack(ls_attacks))
 
         # Cria os objetos para escuta e transmissão de mensagens ADS-B
         self.__o_adsbIn = AdsbIn(fi_id= li_id, ff_lat=self.__f_latitude,
