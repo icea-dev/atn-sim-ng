@@ -337,10 +337,10 @@ class CorePtracksFeed(AdsbFeed):
             l_key = int(message[0])
 
             if self.send_data_radar is True:
-                #self.__dict_lock.acquire()
+                self.__dict_lock.acquire()
                 sock_radar.sendto(data, (self.ctrl_net_radar, self.ctrl_net_radar_port))
-                #self.__d_ptracks_data[l_key] = data
-                #self.__dict_lock.release()
+                self.__d_ptracks_data[l_key] = data
+                self.__dict_lock.release()
 
             logging.info("Data received [%s]" % data)
             self.data_lock.acquire()
@@ -362,9 +362,9 @@ class CorePtracksFeed(AdsbFeed):
         while True:
 
             #self.__dict_lock.acquire()
-            if self.__p_tracks_data:
-                for key, data in self.__ptracks_data.items():
-                    sock_radar.sendto(data, (self.ctrl_net_radar, self.ctrl_net_radar_port))
+            #if self.__p_tracks_data:
+                #for key, data in self.__ptracks_data.items():
+                   # sock_radar.sendto(data, (self.ctrl_net_radar, self.ctrl_net_radar_port))
             #self.__dict_lock.release()
 
             time.sleep(2.0)
