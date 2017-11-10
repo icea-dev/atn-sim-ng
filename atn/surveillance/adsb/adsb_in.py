@@ -282,6 +282,8 @@ class AdsbIn(object):
         """
         loop de recebimento das mensagens ADS-B
         """
+        M_LOG.info(">> AdsbIn.receive")
+
         # create a socket for receiving ADS-B messages
         l_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         assert l_sock
@@ -294,7 +296,7 @@ class AdsbIn(object):
         l_sock.bind(("", M_NET_PORT))
 
         # show
-        print "waiting on port: {}".format(M_NET_PORT)
+        M_LOG.info( "!! waiting on port: {}".format(M_NET_PORT) )
 
         # initial time
         lf_now = time.time()
@@ -343,6 +345,8 @@ class AdsbIn(object):
                 # reset message counter
                 li_num_msgs = 0
 
+        M_LOG.info("<< AdsbIn.receive")
+
     # ---------------------------------------------------------------------------------------------
     def run(self):
         """
@@ -366,11 +370,16 @@ class AdsbIn(object):
         retrieve messages
         """
         # queue empty ?
+        M_LOG.info(">> AdsbIn.retrieve_msg")
+
         if self.__q_rec_msgs.empty():
-            # return 
+            M_LOG.info("!! Não existe mensagem ADS-B")
+            M_LOG.info("<< AdsbIn.retrieve_msg")
+            # return
             return None
 
         # return
+        M_LOG.info("<< AdsbIn.retrieve_msg")
         return self.__q_rec_msgs.get()
 
 # -------------------------------------------------------------------------------------------------

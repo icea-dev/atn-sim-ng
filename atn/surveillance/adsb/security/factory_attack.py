@@ -23,18 +23,23 @@ revision 0.1  2017/oct  matiasims
 initial release (Linux/Python)
 ---------------------------------------------------------------------------------------------------
 """
-__version__ = "$revision: 0.1$"
-__author__ = "Ivan Matias"
-__date__ = "2017/10"
-
 # < imports >--------------------------------------------------------------------------------------
 
 # python library
+import logging
 from .flasher import Flasher
 from .evil_twin import EvilTwin
 from .evil_twin_kinematics import EvilTwinKinematics
 from .evil_twin_callsign import EvilTwinCallsign
 from .flooding import Flooding
+
+__version__ = "$revision: 0.1$"
+__author__ = "Ivan Matias"
+__date__ = "2017/10"
+
+
+M_LOG = logging.getLogger(__name__)
+M_LOG.setLevel(logging.DEBUG)
 
 class FactoryAttack():
     """
@@ -42,14 +47,17 @@ class FactoryAttack():
 
     """
 
+    # ---------------------------------------------------------------------------------------------
     @staticmethod
-    def createCyberAttack(self, fs_type=None):
+    def createCyberAttack(fs_type=None):
         """
         Cria um cyber ataque definido em fs_type.
         
         :param fs_type: o tipo de ataqtue cibernético
         :return lo_abstract_attack: um objeto do tipo AbstractAttack
         """
+        M_LOG.info(">> FactoryAttack.createCyberAttack : %s" % fs_type)
+
         if fs_type == 'Flasher':
             return Flasher()
         elif fs_type == 'EvilTwin':
@@ -60,6 +68,8 @@ class FactoryAttack():
             return EvilTwinCallsign()
         elif fs_type == 'Flooding':
             return Flooding()
+
+        M_LOG.info("<< FactoryAttack.createCyberAttack : None")
 
         return None
 

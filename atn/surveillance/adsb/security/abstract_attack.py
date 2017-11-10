@@ -44,17 +44,20 @@ class AbstractAttack(object):
     # Número máximo de mensagens no buffer de mensagens ADS-B recebidas.
     M_MAX_REC_MSGS = 5000
 
+    # ---------------------------------------------------------------------------------------------
     def __init__(self):
         """
 
         """
 
         # A posição do atacante no CORE
-        self.altitude = None
-        self.latitude = None
-        self.longitude = None
+        self.__f_altitude = None
+        self.__f_latitude = None
+        self.__f_longitude = None
 
 
+
+    # ---------------------------------------------------------------------------------------------
     @abstractmethod
     def calculateKinematics(self):
         """
@@ -64,15 +67,21 @@ class AbstractAttack(object):
         raise NotImplementedError()
 
 
+    # ---------------------------------------------------------------------------------------------
     @abstractmethod
-    def spy(self, fo_adsbOut=None):
+    def spy(self, fo_adsbOut=None, fdict_aircraft_table=None, flst_icao24_fake=None):
         """
-        Escuta as mensagens ADS-B.
-        :return:
+        Escuta da mensagens ADS-B.
+
+        :param fo_adsbOut: o transmissor da mensagem ADS-B
+        :param fdict_aircraft_table: dicionário com as informações das aeronaves espionadas.
+        :param flst_icao24_fake: lista com o endereços ICAO24 fake.
+        :return: None.
         """
         raise NotImplementedError()
 
 
+    # ---------------------------------------------------------------------------------------------
     def store_adsb_message(self, fs_message):
         """
         Armazena as mensagens ADS-B recebidas
@@ -84,6 +93,7 @@ class AbstractAttack(object):
             self.q_rec_msgs.put(fs_message)
 
 
+    # ---------------------------------------------------------------------------------------------
     def replay(self, fs_message, fo_adsbOut, fi_delay):
         """
         Retransmite a mensagem ADS-B

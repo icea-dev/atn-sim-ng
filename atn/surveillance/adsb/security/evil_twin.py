@@ -23,40 +23,54 @@ revision 0.1  2017/oct  matiasims
 initial release (Linux/Python)
 ---------------------------------------------------------------------------------------------------
 """
+# < imports >--------------------------------------------------------------------------------------
+
+# python library
+import logging
+
+from .abstract_attack import AbstractAttack
+
+# logger
+M_LOG = logging.getLogger(__name__)
+M_LOG.setLevel(logging.DEBUG)
+
 __version__ = "$revision: 0.1$"
 __author__ = "Ivan Matias"
 __date__ = "2017/10"
 
-# < imports >--------------------------------------------------------------------------------------
-
-# python library
-from .abstract_attack import AbstractAttack
-
 
 class EvilTwin(AbstractAttack):
     """
+    Classe responsável pelo ataque de spoofing que altera a LATITUDE e ENDEREÇO ICAO da
+    aeronave. As outras informações são exatamente as mesmas.
 
     """
 
 
+    # ---------------------------------------------------------------------------------------------
     def __init__(self):
         """
         Construtor
         """
-        self.__l_icao24 = []
-        self.__d_icao24_table = {}
-        self.__l_icao24_spoofed = []
+        M_LOG.info(">> EvilTwin.__init__")
+        M_LOG.info("<< EvilTwin.__init__")
 
 
-    def spy(self, fo_adsbOut):
+    # ---------------------------------------------------------------------------------------------
+    def spy(self, fo_adsbOut=None, fdict_aircraft_table=None, flst_icao24_fake=None):
         """
+        Escuta da mensagens ADS-B.
 
-        :param fo_adsbOut:
-        :return:
+        :param fo_adsbOut: o transmissor da mensagem ADS-B
+        :param fdict_aircraft_table: dicionário com as informações das aeronaves espionadas.
+        :param flst_icao24_fake: lista com o endereços ICAO24 fake.
+        :return: None.
         """
-        raise NotImplementedError()
+        M_LOG.info(">> EvilTwin.spy")
+        M_LOG.info("<< EvilTwin.spy")
 
 
+    # ---------------------------------------------------------------------------------------------
     def calculateKinematics(self):
         """
 
