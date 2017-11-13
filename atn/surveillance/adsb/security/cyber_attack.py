@@ -26,19 +26,19 @@ initial release (Linux/Python)
 # < imports >--------------------------------------------------------------------------------------
 
 # python library
+import getopt
 import logging
 import multiprocessing
 import sys
 import time
+import atn.surveillance.adsb.security.glb_defs as ldefs
 
 from .factory_attack import FactoryAttack
-
 from ..adsb_in import AdsbIn
 from ..adsb_out import AdsbOut
 from ..feeds.adsb_feed import AdsbFeed
 
 import atn.surveillance.adsb.decoder as AdsbDecoder
-import atn.surveillance.adsb.adsb_utils as AdsbUtils
 
 __version__ = "$revision: 0.1$"
 __author__ = "Ivan Matias"
@@ -49,27 +49,6 @@ class CyberAttack(AdsbFeed):
     """
 
     """
-    ODD_FRAME = 1
-
-    ODD_TYPE = 'odd'
-    EVEN_TYPE = 'even'
-
-    FT_TO_M = 0.3048
-    KT_TO_MPS = 0.514444
-    FTPM_TO_MPS = 0.00508
-
-    DELAY = 1.0
-
-    CALLSIGN = 'cs'
-    GROUND_SPEED = 'gs'
-    HEADING = 'h'
-    VERTICAL_RATE = 'vr'
-    ODD_MSG = 'om'
-    EVEN_MSG = 'em'
-    LAST_TYPE = 'lt'
-    LATITUDE = 'lat'
-    LONGITUDE = 'lng'
-    ALTITUDE = 'alt'
 
     # ---------------------------------------------------------------------------------------------
     def __init__(self, fs_argv=None):
@@ -78,9 +57,18 @@ class CyberAttack(AdsbFeed):
         """
         logging.info(">> Constructor : CyberAttack")
 
+        # time to attack, default 2 minutes
+        self.__i_time_to_attack = 2
+
+        # interval to attack, default 10 minutes
+        self.__i_interval_to_attack = 10
+
+        # config file name
+        self.__s_config_file = None
+
         # Verifica se os argumentos da linha de comando foi passado para o construtor
         if fs_argv == None:
-            logging.error("!! Não foram passados argumentos na linha de comando!")
+            logging.error("!! No arguments were passed in the command line!")
             logging.info("<< Constructor : CyberAttack")
             return None
 
@@ -90,37 +78,52 @@ class CyberAttack(AdsbFeed):
 
         # Recupera os argumentos da linha de comando
         # O identificador do sensor
-        li_id = int(sys.argv[1])
+        li_id = int(fs_argv[1])
 
         # Coordenadas da posição do ataque cibernético.
-        self.__f_latitude = float(sys.argv[2])
-        self.__f_longitude = float(sys.argv[3])
-        self.__f_altitude = float(sys.argv[4])
+        self.__f_latitude = float(fs_argv[2])
+        self.__f_longitude = float(fs_argv[3])
+        self.__f_altitude = float(fs_argv[4])
 
         llst_attacks = []
 
-        logging.info("!! Criando os objetos para os ataques cibernéticos.")
+        logging.info("!! Creating objects for cyber attacks.")
 
-        # Tipos de ataques cibernéticos
-        if "--spoofing-flasher" in sys.argv:
-            llst_attacks.append("Flasher")
+        llst_opt_cyber_attack = []
+        llst_opt_cyber_attack.append("time-to-attack=")
+        llst_opt_cyber_attack.append("interval-to-attack=")
+        llst_opt_cyber_attack.append("config=")
+        llst_opt_cyber_attack.append("spoofing-evil-twin")
+        llst_opt_cyber_attack.append("spoofing-kinematics")
+        llst_opt_cyber_attack.append("spoofing-callsign")
+        llst_opt_cyber_attack.append("flooding")
 
-        if "--spoofing-evil-twin" in sys.argv:
-            llst_attacks.append("EvilTwin")
+        try:
+            ls_opts, ls_args = getopt.getopt(fs_argv[5:],"cefikst", llst_opt_cyber_attack)
+        except getopt.GetoptError as err:
+            logging.error(str(err))
+            print str(err)
 
-        if "--spoofing-kinematics" in sys.argv:
-            llst_attacks.append("EvilTwinKinemtics")
-
-        if "--spoofing-callsign" in sys.argv:
-            llst_attacks.append("EvilTwinCallsign")
-
-        if "--flooding" in sys.argv:
-            llst_attacks.append("Flooding")
+        for ls_opt, ls_arg in ls_opts:
+            if ls_opt in ("-t", "--time-to-attack"):
+                self.__i_time_to_attack = int(ls_arg)
+            elif ls_opt in ("-i", "--interval-to-attack"):
+                self.__i_interval_to_attack = int(ls_arg)
+            elif ls_opt in ("-c", "--config"):
+                self.__s_config_file = ls_arg
+            elif ls_opt in ("-f", "--flooding"):
+                llst_attacks.append("Flooding")
+            elif ls_opt in ("-e", "--spoofing-evil-twin"):
+                llst_attacks.append("EvilTwin")
+            elif ls_opt in ("-k", "--spoofing-kinematics"):
+                llst_attacks.append("EvilTwinKinemtics")
+            elif ls_opt in ("-s", "--spoofing-callsign"):
+                llst_attacks.append("EvilTwinCallsign")
 
         # lista de objetos que fazem o ataque cibernético
         self.__lst_cyber_attack = []
 
-        logging.debug("!! Lista de ataques cibernéticos %s" % llst_attacks)
+        logging.debug("!! List of cyber attacks %s" % llst_attacks)
 
         # cria os ataques
         for ls_attacks in llst_attacks:
@@ -130,15 +133,19 @@ class CyberAttack(AdsbFeed):
             self.__lst_cyber_attack.append(lo_cyber_attack)
 
         # Cria os objetos para escuta e transmissão de mensagens ADS-B
-        logging.info("!! Criar o receptor de mensagens ADS-B (AdsbIn).")
+        logging.info("!! Create the ADS-B message receiver (AdsbIn).")
         self.__o_adsbIn = AdsbIn(fi_id= li_id, ff_lat=self.__f_latitude,
                              ff_lng=self.__f_longitude, ff_alt=self.__f_altitude,
                              fv_store_msgs=True)
 
-        logging.info("!! Criar o transmissor de mensagens ADS-B fake (AdsbOut).")
+        logging.info("!! Create the ADS-B message transmitter fake (AdsbOut).")
         self.__o_adsbOut = AdsbOut(nodename=None,feed=self)
 
+        logging.info ("!! Time to start attack [%d]min" % self.__i_time_to_attack)
+        logging.info ("!! Interval between attacks [%d]min" % self.__i_interval_to_attack)
+
         logging.info("<< Constructor : CyberAttack")
+
 
     # ---------------------------------------------------------------------------------------------
     def __decode_position_message(self, f_dct_aircraft, fs_message):
@@ -153,15 +160,15 @@ class CyberAttack(AdsbFeed):
         li_evenOddMsg = int(AdsbDecoder.get_oe_flag(fs_message))
 
         # Save ADS-B message
-        if li_evenOddMsg == self.ODD_FRAME:
-            f_dct_aircraft[self.ODD_MSG] = fs_message
-            f_dct_aircraft[self.LAST_TYPE] = self.ODD_TYPE
+        if li_evenOddMsg == ldefs.ODD_FRAME:
+            f_dct_aircraft[ldefs.ODD_MSG] = fs_message
+            f_dct_aircraft[ldefs.LAST_TYPE] = ldefs.ODD_TYPE
         else:
-            f_dct_aircraft[self.EVEN_MSG] = fs_message
-            f_dct_aircraft[self.LAST_TYPE] = self.EVEN_TYPE
+            f_dct_aircraft[ldefs.EVEN_MSG] = fs_message
+            f_dct_aircraft[ldefs.LAST_TYPE] = ldefs.EVEN_TYPE
 
         # Initialize times
-        if f_dct_aircraft[self.LAST_TYPE] == self.EVEN_TYPE:
+        if f_dct_aircraft[ldefs.LAST_TYPE] == ldefs.EVEN_TYPE:
             li_t0 = 1
             li_t1 = 0
         else:
@@ -169,16 +176,16 @@ class CyberAttack(AdsbFeed):
             li_t1 = 1
 
         # Decode position and altitude
-        if f_dct_aircraft[self.ODD_MSG] and f_dct_aircraft[self.EVEN_MSG]:
-            lf_lat, lf_lng = AdsbDecoder.get_position(f_dct_aircraft[self.ODD_MSG],
-                                                      f_dct_aircraft[self.EVEN_MSG],
+        if f_dct_aircraft[ldefs.ODD_MSG] and f_dct_aircraft[ldefs.EVEN_MSG]:
+            lf_lat, lf_lng = AdsbDecoder.get_position(f_dct_aircraft[ldefs.ODD_MSG],
+                                                      f_dct_aircraft[ldefs.EVEN_MSG],
                                                       li_t0, li_t1)
 
             if lf_lat and lf_lng:
-                f_dct_aircraft[self.LATITUDE] = lf_lat
-                f_dct_aircraft[self.LONGITUDE] = lf_lng
+                f_dct_aircraft[ldefs.LATITUDE] = lf_lat
+                f_dct_aircraft[ldefs.LONGITUDE] = lf_lng
 
-            f_dct_aircraft[self.ALTITUDE] = AdsbDecoder.get_alt(fs_message) * self.FT_TO_M
+            f_dct_aircraft[ldefs.ALTITUDE] = AdsbDecoder.get_alt(fs_message)
 
         return
 
@@ -194,9 +201,9 @@ class CyberAttack(AdsbFeed):
         """
 
         (lf_ground_speed, lf_heading, lf_vertical_rate, lf_tag) = AdsbDecoder.get_velocity(fs_message)
-        f_dct_aircraft[self.GROUND_SPEED] = lf_ground_speed * self.KT_TO_MPS
-        f_dct_aircraft[self.HEADING] = lf_heading
-        f_dct_aircraft[self.VERTICAL_RATE] = lf_vertical_rate * self.FTPM_TO_MPS
+        f_dct_aircraft[ldefs.GROUND_SPEED] = lf_ground_speed
+        f_dct_aircraft[ldefs.HEADING] = lf_heading
+        f_dct_aircraft[ldefs.VERTICAL_RATE] = lf_vertical_rate
 
         return
 
@@ -210,7 +217,7 @@ class CyberAttack(AdsbFeed):
         :param fs_message: a mensagem ADS-B.
         :return: None.
         """
-        f_dct_aircraft[self.CALLSIGN]= AdsbDecoder.get_callsign(fs_message).replace("_","")
+        f_dct_aircraft[ldefs.CALLSIGN]= AdsbDecoder.get_callsign(fs_message).replace("_","")
 
         return
 
@@ -232,8 +239,8 @@ class CyberAttack(AdsbFeed):
             return
 
         ldct_aircraft = {}
-        ldct_aircraft[self.ODD_MSG] = None
-        ldct_aircraft[self.EVEN_MSG] = None
+        ldct_aircraft[ldefs.ODD_MSG] = None
+        ldct_aircraft[ldefs.EVEN_MSG] = None
 
         # New aircraft?
         if self.__dct_aircraft_table.has_key(fi_icao24):
@@ -287,6 +294,13 @@ class CyberAttack(AdsbFeed):
         # Receive message ADS-B
         self.__o_adsbIn.run();
 
+        # for all configured cyber attacks start simulation...
+        for l_attack in self.__lst_cyber_attack:
+            # start attack
+            logging.debug("!! attack :[%s]" % l_attack)
+            l_attack.start(self.__i_time_to_attack, self.__i_interval_to_attack)
+            l_attack.set_position(self.__f_latitude, self.__f_longitude, self.__f_altitude)
+
         while True:
             logging.info ("!! Retrieve message ADS-B.")
             ls_message = self.__o_adsbIn.retrieve_msg()
@@ -314,8 +328,8 @@ class CyberAttack(AdsbFeed):
                 # for all configured cyber attacks...
                 for l_attack in self.__lst_cyber_attack:
                     # attack received ADS-B message
-                    logging.debug("!! attack ")
-                    l_attack.spy(self.__o_adbsOut, self.__dct_aircraft_table, self.__lst_icao24_fake)
+                    logging.debug("!! attack :[%s]" % l_attack)
+                    l_attack.spy(self.__o_adsbOut, self.__dct_aircraft_table, self.__lst_icao24_fake)
 
         logging.info ("<< CyberAttack.run")
 
