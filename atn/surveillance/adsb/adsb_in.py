@@ -373,7 +373,7 @@ class AdsbIn(object):
         M_LOG.info(">> AdsbIn.retrieve_msg")
 
         if self.__q_rec_msgs.empty():
-            M_LOG.info("!! Não existe mensagem ADS-B")
+            M_LOG.info("!! There is no ADS-B message")
             M_LOG.info("<< AdsbIn.retrieve_msg")
             # return
             return None
