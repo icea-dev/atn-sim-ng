@@ -35,8 +35,6 @@ import atn.surveillance.adsb.security.glb_defs as ldefs
 
 from .factory_attack import FactoryAttack
 from ..adsb_in import AdsbIn
-from ..adsb_out import AdsbOut
-from ..feeds.adsb_feed import AdsbFeed
 
 import atn.surveillance.adsb.decoder as AdsbDecoder
 
@@ -45,7 +43,7 @@ __author__ = "Ivan Matias"
 __date__ = "2017/10"
 
 
-class CyberAttack(AdsbFeed):
+class CyberAttack(object):
     """
 
     """
@@ -137,9 +135,6 @@ class CyberAttack(AdsbFeed):
         self.__o_adsbIn = AdsbIn(fi_id= li_id, ff_lat=self.__f_latitude,
                              ff_lng=self.__f_longitude, ff_alt=self.__f_altitude,
                              fv_store_msgs=True)
-
-        logging.info("!! Create the ADS-B message transmitter fake (AdsbOut).")
-        self.__o_adsbOut = AdsbOut(nodename=None,feed=self)
 
         logging.info ("!! Time to start attack [%d]min" % self.__i_time_to_attack)
         logging.info ("!! Interval between attacks [%d]min" % self.__i_interval_to_attack)
@@ -250,6 +245,9 @@ class CyberAttack(AdsbFeed):
         li_type_code = AdsbDecoder.get_tc(fs_message)
         logging.debug("!! Type Code da mensagem %d" % li_type_code)
 
+        # Update timer
+        ldct_aircraft[ldefs.LAST_UPDATE] = time.time()
+
         # Is it a position message ?
         if li_type_code in range(9,19):
             self.__decode_position_message(ldct_aircraft, fs_message)
@@ -329,77 +327,9 @@ class CyberAttack(AdsbFeed):
                 for l_attack in self.__lst_cyber_attack:
                     # attack received ADS-B message
                     logging.debug("!! attack :[%s]" % l_attack)
-                    l_attack.spy(self.__o_adsbOut, self.__dct_aircraft_table, self.__lst_icao24_fake)
+                    l_attack.spy(self.__dct_aircraft_table, self.__lst_icao24_fake)
 
         logging.info ("<< CyberAttack.run")
-
-    # ---------------------------------------------------------------------------------------------
-    def get_ssr(self):
-        """Informs current squawk code of the given aircraft.
-
-        Examples:
-            - 7500: Hi-Jacking
-            - 7600: Radio Failure
-            - 7700: Emergency
-
-        The complete list can be found in http://www.flightradars.eu/lsquawkcodes.html
-        """
-        raise NotImplementedError()
-
-
-    # ---------------------------------------------------------------------------------------------
-    def get_spi(self):
-        """Informs if SPI is activated.
-        """
-        raise NotImplementedError()
-
-
-    # ---------------------------------------------------------------------------------------------
-    def get_callsign(self):
-        """Provides the callsign of the given aircraft.
-        """
-        raise NotImplementedError()
-
-
-    # ---------------------------------------------------------------------------------------------
-    def get_position(self):
-        """
-        Returns latitude, longitude and altitude of aircraft
-        :return: (latitude in degrees, longitude in degress, altitude in meters)
-        """
-        return self.__f_latitude, self.__f_longitude, self.__f_altitude
-
-
-    # ---------------------------------------------------------------------------------------------
-    def get_velocity(self):
-        """Provides azimuth, climb_rate, and speed in meters per second.
-        """
-        raise NotImplementedError()
-
-
-    # ---------------------------------------------------------------------------------------------
-    def get_icao24(self):
-        raise NotImplementedError()
-
-
-    # ---------------------------------------------------------------------------------------------
-    def get_capabilities(self):
-        raise NotImplementedError()
-
-
-    # ---------------------------------------------------------------------------------------------
-    def get_type(self):
-        raise NotImplementedError()
-
-
-    # ---------------------------------------------------------------------------------------------
-    def is_track_updated(self):
-        raise NotImplementedError()
-
-
-    # ---------------------------------------------------------------------------------------------
-    def start(self):
-        return
 
 
 if "__main__" == __name__:

