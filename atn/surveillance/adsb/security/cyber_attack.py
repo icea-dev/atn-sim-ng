@@ -172,8 +172,8 @@ class CyberAttack(object):
 
         # Decode position and altitude
         if f_dct_aircraft[ldefs.ODD_MSG] and f_dct_aircraft[ldefs.EVEN_MSG]:
-            lf_lat, lf_lng = AdsbDecoder.get_position(f_dct_aircraft[ldefs.ODD_MSG],
-                                                      f_dct_aircraft[ldefs.EVEN_MSG],
+            lf_lat, lf_lng = AdsbDecoder.get_position(f_dct_aircraft[ldefs.EVEN_MSG],
+                                                      f_dct_aircraft[ldefs.ODD_MSG],
                                                       li_t0, li_t1)
 
             if lf_lat and lf_lng:
