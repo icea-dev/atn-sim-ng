@@ -229,7 +229,7 @@ class CyberAttackFeed(AdsbFeed):
         return
 
     # -------------------------------------------------------------------------------------------------
-    def process_message(self, fdict_aircraft=None, fs_icao24_fake=None):
+    def process_message(self, f_dct_aircraft=None, f_s_icao24_fake=None):
         """
         Processes the message from the Cyber Attack.
 
@@ -244,25 +244,25 @@ class CyberAttackFeed(AdsbFeed):
         self.__b_spi = False
 
         # Altitude (meters)
-        self.__f_altitude = fdict_aircraft[self.ALTITUDE]
+        self.__f_altitude = f_dct_aircraft[self.ALTITUDE]
 
         # Latitude (degrees)
-        self.__f_latitude = fdict_aircraft[self.LATITUDE]
+        self.__f_latitude = f_dct_aircraft[self.LATITUDE]
 
         # Longitude (degrees)
-        self.__f_longitude = fdict_aircraft[self.LONGITUDE]
+        self.__f_longitude = f_dct_aircraft[self.LONGITUDE]
 
         # Ground speed (m/s)
-        self.__f_ground_speed = fdict_aircraft[self.GROUND_SPEED]
+        self.__f_ground_speed = f_dct_aircraft[self.GROUND_SPEED]
 
         # Vertical rate (m/s)
-        self.__f_vertical_rate = fdict_aircraft[self.VERTICAL_RATE]
+        self.__f_vertical_rate = f_dct_aircraft[self.VERTICAL_RATE]
 
         # Heading (degrees)
-        self.__f_heading = fdict_aircraft[self.HEADING]
+        self.__f_heading = f_dct_aircraft[self.HEADING]
 
         # Callsign
-        self.__s_callsign = fdict_aircraft[self.CALLSIGN]
+        self.__s_callsign = f_dct_aircraft[self.CALLSIGN]
 
         # Aircraft performance type
         self.__s_aircraft_type = None
@@ -272,7 +272,7 @@ class CyberAttackFeed(AdsbFeed):
         self.__l_timestamp = 0
 
         # ICAO 24 bit code
-        self.__s_icao24 = fs_icao24_fake
+        self.__s_icao24 = f_s_icao24_fake
 
 
 # < the end >--------------------------------------------------------------------------------------
