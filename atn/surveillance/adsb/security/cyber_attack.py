@@ -114,7 +114,7 @@ class CyberAttack(object):
             elif ls_opt in ("-e", "--spoofing-evil-twin"):
                 llst_attacks.append("EvilTwin")
             elif ls_opt in ("-k", "--spoofing-kinematics"):
-                llst_attacks.append("EvilTwinKinemtics")
+                llst_attacks.append("EvilTwinKinematics")
             elif ls_opt in ("-s", "--spoofing-callsign"):
                 llst_attacks.append("EvilTwinCallsign")
 
@@ -236,6 +236,7 @@ class CyberAttack(object):
         ldct_aircraft = {}
         ldct_aircraft[ldefs.ODD_MSG] = None
         ldct_aircraft[ldefs.EVEN_MSG] = None
+        ldct_aircraft[ldefs.UNLAWFUL_INTERFERENCE] = False
 
         # New aircraft?
         if self.__dct_aircraft_table.has_key(fi_icao24):
@@ -264,6 +265,7 @@ class CyberAttack(object):
         self.__dct_aircraft_table[fi_icao24] = ldct_aircraft
 
         logging.info("<< CyberAttack.eavesdropping")
+
 
     # ---------------------------------------------------------------------------------------------
     def __disclaimer(self):

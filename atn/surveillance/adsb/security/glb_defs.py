@@ -62,6 +62,7 @@ FT_TO_M = 0.3048
 KT_TO_MPS = 0.514444
 FTPM_TO_MPS = 0.00508
 
+NM_H_TO_NM_S = 0.000277778
 DELAY = 1.0
 
 # < chaves do dicionario de informações da aeronave >----------------------------------------------
@@ -76,6 +77,7 @@ LATITUDE = 'lat'
 LONGITUDE = 'lng'
 ALTITUDE = 'alt'
 LAST_UPDATE ='lu'
+UNLAWFUL_INTERFERENCE = "ui"
 
 # Número máximo de mensagens no buffer de mensagens ADS-B recebidas.
 M_MAX_REC_MSGS = 5000

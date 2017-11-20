@@ -94,17 +94,12 @@ class EvilTwin(AbstractAttack):
                 lf_latitude += 0.05
                 lf_longitude = self.__dct_aircraft[ldefs.LONGITUDE]
                 lf_altitude = self.__dct_aircraft[ldefs.ALTITUDE]
-                #ls_last_position_msg = self.__dct_aircraft[ldefs.LAST_TYPE]
 
                 # Hex
-                #ls_msg = self.encode_airborne_position(self.__s_fake_icao24, li_sv, lf_latitude,
-                #                                       lf_longitude, lf_altitude, ls_last_position_msg)
-                M_LOG.debug("!! self.__s_last_postion_msg [%s]" % self.__s_last_position_msg)
                 ls_msg, ls_last_msg = self.encode_airborne_position(self.__s_fake_icao24, li_sv, lf_latitude,
                                                        lf_longitude, lf_altitude, self.__s_last_position_msg)
                 if ls_msg is not None:
                     self.__s_last_position_msg = ls_last_msg
-                    M_LOG.debug("!! self.__s_last_position_msg [%s]" % self.__s_last_position_msg)
                     self.replay(ls_msg)
 
                 # mensagens de meio em meio segundo.
@@ -171,13 +166,23 @@ class EvilTwin(AbstractAttack):
 
         # Auto selecting vitim
         if self.__s_spoof_icao24 is None:
-            llst_icao24 = fdct_aircraft_table.keys()
+
+            #lst_icao24 = fdct_aircraft_table.keys()
+            llst_icao24 = []
+
+            for ls_icao24 in fdct_aircraft_table:
+                ldct_aircraft_data = fdct_aircraft_table[ls_icao24]
+                if (ldefs.UNLAWFUL_INTERFERENCE in ldct_aircraft_data):
+                    if ldct_aircraft_data[ldefs.UNLAWFUL_INTERFERENCE] is False:
+                        llst_icao24.append(ls_icao24)
+
             M_LOG.debug("!! Lista de endereco ICAO24 simulados %s" % llst_icao24)
 
             if len(llst_icao24) > 0:
                 self.__s_spoof_icao24 = random.choice(llst_icao24)
                 self.__s_fake_icao24 = self.get_new_icao24()
                 flst_icao24_fake.append(self.__s_fake_icao24)
+                fdct_aircraft_table[self.__s_spoof_icao24][ldefs.UNLAWFUL_INTERFERENCE] = True
 
         else:
             self.__dct_aircraft = fdct_aircraft_table[self.__s_spoof_icao24]
@@ -191,9 +196,11 @@ class EvilTwin(AbstractAttack):
                     logging.info("!! Aircraft lost")
                     if self.__s_fake_icao24 in flst_icao24_fake:
                         flst_icao24_fake.remove(self.__s_fake_icao24)
+
                     self.__s_spoof_icao24 = None
                     self.__s_fake_icao24 = None
                     self.__dct_aircraft = {}
+
                     # waiting for new attack
                     self.restart()
 
