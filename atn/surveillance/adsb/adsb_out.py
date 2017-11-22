@@ -230,6 +230,12 @@ class AdsbOut:
             self.net_sock.sendto(msg, (self.net_dest, self.net_port))
             return True
 
+        elif self.nodename == "cyber_attack":
+            lat, lon, alt = self.feed.get_hacker_position()
+            msg = message + " " + str(lat) + " " + str(lon) + " " + str(alt)
+            self.net_sock.sendto(msg, (self.net_dest, self.net_port))
+            return True
+
         else:
             self.net_sock.sendto(message + " " + self.nodename, (self.net_dest, self.net_port))
             return True

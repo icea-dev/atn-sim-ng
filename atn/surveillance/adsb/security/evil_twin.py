@@ -210,15 +210,6 @@ class EvilTwin(AbstractAttack):
 
 
     # ---------------------------------------------------------------------------------------------
-    def calculate_kinematics(self):
-        """
-
-        :return:
-        """
-        raise NotImplementedError()
-
-
-    # ---------------------------------------------------------------------------------------------
     def start(self, fi_time_to_attack, fi_interval_to_attack):
         """
 

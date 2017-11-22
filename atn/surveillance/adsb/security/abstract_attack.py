@@ -32,7 +32,9 @@ import logging
 import math
 import netifaces as ni
 import os
+import random
 import socket
+import string
 
 from abc import ABCMeta, abstractmethod
 from time import time
@@ -77,14 +79,14 @@ class AbstractAttack(object):
 
     __net_dest = None
 
-    # ---------------------------------------------------------------------------------------------
-    @abstractmethod
-    def calculate_kinematics(self):
-        """
-        Calculos cinemáticos da aeronave vítima.
-        :return:
-        """
-        raise NotImplementedError()
+    __lst_nationality = [ "PT", "PP", "PR", "PU" ]
+    __lst_first_letter = list(string.ascii_uppercase)
+    __lst_first_letter.remove('Q')
+
+    __lst_second_letter = list(string.ascii_uppercase)
+    __lst_second_letter.remove('W')
+    __lst_illegal_prefixes = [ "SOS", "XXX", "PAN", "TTT", "VFR", "IFR", "VMC", "IMC" ]
+    __lst_letter = list(string.ascii_uppercase)
 
 
     # ---------------------------------------------------------------------------------------------
@@ -359,6 +361,76 @@ class AbstractAttack(object):
 
 
     # ---------------------------------------------------------------------------------------------
+    def get_new_callsign(self):
+        """
+
+        :return:
+        """
+        ls_callsign = random.choice(self.__lst_nationality)
+        ls_prefix = random.choice(self.__lst_illegal_prefixes)
+
+        while (ls_prefix in self.__lst_illegal_prefixes):
+            ls_prefix = random.choice(self.__lst_first_letter)
+            ls_prefix += random.choice(self.__lst_second_letter)
+            ls_prefix += random.choice(self.__lst_letter)
+
+        ls_callsign += ls_prefix
+        return ls_callsign
+
+    # ---------------------------------------------------------------------------------------------
+    def get_new_icao24(self):
+        """
+        Retorna um novo endereço ICAO
+        :return:
+        """
+        return binascii.b2a_hex(os.urandom(3))
+
+
+    # ---------------------------------------------------------------------------------------------
+    def get_position(self):
+        """
+
+        :return:
+        """
+        return self.__f_latitude, self.__f_longitude, self.__f_altitude
+
+
+    # ---------------------------------------------------------------------------------------------
+    def replay(self, fs_message):
+        """
+        Retransmite a mensagem ADS-B
+        :return:
+        """
+        M_LOG.info(">> AbstractAttack.replay")
+
+        if fs_message is None:
+            M_LOG.debug("!! message is None.")
+            return False
+
+        M_LOG.info(">> Send msg to %s:%d" % (self.__net_dest, self.__i_net_port))
+
+        lf_msg = fs_message + " " + str(self.__f_latitude) + " " + str(self.__f_longitude) + " " + str(self.__f_altitude)
+        self.__net_sock.sendto(lf_msg, (self.__net_dest, self.__i_net_port))
+
+        M_LOG.info("<< AbstractAttack.replay")
+
+
+    # ---------------------------------------------------------------------------------------------
+    def restart(self):
+        """
+
+        :return:
+        """
+        M_LOG.info(">> AbstractAttack.restart")
+
+        self.__i_time_to_attack = self.__i_interval_to_attack
+        self.__b_attack = False
+        self.__tt_start = time()
+
+        M_LOG.info("<< AbstractAttack.restart")
+
+
+    # ---------------------------------------------------------------------------------------------
     def set_position(self, ff_latitude, ff_longitude, ff_altitude):
         """
 
@@ -405,50 +477,6 @@ class AbstractAttack(object):
         self.__tt_start = time()
 
         M_LOG.info ("<< AbstractAttack.start")
-
-
-    # ---------------------------------------------------------------------------------------------
-    def replay(self, fs_message):
-        """
-        Retransmite a mensagem ADS-B
-        :return:
-        """
-        M_LOG.info(">> AbstractAttack.replay")
-
-        if fs_message is None:
-            M_LOG.debug("!! message is None.")
-            return False
-
-        M_LOG.info(">> Send msg to %s:%d" % (self.__net_dest, self.__i_net_port))
-
-        lf_msg = fs_message + " " + str(self.__f_latitude) + " " + str(self.__f_longitude) + " " + str(self.__f_altitude)
-        self.__net_sock.sendto(lf_msg, (self.__net_dest, self.__i_net_port))
-
-        M_LOG.info("<< AbstractAttack.replay")
-
-
-    # ---------------------------------------------------------------------------------------------
-    def restart(self):
-        """
-
-        :return:
-        """
-        M_LOG.info(">> AbstractAttack.restart")
-
-        self.__i_time_to_attack = self.__i_interval_to_attack
-        self.__b_attack = False
-        self.__tt_start = time()
-
-        M_LOG.info("<< AbstractAttack.restart")
-
-
-    # ---------------------------------------------------------------------------------------------
-    def get_new_icao24(self):
-        """
-        Retorna um novo endereço ICAO
-        :return:
-        """
-        return binascii.b2a_hex(os.urandom(3))
 
 
 # < the end >--------------------------------------------------------------------------------------

@@ -23,10 +23,11 @@ initial release (Linux/Python)
 """
 # < imports >--------------------------------------------------------------------------------------
 import logging
-import netifaces as ni
-import socket
+import math
+import random
 import threading
 import time
+import atn.surveillance.adsb.security.glb_defs as ldefs
 
 from .adsb_feed import AdsbFeed
 
@@ -42,28 +43,6 @@ class CyberAttackFeed(AdsbFeed):
     The aircraft information is read through the CyberAttack.
     """
 
-    # 'CA' Capability Field : 5 - Signifies Level 2 or above transponder, and the ability to set "CA"
-    # code 7, and airbone
-    CA = 5
-
-    # ADS-B Emitter Category used to identify particular aircraft
-    # 0 : No ADS-B Emitter Category Information
-    EMITTER_CATEGORY = 0
-
-    FT_TO_M = 0.3048
-    KT_TO_MPS = 0.51444444444
-
-    CALLSIGN = 'cs'
-    GROUND_SPEED = 'gs'
-    HEADING = 'h'
-    VERTICAL_RATE = 'vr'
-    ODD_MSG = 'om'
-    EVEN_MSG = 'em'
-    LAST_TYPE = 'lt'
-    LATITUDE = 'lat'
-    LONGITUDE = 'lng'
-    ALTITUDE = 'alt'
-
     # -------------------------------------------------------------------------------------------------
     def __init__(self, fb_send_data_radar=True):
         """
@@ -76,6 +55,10 @@ class CyberAttackFeed(AdsbFeed):
         self.__dict_lock = threading.Lock()
 
         self.__d_ptracks_data = {}
+
+        self.__f_hacker_lat = 0.0
+        self.__f_hacker_lng = 0.0
+        self.__f_hacker_alt = 0.0
 
         # Init attributes aircraft data
         self.__s_ssr = None
@@ -93,6 +76,21 @@ class CyberAttackFeed(AdsbFeed):
         self.__s_icao24 = None
 
         logging.info("<< CyberAttackFeed.__init__")
+
+    # ---------------------------------------------------------------------------------------------
+    def calculate_kinematics(self, ff_ground_speed, ff_heading):
+        """
+
+        :param ff_ground_speed:
+        :param ff_heading:
+        :return:
+        """
+        ff_heading_radians = math.radians(ff_heading)
+        ff_dx = (ff_ground_speed * ldefs.NM_H_TO_NM_S * math.sin(ff_heading_radians)) / 60.
+        ff_dy = (ff_ground_speed * ldefs.NM_H_TO_NM_S * math.cos(ff_heading_radians)) / 60.
+
+        return ff_dx, ff_dy
+
 
     # -------------------------------------------------------------------------------------------------
     def get_ssr(self):
@@ -132,6 +130,21 @@ class CyberAttackFeed(AdsbFeed):
         self.__data_lock.release()
 
         return ls_callsign
+
+
+    # -------------------------------------------------------------------------------------------------
+    def get_hacker_postion(self):
+        """
+        Returns latitude, longitude and altitude of hacker
+        :return: (latitude in degrees, longitude in degress, altitude in meters)
+        """
+        self.__data_lock.acquire()
+        lf_latitude = self.__f_hacker_lat
+        lf_longitude = self.__f_hacker_lng
+        lf_altitude = self.__f_hacker_alt
+        self.__data_lock.release()
+
+        return lf_latitude, lf_longitude, lf_altitude
 
 
     # -------------------------------------------------------------------------------------------------
@@ -220,22 +233,44 @@ class CyberAttackFeed(AdsbFeed):
         """
         return True
 
+
+    # ---------------------------------------------------------------------------------------------
+    def set_position(self, ff_latitude, ff_longitude, ff_altitude):
+        """
+
+        :param ff_latitude:
+        :param ff_longitude:
+        :param ff_altitude:
+        :return:
+        """
+        self.__f_hacker_alt = ff_altitude
+        self.__f_hacker_lat = ff_latitude
+        self.__f_hacker_lng = ff_longitude
+
+
+
     # -------------------------------------------------------------------------------------------------
     def start(self):
         """
         Starts reading aircraft data from CyberAttack
         :return:
         """
+
+        while True:
+            self.calculate_kinematics(self.__f_ground_speed, self.__f_heading)
+            time.sleep(1)
+
         return
 
     # -------------------------------------------------------------------------------------------------
-    def process_message(self, f_dct_aircraft=None, f_s_icao24_fake=None):
+    def process_message(self, f_dct_aircraft=None, f_s_icao24_fake=None, f_s_callsign=None):
         """
         Processes the message from the Cyber Attack.
 
         :param fdict_aircraft: the information from the fake aircraft
         :return: None:
         """
+        ls_distance = range(10,65,5)
 
         # SSR
         self.__s_ssr = "0000"
@@ -244,25 +279,31 @@ class CyberAttackFeed(AdsbFeed):
         self.__b_spi = False
 
         # Altitude (meters)
-        self.__f_altitude = f_dct_aircraft[self.ALTITUDE]
+        self.__f_altitude = f_dct_aircraft[ldefs.ALTITUDE]
 
         # Latitude (degrees)
-        self.__f_latitude = f_dct_aircraft[self.LATITUDE]
+        self.__f_latitude = f_dct_aircraft[ldefs.LATITUDE]
 
         # Longitude (degrees)
-        self.__f_longitude = f_dct_aircraft[self.LONGITUDE]
+        self.__f_longitude = f_dct_aircraft[ldefs.LONGITUDE]
 
         # Ground speed (m/s)
-        self.__f_ground_speed = f_dct_aircraft[self.GROUND_SPEED]
+        self.__f_ground_speed = f_dct_aircraft[ldefs.GROUND_SPEED]
 
         # Vertical rate (m/s)
-        self.__f_vertical_rate = f_dct_aircraft[self.VERTICAL_RATE]
+        self.__f_vertical_rate = f_dct_aircraft[ldefs.VERTICAL_RATE]
 
         # Heading (degrees)
-        self.__f_heading = f_dct_aircraft[self.HEADING]
+        self.__f_heading = random.randrange(0.0,360.0)
+
+        li_chosen_distance = random.choice(ls_distance)
+        lf_heading_radians = math.radians(self.__f_heading)
+
+        self.__f_longitude += ( li_chosen_distance * math.sin(lf_heading_radians))
+        self.__f_latitude += ( li_chosen_distance * math.cos(lf_heading_radians))
 
         # Callsign
-        self.__s_callsign = f_dct_aircraft[self.CALLSIGN]
+        self.__s_callsign = f_s_callsign
 
         # Aircraft performance type
         self.__s_aircraft_type = None
