@@ -120,7 +120,7 @@ class Flooding(AbstractAttack):
 
                 M_LOG.info("!! Creating new thread for aircraft !")
 
-                time.sleep(2)
+                time.sleep(1)
 
         self.restart()
 

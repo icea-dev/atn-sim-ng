@@ -311,7 +311,7 @@ class CyberAttackFeed(AdsbFeed):
         # Heading (degrees)
         self.__f_heading = random.randrange(0.0,360.0)
 
-        li_chosen_distance = random.choice(ls_distance)
+        li_chosen_distance = random.choice(ls_distance) / 60.0
         lf_heading_radians = math.radians(self.__f_heading)
 
         self.__f_longitude += ( li_chosen_distance * math.sin(lf_heading_radians))
