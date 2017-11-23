@@ -58,6 +58,11 @@ class Flooding(AbstractAttack):
         self.__i_amount_fake_aircraft = 10
         self.__i_total_fake_aircraft = 100
 
+        self.__lst_fake_icao24 = []
+        self.__lst_callsign = []
+        self.__lst_adsbOut = []
+        self.__lst_feed = []
+
         M_LOG.info("<< Flooding.__init__")
 
 
@@ -82,22 +87,40 @@ class Flooding(AbstractAttack):
             ls_spoof_icao24 = random.choice(llst_icao24)
             ldct_aircraft = fdct_aircraft_table[ls_spoof_icao24]
 
-            logging.info("!! Victim:  %s (%s)" % (self.__dct_aircraft[ldefs.CALLSIGN], ls_spoof_icao24))
+            logging.info("!! Victim:  %s (%s)" % (ldct_aircraft[ldefs.CALLSIGN], ls_spoof_icao24))
 
             for x in range(self.__i_amount_fake_aircraft):
                 lo_cyberAttackFeed = CyberAttackFeed()
                 lf_lat, lf_lng, lf_alt = self.get_position()
+                logging.info("!! Position:  %s,%s" % (lf_lat, lf_lng))
                 lo_cyberAttackFeed.set_position(lf_lat, lf_lng, lf_alt)
+
                 ls_fake_icao24 = self.get_new_icao24()
+
+                while (ls_fake_icao24 in self.__lst_fake_icao24):
+                    ls_fake_icao24 = self.get_new_icao24()
+
                 ls_callsign = self.get_new_callsign()
+
+                while (ls_callsign in self.__lst_callsign):
+                    ls_callsign = self.get_new_callsign()
+
+                logging.info("!! Callsign:  %s" % ls_callsign)
+
                 lo_cyberAttackFeed.process_message(ldct_aircraft, ls_fake_icao24, ls_callsign)
+                logging.info("!! Process message")
 
                 lo_adsbOut = AdsbOut(nodename="cyber_attack",feed=lo_cyberAttackFeed)
                 lo_adsbOut.start()
 
+                self.__lst_fake_icao24.append(ls_fake_icao24)
+                self.__lst_callsign.append(ls_callsign)
+                self.__lst_adsbOut.append(lo_adsbOut)
+                self.__lst_feed.append(lo_cyberAttackFeed)
+
                 M_LOG.info("!! Creating new thread for aircraft !")
 
-                time.sleep(1)
+                time.sleep(2)
 
         self.restart()
 

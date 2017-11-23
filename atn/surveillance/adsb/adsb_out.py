@@ -157,9 +157,12 @@ class AdsbOut:
         # Startup time
         time.sleep(random.randint(0, 5))
 
-        self.logger.debug("Starting airbone position message!")
         while True:
             t0 = time.time()
+
+            if self.nodename == "cyber_attack":
+                self.feed.calculate_kinematics()
+
             msg = self.generate_airborne_position()
 
             if msg is None:
@@ -229,13 +232,11 @@ class AdsbOut:
             msg = message + " " + str(lat) + " " + str(lon) + " " + str(alt)
             self.net_sock.sendto(msg, (self.net_dest, self.net_port))
             return True
-
         elif self.nodename == "cyber_attack":
             lat, lon, alt = self.feed.get_hacker_position()
             msg = message + " " + str(lat) + " " + str(lon) + " " + str(alt)
             self.net_sock.sendto(msg, (self.net_dest, self.net_port))
             return True
-
         else:
             self.net_sock.sendto(message + " " + self.nodename, (self.net_dest, self.net_port))
             return True
@@ -279,7 +280,6 @@ class AdsbOut:
         Cria a mensagem ADS-B de posição da aeronave.
         :return:
         """
-
         if not self.feed.is_track_updated():
             self.logger.debug("Track is not updated!")
             return None

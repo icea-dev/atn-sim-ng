@@ -111,6 +111,19 @@ class CoreFeed(AdsbFeed):
         self.db.commit()
         cursor.close()
 
+    # -------------------------------------------------------------------------------------------------
+    def calculate_kinematics(self):
+        """
+
+        :return:
+        """
+        return
+
+
+    def get_hacker_postion(self):
+        return 0, 0, 0
+
+
     def get_position(self):
         # return self.gps_latitude, self.gps_longitude, self.gps_altitude
         return self.tracksrv_latitude, self.tracksrv_longitude, self.tracksrv_altitude

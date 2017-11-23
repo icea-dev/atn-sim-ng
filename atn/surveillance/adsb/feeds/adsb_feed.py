@@ -32,6 +32,24 @@ class AdsbFeed(object):
     __metaclass__ = ABCMeta
 
     @abstractmethod
+    def calculate_kinematics(self):
+        """
+
+        :return:
+        """
+        raise NotImplementedError()
+
+
+    @abstractmethod
+    def get_hacker_position(self):
+        """
+
+        :return:
+        """
+        raise NotImplementedError()
+
+
+    @abstractmethod
     def get_ssr(self):
         """Informs current squawk code of the given aircraft.
 
@@ -44,11 +62,13 @@ class AdsbFeed(object):
         """
         raise NotImplementedError()
 
+
     @abstractmethod
     def get_spi(self):
         """Informs if SPI is activated.
         """
         raise NotImplementedError()
+
 
     @abstractmethod
     def get_callsign(self):
@@ -56,11 +76,13 @@ class AdsbFeed(object):
         """
         raise NotImplementedError()
 
+
     @abstractmethod
     def get_position(self):
         """Provides latitude, longitude, and altitude in meters.
         """
         raise NotImplementedError()
+
 
     @abstractmethod
     def get_velocity(self):
@@ -68,21 +90,26 @@ class AdsbFeed(object):
         """
         raise NotImplementedError()
 
+
     @abstractmethod
     def get_icao24(self):
         raise NotImplementedError()
+
 
     @abstractmethod
     def get_capabilities(self):
         raise NotImplementedError()
 
+
     @abstractmethod
     def get_type(self):
         raise NotImplementedError()
 
+
     @abstractmethod
     def is_track_updated(self):
         raise NotImplementedError()
+
 
     @abstractmethod
     def start(self):

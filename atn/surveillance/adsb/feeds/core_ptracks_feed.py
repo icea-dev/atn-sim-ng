@@ -103,6 +103,22 @@ class CorePtracksFeed(AdsbFeed):
 
 
     # -------------------------------------------------------------------------------------------------
+    def calculate_kinematics(self):
+        """
+
+        :return:
+        """
+        return
+
+    def get_hacker_position(self):
+        """
+
+        :return:
+        """
+        return 0, 0, 0
+
+
+    # -------------------------------------------------------------------------------------------------
     def get_ssr(self):
         """
          Returns the current squawk code of the aircraft.

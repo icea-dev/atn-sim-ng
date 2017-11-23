@@ -31,6 +31,11 @@ import atn.surveillance.adsb.security.glb_defs as ldefs
 
 from .adsb_feed import AdsbFeed
 
+
+M_LOG = logging.getLogger(__name__)
+M_LOG.setLevel(logging.DEBUG)
+
+
 __version__ = "$revision: 0.1$"
 __author__ = "Ivan Matias"
 __date__ = "2017/04"
@@ -42,6 +47,13 @@ class CyberAttackFeed(AdsbFeed):
     Receives the information from the fake aircraft.
     The aircraft information is read through the CyberAttack.
     """
+    # 'CA' Capability Field : 5 - Signifies Level 2 or above transponder, and the ability to set "CA"
+    # code 7, and airbone
+    CA = 5
+
+    # ADS-B Emitter Category used to identify particular aircraft
+    # 0 : No ADS-B Emitter Category Information
+    EMITTER_CATEGORY = 0
 
     # -------------------------------------------------------------------------------------------------
     def __init__(self, fb_send_data_radar=True):
@@ -78,18 +90,22 @@ class CyberAttackFeed(AdsbFeed):
         logging.info("<< CyberAttackFeed.__init__")
 
     # ---------------------------------------------------------------------------------------------
-    def calculate_kinematics(self, ff_ground_speed, ff_heading):
+    def calculate_kinematics(self):
         """
 
-        :param ff_ground_speed:
-        :param ff_heading:
         :return:
         """
-        ff_heading_radians = math.radians(ff_heading)
-        ff_dx = (ff_ground_speed * ldefs.NM_H_TO_NM_S * math.sin(ff_heading_radians)) / 60.
-        ff_dy = (ff_ground_speed * ldefs.NM_H_TO_NM_S * math.cos(ff_heading_radians)) / 60.
+        logging.info(">> CyberAttackFeed.calculate_kinematics")
+        ff_heading_radians = math.radians(self.__f_heading)
+        ff_dx = (self.__f_ground_speed * ldefs.NM_H_TO_NM_S * math.sin(ff_heading_radians)) / 60.
+        ff_dy = (self.__f_ground_speed * ldefs.NM_H_TO_NM_S * math.cos(ff_heading_radians)) / 60.
 
-        return ff_dx, ff_dy
+        self.__f_longitude += ff_dx
+        self.__f_latitude += ff_dy
+
+        logging.info("<< CyberAttackFeed.calculate_kinematics")
+
+        return
 
 
     # -------------------------------------------------------------------------------------------------
@@ -133,7 +149,7 @@ class CyberAttackFeed(AdsbFeed):
 
 
     # -------------------------------------------------------------------------------------------------
-    def get_hacker_postion(self):
+    def get_hacker_position(self):
         """
         Returns latitude, longitude and altitude of hacker
         :return: (latitude in degrees, longitude in degress, altitude in meters)
@@ -234,7 +250,7 @@ class CyberAttackFeed(AdsbFeed):
         return True
 
 
-    # ---------------------------------------------------------------------------------------------
+    # -------------------------------------------------------------------------------------------------
     def set_position(self, ff_latitude, ff_longitude, ff_altitude):
         """
 
@@ -256,9 +272,8 @@ class CyberAttackFeed(AdsbFeed):
         :return:
         """
 
-        while True:
-            self.calculate_kinematics(self.__f_ground_speed, self.__f_heading)
-            time.sleep(1)
+        M_LOG.info(">> CyberAttackFeed.start")
+        M_LOG.info("<< CyberAttackFeed.start")
 
         return
 
