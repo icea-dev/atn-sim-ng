@@ -23,6 +23,10 @@ revision 0.1  2017/oct  matiasims
 initial release (Linux/Python)
 ---------------------------------------------------------------------------------------------------
 """
+__version__ = "$revision: 0.1$"
+__author__ = "Ivan Matias"
+__date__ = "2017/10"
+
 # < imports >--------------------------------------------------------------------------------------
 
 # python library
@@ -38,16 +42,11 @@ from ..adsb_in import AdsbIn
 
 import atn.surveillance.adsb.decoder as AdsbDecoder
 
-__version__ = "$revision: 0.1$"
-__author__ = "Ivan Matias"
-__date__ = "2017/10"
-
 
 class CyberAttack(object):
     """
 
     """
-
     # ---------------------------------------------------------------------------------------------
     def __init__(self, fs_argv=None):
         """

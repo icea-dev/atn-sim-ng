@@ -1,0 +1,494 @@
+Report
+======
+8026 statements analysed.
+
+Statistics by type
+------------------
+
++---------+-------+-----------+-----------+------------+---------+
+|type     |number |old number |difference |%documented |%badname |
++=========+=======+===========+===========+============+=========+
+|module   |109    |NC         |NC         |69.72       |2.75     |
++---------+-------+-----------+-----------+------------+---------+
+|class    |79     |NC         |NC         |51.90       |11.39    |
++---------+-------+-----------+-----------+------------+---------+
+|method   |450    |NC         |NC         |86.44       |4.67     |
++---------+-------+-----------+-----------+------------+---------+
+|function |112    |NC         |NC         |39.29       |13.39    |
++---------+-------+-----------+-----------+------------+---------+
+
+
+
+External dependencies
+---------------------
+::
+
+    MySQLdb (atn.surveillance.adsb.forwarders.database_fwrd,atn.track_server)
+    PyQt4 
+      \-QtCore (atn.gui.dlg_sync,atn.gui.track_generator_mngr,atn.gui.wnd_main_atn_sim,atn.gui.core_mngr,atn.gui.wnd_traf_ui,atn.gui.dlg_sync_ui,atn.gui.dlg_trf,atn.gui.parser_utils,atn.gui.core_message_builder,atn.gui.dlg_traf_run_time_ui,atn.gui.dlg_start_ui,atn.gui.dlg_traf_ui,atn.gui.atn_sim_mngr,atn.gui.wnd_main_atn_sim_rc,atn.gui.wnd_main_atn_sim_ui,atn.gui.wnd_trf,atn.gui.dlg_trf_run_time)
+      \-QtGui (atn.gui.dlg_sync,atn.gui.wnd_main_atn_sim,atn.gui.wnd_traf_ui,atn.gui.dlg_sync_ui,atn.gui.dlg_trf,atn.gui.wnd_trf,atn.gui.dlg_traf_run_time_ui,atn.gui.dlg_start_ui,atn.gui.dlg_traf_ui,atn.gui.atn-sim-gui,atn.gui.wnd_main_atn_sim_ui,atn.gui.dlg_start,atn.gui.dlg_trf_run_time)
+      \-QtXml (atn.gui.dlg_sync,atn.gui.core_mngr,atn.gui.dlg_trf,atn.gui.dlg_trf_run_time,atn.gui.wnd_trf,atn.gui.atn_sim_mngr)
+    atn 
+      \-core_utils (atn.surveillance.adsb.forwarders.database_fwrd,atn.surveillance.adsb.feeds.coreemu_feed,atn.track_server,atn.surveillance.radar.radar,test_core_utils)
+      \-emane_utils (atn.surveillance.adsb.forwarders.database_fwrd,atn.surveillance.adsb.feeds.coreemu_feed,atn.track_server,atn.surveillance.radar.radar,test_emane_utils)
+      \-geo_utils (atn.surveillance.adsb.security.mlat,atn.surveillance.radar.radar,atn.surveillance.adsb.security.sensors,atn.surveillance.adsb.forwarders.database_fwrd,atn.surveillance.adsb.adsb_in,atn.surveillance.adsb.security.buster_server)
+      \-gui 
+      | \-atn_sim_mngr (atn.gui.atn-sim-gui)
+      | \-core_message_builder (atn.gui.core_mngr)
+      | \-core_mngr (atn.gui.atn_sim_mngr)
+      | \-dlg_start (atn.gui.wnd_main_atn_sim)
+      | \-dlg_start_ui (atn.gui.dlg_start)
+      | \-dlg_sync (atn.gui.wnd_main_atn_sim)
+      | \-dlg_sync_ui (atn.gui.dlg_sync)
+      | \-dlg_traf_run_time_ui (atn.gui.dlg_trf_run_time)
+      | \-dlg_traf_ui (atn.gui.dlg_trf)
+      | \-dlg_trf (atn.gui.wnd_main_atn_sim)
+      | \-dlg_trf_run_time (atn.gui.wnd_main_atn_sim)
+      | \-parser_utils (atn.gui.atn_sim_mngr)
+      | \-track_generator_mngr (atn.gui.atn_sim_mngr)
+      | \-wnd_main_atn_sim (atn.gui.atn_sim_mngr)
+      | \-wnd_main_atn_sim_rc (atn.gui.wnd_main_atn_sim_ui)
+      | \-wnd_main_atn_sim_ui (atn.gui.wnd_main_atn_sim)
+      | \-wnd_traf_ui (atn.gui.wnd_trf)
+      \-location (atn.gui.core_mngr)
+      \-network 
+      | \-mcast_socket (atn.track_server,atn.surveillance.radar.radar)
+      \-surveillance 
+      | \-adsb 
+      | | \-adsb_in (atn.surveillance.adsb.security.cyber_attack,atn.surveillance.adsb.security.adsb_ghost,test_adsb_in)
+      | | \-adsb_out (test_adsb_out,atn.surveillance.adsb.security.adsb_ghost)
+      | | \-adsb_utils (atn.surveillance.adsb.security.abstract_attack,atn.surveillance.adsb.security.adsb_ghost,atn.surveillance.adsb.adsb_out)
+      | | \-decoder (atn.surveillance.adsb.adsb_in,atn.surveillance.adsb.security.cyber_attack,atn.surveillance.adsb.security.adsb_ghost,atn.surveillance.asterix.adsb_decoder,atn.surveillance.adsb.security.buster_server)
+      | | \-feeds 
+      | | | \-adsb_feed (atn.surveillance.adsb.feeds.coreemu_feed,atn.surveillance.adsb.feeds.cyber_attack_feed,atn.surveillance.adsb.feeds.core_ptracks_feed,atn.surveillance.adsb.security.adsb_ghost)
+      | | | \-core_ptracks_feed (atn.surveillance.adsb.adsb_out)
+      | | | \-coreemu_feed (test_adsb_out,atn.surveillance.adsb.adsb_out)
+      | | \-forwarders 
+      | | | \-adsb_fwrd (atn.surveillance.adsb.forwarders.database_fwrd,atn.surveillance.adsb.forwarders.buster_fwrd,atn.surveillance.adsb.forwarders.dump1090_fwrd,atn.surveillance.adsb.forwarders.asterix_fwrd)
+      | | | \-asterix_fwrd (atn.surveillance.adsb.adsb_in)
+      | | | \-buster_fwrd (atn.surveillance.adsb.adsb_in)
+      | | | \-dump1090_fwrd (atn.surveillance.adsb.adsb_in,atn.surveillance.adsb.security.buster_server)
+      | | \-security 
+      | |   \-abstract_attack (atn.surveillance.adsb.security.evil_twin_callsign,atn.surveillance.adsb.security.evil_twin_kinematics,atn.surveillance.adsb.security.evil_twin,atn.surveillance.adsb.security.flasher,atn.surveillance.adsb.security.flooding)
+      | |   \-bcolors (atn.surveillance.adsb.security.buster_server)
+      | |   \-evil_twin (atn.surveillance.adsb.security.factory_attack)
+      | |   \-evil_twin_callsign (atn.surveillance.adsb.security.factory_attack)
+      | |   \-evil_twin_kinematics (atn.surveillance.adsb.security.factory_attack)
+      | |   \-factory_attack (atn.surveillance.adsb.security.cyber_attack)
+      | |   \-flasher (atn.surveillance.adsb.security.factory_attack)
+      | |   \-flooding (atn.surveillance.adsb.security.factory_attack)
+      | |   \-glb_defs (atn.surveillance.adsb.security.abstract_attack,atn.surveillance.adsb.security.evil_twin_kinematics,atn.surveillance.adsb.security.evil_twin_callsign,atn.surveillance.adsb.security.cyber_attack,atn.surveillance.adsb.security.evil_twin)
+      | |   \-mlat (atn.surveillance.adsb.security.buster_server)
+      | |   \-sensors (atn.surveillance.adsb.security.buster_server)
+      | |   \-vincenty (atn.surveillance.adsb.security.mlat)
+      | \-asterix 
+      | | \-adsb_decoder (atn.surveillance.asterix.asterix_server,atn.surveillance.adsb.adsb_in,atn.surveillance.adsb.security.buster_server)
+      | | \-aircraft_data (atn.surveillance.asterix.asterix_encoder,atn.surveillance.asterix.adsb_decoder)
+      | | \-asterix_encoder (atn.surveillance.asterix.asterix_server,atn.surveillance.adsb.adsb_in,atn.surveillance.adsb.security.buster_server)
+      | | \-asterix_utils (atn.surveillance.radar.radar,atn.surveillance.asterix.asterix_encoder)
+      | | \-ground_station (atn.surveillance.asterix.asterix_encoder)
+      | \-icea 
+      |   \-HeaderPR99 (atn.surveillance.icea.tagPR99,atn.surveillance.icea.tagPR95)
+      |   \-Message (atn.surveillance.icea.Aeronave)
+      |   \-tagPR95 (atn.surveillance.icea.icea_protocol)
+      |   \-tagPR99 (atn.surveillance.icea.icea_protocol)
+      \-track_server (test_track_server)
+      \-utm (atn.location)
+    emanesh 
+      \-events (atn.track_server)
+    geo_utils (mlat_3,mlat_4,trilat_3,mlat_2,mlat_1)
+    ipcalc (atn.surveillance.adsb.security.abstract_attack,atn.gui.atn_sim_mngr,atn.surveillance.adsb.adsb_out)
+    netifaces (atn.surveillance.adsb.feeds.cyber_attack_feed,atn.track_server,atn.surveillance.adsb.feeds.core_ptracks_feed,atn.surveillance.radar.radar,atn.surveillance.adsb.adsb_out,atn.surveillance.adsb.security.abstract_attack)
+    numpy (atn.surveillance.adsb.security.mlat,trilat_3,trilat_2,atn.surveillance.adsb.security.buster_server,mlat_4,mlat_3,mlat_2,mlat_1)
+    scipy (atn.surveillance.adsb.security.mlat)
+      \-linalg (atn.surveillance.adsb.security.buster_server)
+
+
+
+Raw metrics
+-----------
+
++----------+-------+------+---------+-----------+
+|type      |number |%     |previous |difference |
++==========+=======+======+=========+===========+
+|code      |16547  |61.39 |NC       |NC         |
++----------+-------+------+---------+-----------+
+|docstring |3195   |11.85 |NC       |NC         |
++----------+-------+------+---------+-----------+
+|comment   |3279   |12.17 |NC       |NC         |
++----------+-------+------+---------+-----------+
+|empty     |3933   |14.59 |NC       |NC         |
++----------+-------+------+---------+-----------+
+
+
+
+Duplication
+-----------
+
++-------------------------+------+---------+-----------+
+|                         |now   |previous |difference |
++=========================+======+=========+===========+
+|nb duplicated lines      |791   |NC       |NC         |
++-------------------------+------+---------+-----------+
+|percent duplicated lines |2.946 |NC       |NC         |
++-------------------------+------+---------+-----------+
+
+
+
+Messages by category
+--------------------
+
++-----------+-------+---------+-----------+
+|type       |number |previous |difference |
++===========+=======+=========+===========+
+|convention |2068   |NC       |NC         |
++-----------+-------+---------+-----------+
+|refactor   |153    |NC       |NC         |
++-----------+-------+---------+-----------+
+|warning    |646    |NC       |NC         |
++-----------+-------+---------+-----------+
+|error      |69     |NC       |NC         |
++-----------+-------+---------+-----------+
+
+
+
+% errors / warnings by module
+-----------------------------
+
++----------------------------------------------------+------+--------+---------+-----------+
+|module                                              |error |warning |refactor |convention |
++====================================================+======+========+=========+===========+
+|atn.gui.core_mngr                                   |7.25  |3.87    |9.80     |1.35       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.surveillance.adsb.security.buster_server        |5.80  |3.41    |1.96     |1.64       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.track_server                                    |5.80  |2.63    |1.31     |1.93       |
++----------------------------------------------------+------+--------+---------+-----------+
+|test_adsb_in                                        |5.80  |0.15    |0.00     |0.15       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.surveillance.adsb.security.abstract_attack      |2.90  |1.24    |6.54     |1.06       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.surveillance.adsb.adsb_out                      |2.90  |1.08    |3.92     |1.69       |
++----------------------------------------------------+------+--------+---------+-----------+
+|myservices.dump1090                                 |2.90  |0.77    |0.00     |0.15       |
++----------------------------------------------------+------+--------+---------+-----------+
+|myservices.adsbout                                  |2.90  |0.62    |11.11    |0.15       |
++----------------------------------------------------+------+--------+---------+-----------+
+|myservices.ircd                                     |2.90  |0.62    |0.65     |0.19       |
++----------------------------------------------------+------+--------+---------+-----------+
+|myservices.sample                                   |2.90  |0.62    |0.00     |0.19       |
++----------------------------------------------------+------+--------+---------+-----------+
+|myservices.track_server                             |2.90  |0.62    |0.00     |0.15       |
++----------------------------------------------------+------+--------+---------+-----------+
+|myservices.radar                                    |2.90  |0.62    |0.00     |0.15       |
++----------------------------------------------------+------+--------+---------+-----------+
+|myservices.pilot                                    |2.90  |0.62    |0.00     |0.15       |
++----------------------------------------------------+------+--------+---------+-----------+
+|myservices.commserver                               |2.90  |0.62    |0.00     |0.15       |
++----------------------------------------------------+------+--------+---------+-----------+
+|myservices.spoofer                                  |2.90  |0.62    |0.00     |0.10       |
++----------------------------------------------------+------+--------+---------+-----------+
+|myservices.buster_server                            |2.90  |0.62    |0.00     |0.10       |
++----------------------------------------------------+------+--------+---------+-----------+
+|myservices.cyber_attack                             |2.90  |0.62    |0.00     |0.05       |
++----------------------------------------------------+------+--------+---------+-----------+
+|myservices.gpsd                                     |2.90  |0.46    |0.00     |0.19       |
++----------------------------------------------------+------+--------+---------+-----------+
+|myservices.ircbot                                   |2.90  |0.46    |0.00     |0.15       |
++----------------------------------------------------+------+--------+---------+-----------+
+|myservices.adsb_in                                  |2.90  |0.46    |0.00     |0.15       |
++----------------------------------------------------+------+--------+---------+-----------+
+|myservices.asterix_server                           |2.90  |0.46    |0.00     |0.05       |
++----------------------------------------------------+------+--------+---------+-----------+
+|mlat_2                                              |2.90  |0.31    |0.65     |2.03       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.surveillance.adsb.security.factory_attack       |2.90  |0.31    |0.65     |0.15       |
++----------------------------------------------------+------+--------+---------+-----------+
+|mlat_4                                              |2.90  |0.00    |0.00     |1.98       |
++----------------------------------------------------+------+--------+---------+-----------+
+|mlat_3                                              |2.90  |0.00    |0.00     |1.55       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.surveillance.icea.icea_protocol                 |1.45  |17.03   |3.27     |9.38       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.surveillance.radar.radar                        |1.45  |4.49    |2.61     |0.97       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.gui.atn_sim_mngr                                |1.45  |1.55    |3.92     |0.39       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.surveillance.adsb.feeds.core_ptracks_feed       |1.45  |1.08    |1.31     |0.29       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.gui.core_message_builder                        |1.45  |0.93    |1.31     |0.48       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.surveillance.adsb.feeds.coreemu_feed            |1.45  |0.77    |0.65     |0.68       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.surveillance.adsb.forwarders.database_fwrd      |1.45  |0.62    |1.96     |0.97       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.surveillance.adsb.security.mlat                 |1.45  |0.62    |1.31     |2.61       |
++----------------------------------------------------+------+--------+---------+-----------+
+|mlat_1                                              |1.45  |0.46    |0.65     |1.64       |
++----------------------------------------------------+------+--------+---------+-----------+
+|trilat_3                                            |1.45  |0.00    |0.00     |2.42       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.surveillance.icea.tagPR99                       |0.00  |5.88    |1.31     |5.95       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.gui.wnd_main_atn_sim_ui                         |0.00  |4.33    |1.31     |1.40       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.location                                        |0.00  |3.72    |1.31     |2.95       |
++----------------------------------------------------+------+--------+---------+-----------+
+|geo_utils                                           |0.00  |2.79    |1.96     |2.37       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.geo_utils                                       |0.00  |2.79    |1.96     |2.37       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.surveillance.icea.Aeronave                      |0.00  |2.79    |0.65     |3.05       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.gui.track_generator_mngr                        |0.00  |2.17    |0.65     |1.21       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.surveillance.icea.tagPR95                       |0.00  |2.17    |0.00     |1.40       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.surveillance.adsb.security.cyber_attack         |0.00  |2.01    |4.58     |1.02       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.gui.dlg_trf                                     |0.00  |1.86    |2.61     |1.40       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.gui.wnd_trf                                     |0.00  |1.86    |1.96     |0.77       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.surveillance.adsb.adsb_in                       |0.00  |1.39    |1.96     |1.11       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.gui.dlg_sync                                    |0.00  |1.39    |0.00     |0.48       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.surveillance.adsb.adsb_utils                    |0.00  |1.08    |5.23     |3.48       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.surveillance.asterix.asterix_utils              |0.00  |1.08    |2.61     |3.53       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.gui.dlg_traf_run_time_ui                        |0.00  |1.08    |0.65     |0.92       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.gui.dlg_traf_ui                                 |0.00  |1.08    |0.00     |0.97       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.gui.wnd_traf_ui                                 |0.00  |1.08    |0.00     |0.92       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.gui.wnd_main_atn_sim                            |0.00  |0.93    |1.31     |0.44       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.gui.dlg_start_ui                                |0.00  |0.93    |0.00     |0.87       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.surveillance.adsb.feeds.cyber_attack_feed       |0.00  |0.77    |0.65     |0.19       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.gui.dlg_sync_ui                                 |0.00  |0.77    |0.00     |1.02       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.surveillance.asterix.asterix_encoder            |0.00  |0.77    |0.00     |0.29       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.surveillance.adsb.decoder                       |0.00  |0.62    |4.58     |7.83       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.surveillance.icea.HeaderPR99                    |0.00  |0.62    |1.31     |1.35       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.surveillance.asterix.adsb_decoder               |0.00  |0.62    |0.00     |0.19       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.gui.dlg_trf_run_time                            |0.00  |0.46    |1.31     |1.11       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.surveillance.icea.Message                       |0.00  |0.46    |0.65     |0.68       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.surveillance.adsb.security.evil_twin_kinematics |0.00  |0.46    |0.00     |0.44       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.surveillance.adsb.security.evil_twin            |0.00  |0.46    |0.00     |0.39       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.surveillance.adsb.security.evil_twin_callsign   |0.00  |0.31    |0.00     |0.39       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.surveillance.adsb.security.vincenty             |0.00  |0.15    |0.65     |1.64       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.surveillance.asterix.aircraft_data              |0.00  |0.15    |0.65     |0.34       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.surveillance.adsb.forwarders.buster_fwrd        |0.00  |0.15    |0.65     |0.29       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.gui.parser_utils                                |0.00  |0.15    |0.65     |0.00       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.core_utils                                      |0.00  |0.15    |0.00     |0.77       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.surveillance.adsb.security.sensors              |0.00  |0.15    |0.00     |0.68       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.track_cmd                                       |0.00  |0.15    |0.00     |0.63       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.gui.dlg_start                                   |0.00  |0.15    |0.00     |0.19       |
++----------------------------------------------------+------+--------+---------+-----------+
+|tst_for                                             |0.00  |0.15    |0.00     |0.15       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.surveillance.adsb.security.flasher              |0.00  |0.15    |0.00     |0.15       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.gui.atn-sim-gui                                 |0.00  |0.15    |0.00     |0.15       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.surveillance.adsb.security.flooding             |0.00  |0.15    |0.00     |0.10       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.utm                                             |0.00  |0.00    |1.31     |2.08       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.emane_utils                                     |0.00  |0.00    |1.31     |0.29       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.surveillance.adsb.forwarders.dump1090_fwrd      |0.00  |0.00    |0.65     |0.34       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.surveillance.adsb.forwarders.asterix_fwrd       |0.00  |0.00    |0.65     |0.15       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.surveillance.adsb.forwarders.adsb_fwrd          |0.00  |0.00    |0.65     |0.15       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.surveillance.asterix.ground_station             |0.00  |0.00    |0.65     |0.05       |
++----------------------------------------------------+------+--------+---------+-----------+
+|trilat_2                                            |0.00  |0.00    |0.00     |1.45       |
++----------------------------------------------------+------+--------+---------+-----------+
+|test_core_utils                                     |0.00  |0.00    |0.00     |1.16       |
++----------------------------------------------------+------+--------+---------+-----------+
+|trilat_1                                            |0.00  |0.00    |0.00     |0.77       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.surveillance.asterix.asterix_server             |0.00  |0.00    |0.00     |0.77       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.gui.wnd_main_atn_sim_rc                         |0.00  |0.00    |0.00     |0.44       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.surveillance.adsb.security.adsb_ghost           |0.00  |0.00    |0.00     |0.34       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.surveillance.adsb.feeds.adsb_feed               |0.00  |0.00    |0.00     |0.29       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.network.mcast_socket                            |0.00  |0.00    |0.00     |0.24       |
++----------------------------------------------------+------+--------+---------+-----------+
+|test_adsb_out                                       |0.00  |0.00    |0.00     |0.19       |
++----------------------------------------------------+------+--------+---------+-----------+
+|test_track_server                                   |0.00  |0.00    |0.00     |0.10       |
++----------------------------------------------------+------+--------+---------+-----------+
+|test_emane_utils                                    |0.00  |0.00    |0.00     |0.10       |
++----------------------------------------------------+------+--------+---------+-----------+
+|myservices.__init__                                 |0.00  |0.00    |0.00     |0.10       |
++----------------------------------------------------+------+--------+---------+-----------+
+|atn.surveillance.adsb.security.glb_defs             |0.00  |0.00    |0.00     |0.05       |
++----------------------------------------------------+------+--------+---------+-----------+
+
+
+
+Messages
+--------
+
++-------------------------------+------------+
+|message id                     |occurrences |
++===============================+============+
+|invalid-name                   |880         |
++-------------------------------+------------+
+|bad-whitespace                 |527         |
++-------------------------------+------------+
+|missing-docstring              |196         |
++-------------------------------+------------+
+|trailing-whitespace            |155         |
++-------------------------------+------------+
+|protected-access               |124         |
++-------------------------------+------------+
+|logging-not-lazy               |92          |
++-------------------------------+------------+
+|attribute-defined-outside-init |88          |
++-------------------------------+------------+
+|wrong-import-order             |74          |
++-------------------------------+------------+
+|unused-import                  |70          |
++-------------------------------+------------+
+|bad-continuation               |61          |
++-------------------------------+------------+
+|unused-variable                |59          |
++-------------------------------+------------+
+|multiple-statements            |59          |
++-------------------------------+------------+
+|line-too-long                  |46          |
++-------------------------------+------------+
+|redefined-outer-name           |42          |
++-------------------------------+------------+
+|import-error                   |37          |
++-------------------------------+------------+
+|bad-indentation                |37          |
++-------------------------------+------------+
+|unused-argument                |35          |
++-------------------------------+------------+
+|too-many-locals                |34          |
++-------------------------------+------------+
+|relative-import                |28          |
++-------------------------------+------------+
+|trailing-newlines              |25          |
++-------------------------------+------------+
+|too-many-instance-attributes   |23          |
++-------------------------------+------------+
+|no-self-use                    |20          |
++-------------------------------+------------+
+|no-member                      |20          |
++-------------------------------+------------+
+|duplicate-code                 |17          |
++-------------------------------+------------+
+|anomalous-backslash-in-string  |17          |
++-------------------------------+------------+
+|too-many-arguments             |15          |
++-------------------------------+------------+
+|old-style-class                |12          |
++-------------------------------+------------+
+|too-many-statements            |11          |
++-------------------------------+------------+
+|superfluous-parens             |11          |
++-------------------------------+------------+
+|pointless-string-statement     |11          |
++-------------------------------+------------+
+|too-many-branches              |9           |
++-------------------------------+------------+
+|missing-final-newline          |9           |
++-------------------------------+------------+
+|unnecessary-semicolon          |8           |
++-------------------------------+------------+
+|too-many-nested-blocks         |8           |
++-------------------------------+------------+
+|too-few-public-methods         |7           |
++-------------------------------+------------+
+|logging-format-interpolation   |6           |
++-------------------------------+------------+
+|fixme                          |6           |
++-------------------------------+------------+
+|undefined-variable             |5           |
++-------------------------------+------------+
+|unidiomatic-typecheck          |4           |
++-------------------------------+------------+
+|redefined-variable-type        |4           |
++-------------------------------+------------+
+|redefined-builtin              |4           |
++-------------------------------+------------+
+|empty-docstring                |4           |
++-------------------------------+------------+
+|singleton-comparison           |3           |
++-------------------------------+------------+
+|simplifiable-if-statement      |3           |
++-------------------------------+------------+
+|no-value-for-parameter         |3           |
++-------------------------------+------------+
+|arguments-differ               |3           |
++-------------------------------+------------+
+|unnecessary-lambda             |2           |
++-------------------------------+------------+
+|undefined-loop-variable        |2           |
++-------------------------------+------------+
+|too-many-return-statements     |2           |
++-------------------------------+------------+
+|super-init-not-called          |2           |
++-------------------------------+------------+
+|no-init                        |2           |
++-------------------------------+------------+
+|deprecated-lambda              |2           |
++-------------------------------+------------+
+|bare-except                    |2           |
++-------------------------------+------------+
+|abstract-class-instantiated    |2           |
++-------------------------------+------------+
+|wrong-import-position          |1           |
++-------------------------------+------------+
+|too-many-lines                 |1           |
++-------------------------------+------------+
+|too-many-format-args           |1           |
++-------------------------------+------------+
+|not-an-iterable                |1           |
++-------------------------------+------------+
+|global-variable-not-assigned   |1           |
++-------------------------------+------------+
+|expression-not-assigned        |1           |
++-------------------------------+------------+
+|eval-used                      |1           |
++-------------------------------+------------+
+|broad-except                   |1           |
++-------------------------------+------------+
+
+
+
+Global evaluation
+-----------------
+Your code has been rated at 6.00/10
+

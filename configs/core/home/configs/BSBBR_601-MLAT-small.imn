@@ -14,8 +14,8 @@ node n4 {
 	!
     }
     canvas c1
-    iconcoords {434.0 307.0}
-    labelcoords {434.0 339.0}
+    iconcoords {438.0 305.0}
+    labelcoords {438.0 337.0}
     interface-peer {eth0 n31}
     services {zebra OSPFv3MDR IPForward Dump1090 AdsbIn}
     interface-peer {eth1 n18}
@@ -127,8 +127,8 @@ node n3 {
 	!
     }
     canvas c1
-    iconcoords {605.0 68.0}
-    labelcoords {605.0 100.0}
+    iconcoords {3135.0 -1203.0}
+    labelcoords {3135.0 -1171.0}
     interface-peer {eth0 n31}
     services {zebra OSPFv3MDR IPForward DefaultMulticastRoute GPSd AdsbOut}
 }
@@ -145,8 +145,8 @@ node n10 {
 	!
     }
     canvas c1
-    iconcoords {319.0 61.0}
-    labelcoords {319.0 93.0}
+    iconcoords {2965.0 2159.0}
+    labelcoords {2965.0 2191.0}
     interface-peer {eth0 n31}
     services {zebra OSPFv3MDR IPForward DefaultMulticastRoute GPSd AdsbOut}
 }
@@ -163,8 +163,8 @@ node n14 {
 	!
     }
     canvas c1
-    iconcoords {76.0 213.0}
-    labelcoords {76.0 245.0}
+    iconcoords {3278.0 -1145.0}
+    labelcoords {3278.0 -1113.0}
     interface-peer {eth0 n31}
     services {zebra OSPFv3MDR IPForward DefaultMulticastRoute GPSd AdsbOut}
 }
@@ -181,8 +181,8 @@ node n20 {
 	!
     }
     canvas c1
-    iconcoords {843.0 216.0}
-    labelcoords {843.0 248.0}
+    iconcoords {3464.0 -1205.0}
+    labelcoords {3464.0 -1173.0}
     interface-peer {eth0 n31}
     services {zebra OSPFv3MDR IPForward DefaultMulticastRoute GPSd AdsbOut}
 }
@@ -199,8 +199,8 @@ node n1 {
 	!
     }
     canvas c1
-    iconcoords {485.0 211.0}
-    labelcoords {485.0 243.0}
+    iconcoords {483.0 209.0}
+    labelcoords {483.0 241.0}
     interface-peer {eth0 n31}
     custom-config {
 	custom-config-id service:AdsbReplay
@@ -212,6 +212,7 @@ node n1 {
     custom-config {
 	custom-config-id service:AdsbReplay:ghost.sh
 	custom-command ghost.sh
+	    
     }
     custom-config {
 	custom-config-id service:Flooder
@@ -268,8 +269,8 @@ node n2 {
 	!
     }
     canvas c1
-    iconcoords {111.0 44.0}
-    labelcoords {111.0 76.0}
+    iconcoords {111.0 42.0}
+    labelcoords {111.0 74.0}
     interface-peer {eth0 n31}
     services {zebra OSPFv3MDR IPForward AdsbIn}
     interface-peer {eth1 n18}
@@ -318,8 +319,8 @@ node n5 {
 	!
     }
     canvas c1
-    iconcoords {111.0 857.0}
-    labelcoords {111.0 889.0}
+    iconcoords {111.0 871.0}
+    labelcoords {111.0 903.0}
     interface-peer {eth0 n31}
     interface-peer {eth1 n18}
     services {zebra OSPFv3MDR IPForward AdsbIn}
@@ -368,8 +369,8 @@ node n13 {
 	!
     }
     canvas c1
-    iconcoords {793.0 802.0}
-    labelcoords {793.0 834.0}
+    iconcoords {791.0 816.0}
+    labelcoords {791.0 848.0}
     interface-peer {eth0 n31}
     interface-peer {eth1 n18}
     services {zebra OSPFv3MDR IPForward AdsbIn}
@@ -418,8 +419,8 @@ node n16 {
 	!
     }
     canvas c1
-    iconcoords {802.0 125.0}
-    labelcoords {802.0 157.0}
+    iconcoords {800.0 123.0}
+    labelcoords {800.0 155.0}
     interface-peer {eth0 n31}
     services {zebra OSPFv3MDR IPForward AdsbIn}
     interface-peer {eth1 n18}
@@ -587,3 +588,4 @@ option global {
 
 option session {
 }
+

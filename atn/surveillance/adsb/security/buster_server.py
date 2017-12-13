@@ -84,7 +84,7 @@ M_EVEN_MSG = 0
 M_ODD_MSG = 1
 
 # speed of light (in meters per second)
-M_LIGHT_SPEED = 299792458.
+# M_LIGHT_SPEED = 299792458.
 
 # < class CBusterServer >--------------------------------------------------------------------------
 
@@ -358,7 +358,7 @@ class CBusterServer(object):
             llst_pos.append([self.__dct_sensors[li_sns][0], self.__dct_sensors[li_sns][1], self.__dct_sensors[li_sns][2]])
 
             # time of arrival to distance
-            llst_toa.append(float(l_msg[2]) * M_LIGHT_SPEED)
+            llst_toa.append(float(l_msg[2]))  # * M_LIGHT_SPEED)
 
         # declared position (x, y, z ECEF)
         lf_anv_x, lf_anv_y, lf_anv_z = self.__get_declared_xy(fs_adsb_msg)

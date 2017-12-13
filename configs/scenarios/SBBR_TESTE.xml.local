@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scenario compiled="true" name="SBBR_TESTE.xml" version="1.0" xmlns="nmfPlan" xmlns:CORE="coreSpecific">
+  <network id="1090Mhz" name="1090Mhz">
+    <point lat="-14.1163038474" lon="-46.3514895081" type="gps"/>
+    <type>wireless</type>
+    <alias domain="COREID">1</alias>
+    <member type="interface">n2/eth0</member>
+    <member type="interface">n3/eth0</member>
+    <member type="interface">n4/eth0</member>
+    <member type="interface">n5/eth0</member>
+    <member type="interface">n6/eth0</member>
+    <member type="interface">n7/eth0</member>
+    <member type="interface">n8/eth0</member>
+    <member type="channel">1090Mhz/wireless</member>
+    <channel id="1090Mhz/wireless" name="wireless">
+      <type domain="CORE">emane_rfpipe</type>
+      <parameter name="enablepromiscuousmode">on</parameter>
+      <parameter name="datarate">1M</parameter>
+      <parameter name="flowcontrolenable">on</parameter>
+      <parameter name="flowcontroltokens">10</parameter>
+      <parameter name="pcrcurveuri">/usr/share/emane/xml/models/mac/rfpipe/rfpipepcr.xml</parameter>
+      <parameter name="jitter">0.0</parameter>
+      <parameter name="delay">0.0</parameter>
+      <parameter name="radiometricenable">on</parameter>
+      <parameter name="radiometricreportinterval">1.0</parameter>
+      <parameter name="neighbormetricdeletetime">60.0</parameter>
+      <parameter name="bandwidth">1M</parameter>
+      <parameter name="frequency">1.090G</parameter>
+      <parameter name="frequencyofinterest">1.090G</parameter>
+      <parameter name="subid">1</parameter>
+      <parameter name="systemnoisefigure">4.0</parameter>
+      <parameter name="txpower">100.0</parameter>
+      <parameter name="fixedantennagain">5.5</parameter>
+      <parameter name="fixedantennagainenable">on</parameter>
+      <parameter name="noisemode">none</parameter>
+      <parameter name="noisebinsize">20</parameter>
+      <parameter name="propagationmodel">freespace</parameter>
+      <member index="0" type="interface">n2/eth0</member>
+      <member index="1" type="interface">n3/eth0</member>
+      <member index="2" type="interface">n4/eth0</member>
+      <member index="3" type="interface">n5/eth0</member>
+      <member index="4" type="interface">n6/eth0</member>
+      <member index="5" type="interface">n7/eth0</member>
+      <member index="6" type="interface">n8/eth0</member>
+    </channel>
+  </network>
+  <host id="n2" name="n2">
+    <type domain="CORE">ground-station</type>
+    <interface id="n2/eth0" name="eth0">
+      <member index="0" type="channel">1090Mhz/wireless</member>
+      <member type="network">1090Mhz</member>
+      <address type="mac">00:00:00:aa:00:00</address>
+      <address type="IPv4">10.0.0.1/24</address>
+      <address type="IPv6">2001::1/128</address>
+    </interface>
+    <alias domain="COREID">2</alias>
+    <point lat="-15.4084067563" lon="-47.8404213423" type="gps"/>
+    <CORE:services name="n2">
+      <service name="zebra" startup_idx="35"/>
+      <service name="OSPFv3MDR" startup_idx="40"/>
+      <service name="IPForward" startup_idx="5"/>
+      <service name="Dump1090" startup_idx="50"/>
+      <service custom="True" name="AdsbIn" startup_idx="50">
+        <file name="adsb_in.cfg">
+[glb]
+destinations = dump1090 
+
+[dump1090]
+type = dump1090
+server = localhost
+port = 30001</file>
+        <file name="adsb_in.sh"/>
+        <command type="start">sh adsb_in.sh</command>
+      </service>
+    </CORE:services>
+  </host>
+  <host id="n3" name="n3">
+    <type domain="CORE">aircraft</type>
+    <interface id="n3/eth0" name="eth0">
+      <member index="1" type="channel">1090Mhz/wireless</member>
+      <member type="network">1090Mhz</member>
+      <address type="mac">00:00:00:aa:00:00</address>
+      <address type="IPv4">10.0.0.2/24</address>
+      <address type="IPv6">2001::2/128</address>
+    </interface>
+    <alias domain="COREID">3</alias>
+    <point lat="-14.6707686767" lon="-49.4174893216" type="gps"/>
+  </host>
+  <host id="n4" name="n4">
+    <type domain="CORE">aircraft</type>
+    <interface id="n4/eth0" name="eth0">
+      <member index="2" type="channel">1090Mhz/wireless</member>
+      <member type="network">1090Mhz</member>
+      <address type="mac">00:00:00:aa:00:01</address>
+      <address type="IPv4">10.0.0.3/24</address>
+      <address type="IPv6">2001::3/128</address>
+    </interface>
+    <alias domain="COREID">4</alias>
+    <point lat="-14.6726161699" lon="-49.0646891492" type="gps"/>
+  </host>
+  <host id="n5" name="n5">
+    <type domain="CORE">aircraft</type>
+    <interface id="n5/eth0" name="eth0">
+      <member index="3" type="channel">1090Mhz/wireless</member>
+      <member type="network">1090Mhz</member>
+      <address type="mac">00:00:00:aa:00:02</address>
+      <address type="IPv4">10.0.0.4/24</address>
+      <address type="IPv6">2001::4/128</address>
+    </interface>
+    <alias domain="COREID">5</alias>
+    <point lat="-15.0275657029" lon="-49.3869908814" type="gps"/>
+  </host>
+  <host id="n6" name="n6">
+    <type domain="CORE">aircraft</type>
+    <interface id="n6/eth0" name="eth0">
+      <member index="4" type="channel">1090Mhz/wireless</member>
+      <member type="network">1090Mhz</member>
+      <address type="mac">00:00:00:aa:00:03</address>
+      <address type="IPv4">10.0.0.5/24</address>
+      <address type="IPv6">2001::5/128</address>
+    </interface>
+    <alias domain="COREID">6</alias>
+    <point lat="-15.0293017524" lon="-49.0336158237" type="gps"/>
+  </host>
+  <host id="n7" name="n7">
+    <type domain="CORE">aircraft</type>
+    <interface id="n7/eth0" name="eth0">
+      <member index="5" type="channel">1090Mhz/wireless</member>
+      <member type="network">1090Mhz</member>
+      <address type="mac">00:00:00:aa:00:04</address>
+      <address type="IPv4">10.0.0.6/24</address>
+      <address type="IPv6">2001::6/128</address>
+    </interface>
+    <alias domain="COREID">7</alias>
+    <point lat="-15.3979622581" lon="-49.3655379183" type="gps"/>
+  </host>
+  <host id="n8" name="n8">
+    <type domain="CORE">aircraft</type>
+    <interface id="n8/eth0" name="eth0">
+      <member index="6" type="channel">1090Mhz/wireless</member>
+      <member type="network">1090Mhz</member>
+      <address type="mac">00:00:00:aa:00:05</address>
+      <address type="IPv4">10.0.0.7/24</address>
+      <address type="IPv6">2001::7/128</address>
+    </interface>
+    <alias domain="COREID">8</alias>
+    <point lat="-15.4086320083" lon="-49.0114619813" type="gps"/>
+  </host>
+  <CORE:defaultservices>
+    <device type="aircraft">
+      <service name="zebra"/>
+      <service name="OSPFv3MDR"/>
+      <service name="vtysh"/>
+      <service name="IPForward"/>
+      <service name="DefaultMulticastRoute"/>
+      <service name="AdsbOut"/>
+    </device>
+    <device type="ground-station">
+      <service name="zebra"/>
+      <service name="OSPFv3MDR"/>
+      <service name="IPForward"/>
+      <service name="GPSd"/>
+      <service name="AdsbIn"/>
+    </device>
+  </CORE:defaultservices>
+  <CORE:sessionconfig>
+    <origin alt="2.0" lat="-13.869227" lon="-49.918091" scale100="50000.0"/>
+    <options>
+      <parameter name="controlnet">172.17.0.0/16</parameter>
+    </options>
+    <metadata>
+      <parameter name="global_options">interface_names=no ip_addresses=yes ipv6_addresses=yes node_labels=yes link_labels=yes show_api=no background_images=no annotations=yes grid=yes traffic_start=0</parameter>
+      <parameter name="canvas c1">{name {Canvas1}} {refpt {0 0 -13.869227 -49.918091 2.0}} {scale {50000.0}} {size {1000 900}}</parameter>
+    </metadata>
+  </CORE:sessionconfig>
+</scenario>

@@ -71,7 +71,7 @@ M_ASTERIX_PORT = 15000
 M_ASTERIX_HOST = "localhost"
 
 # speed of light (m/s)
-M_LIGHT_SPEED = 299792458.
+# M_LIGHT_SPEED = 299792458.
 
 # tempo para estatística (s)
 M_TIM_STAT = 60
@@ -174,7 +174,7 @@ class AdsbIn(object):
         #M_LOG.debug("lf_dist_3d: {}".format(lf_dist_3d))
 
         # return ads-b message, estimated time (distance / speed of light)
-        return ls_msg_adsb, lf_dist_3d / M_LIGHT_SPEED
+        return ls_msg_adsb, lf_dist_3d  # / M_LIGHT_SPEED
 
     # ---------------------------------------------------------------------------------------------
     def __init_asterix_server(self):

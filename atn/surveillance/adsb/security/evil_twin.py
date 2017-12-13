@@ -23,6 +23,10 @@ revision 0.1  2017/oct  matiasims
 initial release (Linux/Python)
 ---------------------------------------------------------------------------------------------------
 """
+__version__ = "$revision: 0.1$"
+__author__ = "Ivan Matias"
+__date__ = "2017/10"
+
 # < imports >--------------------------------------------------------------------------------------
 
 # python library
@@ -38,19 +42,12 @@ from .abstract_attack import AbstractAttack
 M_LOG = logging.getLogger(__name__)
 M_LOG.setLevel(logging.DEBUG)
 
-__version__ = "$revision: 0.1$"
-__author__ = "Ivan Matias"
-__date__ = "2017/10"
-
 
 class EvilTwin(AbstractAttack):
     """
     Classe responsável pelo ataque de spoofing que altera a LATITUDE e ENDEREÇO ICAO da
     aeronave. As outras informações são exatamente as mesmas.
-
     """
-
-
     # ---------------------------------------------------------------------------------------------
     def __init__(self):
         """
